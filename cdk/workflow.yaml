@@ -1,0 +1,162 @@
+Comment: AWS Step Functions State Machine for Title Generation Workflow
+StartAt: FetchPrompts
+States:
+  FetchPrompts:
+    Type: Task
+    Resource: arn:aws:states:::lambda:invoke
+    Parameters:
+      FunctionName: !Ref FetchPromptsFn
+      Payload:
+        projectId.$: $.projectId
+        article.$: $.article
+    ResultPath: $.promptsResult
+    Next: GuardInput
+    Retry:
+      - ErrorEquals: ["States.ALL"]
+        IntervalSeconds: 2
+        MaxAttempts: 3
+        BackoffRate: 2.0
+    Catch:
+      - ErrorEquals: ["States.ALL"]
+        Next: HandleError
+        ResultPath: $.error
+
+  GuardInput:
+    Type: Task
+    Resource: arn:aws:states:::bedrock:applyGuardrail
+    Parameters:
+      GuardrailIdentifier: !Ref ProjectGuardrail
+      GuardrailVersion: "DRAFT"
+      Source: "INPUT"
+      Content:
+        - Text:
+            Text.$: $.article
+    ResultPath: $.guardResult
+    Next: PreparePrompt
+    Catch:
+      - ErrorEquals: ["States.ALL"]
+        Next: HandleGuardError
+        ResultPath: $.error
+
+  PreparePrompt:
+    Type: Task
+    Resource: arn:aws:states:::lambda:invoke
+    Parameters:
+      FunctionName: !Ref BuildPayloadFn
+      Payload:
+        prompts.$: $.promptsResult.Payload.prompts
+        article.$: $.article
+        projectId.$: $.projectId
+    ResultPath: $.preparedPayload
+    Next: InvokeModel
+    Retry:
+      - ErrorEquals: ["States.ALL"]
+        IntervalSeconds: 2
+        MaxAttempts: 3
+        BackoffRate: 2.0
+    Catch:
+      - ErrorEquals: ["States.ALL"]
+        Next: HandleError
+        ResultPath: $.error
+
+  InvokeModel:
+    Type: Task
+    Resource: arn:aws:states:::bedrock:invokeModel
+    Parameters:
+      ModelId: "anthropic.claude-3-5-sonnet-20241022-v2:0"
+      Body.$: $.preparedPayload.Payload.body
+    ResultPath: $.modelResult
+    Next: GuardOutput
+    Retry:
+      - ErrorEquals: ["States.ALL"]
+        IntervalSeconds: 5
+        MaxAttempts: 2
+        BackoffRate: 2.0
+    Catch:
+      - ErrorEquals: ["States.ALL"]
+        Next: HandleError
+        ResultPath: $.error
+
+  GuardOutput:
+    Type: Task
+    Resource: arn:aws:states:::bedrock:applyGuardrail
+    Parameters:
+      GuardrailIdentifier: !Ref ProjectGuardrail
+      GuardrailVersion: "DRAFT"
+      Source: "OUTPUT"
+      Content:
+        - Text:
+            Text.$: $.modelResult.Body.content[0].text
+    ResultPath: $.outputGuardResult
+    Next: SaveResults
+    Catch:
+      - ErrorEquals: ["States.ALL"]
+        Next: HandleGuardError
+        ResultPath: $.error
+
+  SaveResults:
+    Type: Task
+    Resource: arn:aws:states:::lambda:invoke
+    Parameters:
+      FunctionName: !Ref SaveResultsFn
+      Payload:
+        projectId.$: $.projectId
+        article.$: $.article
+        result.$: $.modelResult.Body
+        usage.$: $.modelResult.ResponseMetadata
+        executionArn.$: $$.Execution.Name
+    ResultPath: $.saveResult
+    Next: NotifyCompletion
+    Retry:
+      - ErrorEquals: ["States.ALL"]
+        IntervalSeconds: 2
+        MaxAttempts: 3
+        BackoffRate: 2.0
+    Catch:
+      - ErrorEquals: ["States.ALL"]
+        Next: HandleError
+        ResultPath: $.error
+
+  NotifyCompletion:
+    Type: Task
+    Resource: arn:aws:states:::sns:publish
+    Parameters:
+      TopicArn: !Ref CompletionTopic
+      Message.$: $.saveResult.Payload.message
+      Subject: "Title Generation Complete"
+    Next: Success
+    Catch:
+      - ErrorEquals: ["States.ALL"]
+        Next: Success
+        ResultPath: $.notificationError
+
+  Success:
+    Type: Succeed
+    OutputPath: $.saveResult.Payload
+
+  HandleError:
+    Type: Task
+    Resource: arn:aws:states:::lambda:invoke
+    Parameters:
+      FunctionName: !Ref ErrorHandlerFn
+      Payload:
+        error.$: $.error
+        executionArn.$: $$.Execution.Name
+        projectId.$: $.projectId
+    Next: Failure
+
+  HandleGuardError:
+    Type: Task
+    Resource: arn:aws:states:::lambda:invoke
+    Parameters:
+      FunctionName: !Ref ErrorHandlerFn
+      Payload:
+        error.$: $.error
+        errorType: "GUARDRAIL_VIOLATION"
+        executionArn.$: $$.Execution.Name
+        projectId.$: $.projectId
+    Next: Failure
+
+  Failure:
+    Type: Fail
+    Cause: "Title generation workflow failed"

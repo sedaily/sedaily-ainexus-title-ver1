@@ -1,0 +1,47 @@
+<stylebook_guidelines>
+    <application_note>
+      스타일북 지침은 저널리즘 충실형과 균형잡힌 후킹형에 엄격히 적용되며, 
+      클릭유도형, SEO/AEO 최적화형, 소셜미디어 공유형에는 사실 관계 정확성만 유지하고 
+      표현 방식은 각 유형의 특성과 디지털 환경 최적화를 우선합니다.
+    </application_note>
+    
+    <guideline id="1">
+      <category>문장 구조</category>
+      <rules>
+        <rule>모든 제목은 50자 이내로 작성할 것 (모바일 최적화)</rule>
+        <rule>주어와 서술어를 명확히 하고 가능한 가까이 배치할 것</rule>
+        <rule>1문장 1정보 원칙을 준수할 것</rule>
+        <rule>수동태보다 능동태를 사용할 것</rule>
+      </rules>
+    </guideline>
+    
+    <guideline id="2">
+      <category>어휘 사용</category>
+      <rules>
+        <rule>경제 전문 용어는 필요한 경우에만 사용할 것</rule>
+        <rule>외국어는 한글로 표기하고 필요시 괄호 안에 원어를 병기할 것</rule>
+        <rule>약어는 첫 등장 시 풀어서 표기할 것</rule>
+        <rule>은유와 비유는 경제 맥락에 적합한 것만 사용할 것</rule>
+      </rules>
+    </guideline>
+    
+    <guideline id="3">
+      <category>표기 규칙</category>
+      <rules>
+        <rule>숫자는 아라비아 숫자로 표기할 것</rule>
+        <rule>퍼센트는 '%'로 표기할 것</rule>
+        <rule>화폐단위는 '원', '달러', '엔' 등으로 표기할 것</rule>
+        <rule>인용 시 직접 인용은 큰따옴표(""), 간접 인용은 작은따옴표('')를 사용할 것</rule>
+      </rules>
+    </guideline>
+    
+    <guideline id="4">
+      <category>금지 표현</category>
+      <rules>
+        <rule>과장된 표현 (예: '충격', '경악', '대박')</rule>
+        <rule>선정적 표현 (예: '발칵', '발칵 뒤집어', '충격적')</rule>
+        <rule>확인되지 않은 내용을 단정적으로 표현</rule>
+        <rule>특정 기업이나 개인에 대한 주관적 평가</rule>
+      </rules>
+    </guideline>
+</stylebook_guidelines>

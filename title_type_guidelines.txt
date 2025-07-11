@@ -1,0 +1,147 @@
+<title_type_guidelines>
+    <length_guidelines>
+      <guideline type="저널리즘 충실형">30-40자 이내 권장</guideline>
+      <guideline type="균형잡힌 후킹형">35-45자 이내 권장</guideline>
+      <guideline type="클릭유도형">40-50자 이내 권장</guideline>
+      <guideline type="SEO/AEO 최적화형">45-55자 이내 허용</guideline>
+      <guideline type="소셜미디어 공유형">30-50자 이내 권장(플랫폼별 상이)</guideline>
+    </length_guidelines>
+
+    <type id="1">
+      <name>저널리즘 충실형</name>
+      <purpose>오프라인 신문 스타일에 가까운, 사실과 정보 전달에 초점을 맞춘 객관적인 제목 생성</purpose>
+      <platform_suitability>서울경제신문 웹사이트 메인, 네이버/다음 경제섹션</platform_suitability>
+      <stylebook_adherence>서울경제신문 스타일북 엄격 준수</stylebook_adherence>
+      <guidelines>
+        <guideline>5W1H 중 가장 중요한 2-3가지 요소만 포함할 것</guideline>
+        <guideline>객관적 사실과 핵심 정보만 전달할 것</guideline>
+        <guideline>간결하고 직설적인 표현을 사용할 것</guideline>
+        <guideline>주어-목적어-서술어 구조를 명확히 유지할 것</guideline>
+        <guideline>감정적 형용사나 부사 사용을 최소화할 것</guideline>
+      </guidelines>
+      <examples>
+        <example>금융위, 가계부채 관리방안 발표..."총량 관리 강화"</example>
+        <example>삼성전자, 3분기 영업이익 14조원...전년比 25% 증가</example>
+      </examples>
+    </type>
+    
+    <type id="2">
+      <name>균형잡힌 후킹형</name>
+      <purpose>오프라인과 온라인 스타일을 절충한, 정보 전달과 호기심 유발을 균형있게 담은 제목 생성</purpose>
+      <platform_suitability>서울경제신문 웹사이트, 모바일 앱, 네이버/다음 뉴스</platform_suitability>
+      <stylebook_adherence>서울경제신문 스타일북 주요 원칙 준수</stylebook_adherence>
+      <guidelines>
+        <guideline>핵심 사실을 유지하면서 독자 호기심을 자극하는 요소를 추가할 것</guideline>
+        <guideline>비유, 대조, 은유 등 문학적 장치를 적절히 활용할 것</guideline>
+        <guideline>진행형 표현으로 현재성과 역동성을 강조할 것</guideline>
+        <guideline>"...의 비밀", "...의 이면" 등 심층적 분석을 암시하는 표현을 고려할 것</guideline>
+        <guideline>결론의 일부만 제시하여 기사 본문 확인 동기를 부여할 것</guideline>
+      </guidelines>
+      <examples>
+        <example>금리인하 기대감 커지는 이유...Fed 의장 발언의 숨은 의미</example>
+        <example>코스피 상승세, 이번엔 다르다...외국인 매수 '비상' 켜진 배경</example>
+      </examples>
+    </type>
+    
+    <type id="3">
+      <name>클릭유도형</name>
+      <purpose>순수 온라인 환경에 최적화된, 독자의 클릭을 극대화하는 주목도 높은 제목 생성</purpose>
+      <platform_suitability>모바일 앱, 네이버/다음 뉴스탭, 제휴 매체</platform_suitability>
+      <stylebook_adherence>핵심 사실 정확성만 유지, 표현 방식은 온라인 최적화 우선</stylebook_adherence>
+      <guidelines>
+        <guideline>수치나 극적인 변화를 강조할 것 (예: "2배 증가", "급락")</guideline>
+        <guideline>독자의 감정이나 호기심을 자극하는 표현을 적극 사용할 것</guideline>
+        <guideline>대비되는 개념을 병치하여 긴장감을 조성할 것</guideline>
+        <guideline>기대와 현실의 차이를 부각시킬 것</guideline>
+        <guideline>"최초", "최대", "유일" 등 독점적 가치를 강조하는 표현을 적극 활용할 것</guideline>
+        <guideline>내용의 사실 관계는 유지하되, 표현의 자유도는 높게 가져갈 것</guideline>
+      </guidelines>
+      <permitted_expressions>
+        <expression>"충격", "경악" 등의 감정 표현 (사실과 부합할 경우)</expression>
+        <expression>의문형, 명령형 문장 구조</expression>
+        <expression>숫자와 특수문자 활용 ("5가지", "3단계" 등)</expression>
+        <expression>강조를 위한 따옴표 활용</expression>
+      </permitted_expressions>
+      <prohibited_expressions>
+        <expression>사실과 다른 내용 및 과장</expression>
+        <expression>선정적 성적 표현</expression>
+        <expression>기사 내용과 관련 없는 키워드 삽입</expression>
+      </prohibited_expressions>
+      <examples>
+        <example>1년 만에 자산 2배로 불린 40대 직장인이 밝힌 투자 비결</example>
+        <example>"역대급 금리인하 임박"...글로벌 시장 뒤흔들 7월 FOMC</example>
+      </examples>
+    </type>
+    
+    <type id="4">
+      <name>SEO/AEO 최적화형</name>
+      <purpose>검색 엔진과 AI 검색에서의 노출을 극대화하는 제목 생성</purpose>
+      <platform_suitability>네이버/다음 검색결과, 구글 검색, 모바일 웹, AI 검색 서비스</platform_suitability>
+      <stylebook_adherence>핵심 사실 정확성만 유지, 검색 최적화를 우선시</stylebook_adherence>
+      <guidelines>
+        <guideline>핵심 키워드를 제목 앞부분에 배치할 것</guideline>
+        <guideline>검색 의도에 따라 제목을 최적화할 것:
+          - 정보탐색형: "~란?", "~의 의미", "~하는 방법"
+          - 거래형: "~구매 방법", "~투자 전략", "~비교"
+          - 네비게이션형: 기관명, 서비스명을 명확히 포함</guideline>
+        <guideline>트렌드 키워드와 시의성 있는 표현을 포함할 것</guideline>
+        <guideline>검색 결과에서 눈에 띄는 숫자나 특수 기호를 적절히 활용할 것</guideline>
+        <guideline>이해하기 쉬운 일상 용어를 사용할 것</guideline>
+        <guideline>질문형 제목을 적극 활용하여 AI 답변 엔진에 최적화할 것</guideline>
+      </guidelines>
+      <permitted_expressions>
+        <expression>구체적인 숫자와 통계 ("5가지", "3단계", "2024년" 등)</expression>
+        <expression>완전성을 나타내는 표현 ("총정리", "완벽 가이드" 등)</expression>
+        <expression>검색자의 의도를 반영한 질문형 구조</expression>
+        <expression>격식 없는 일상 용어와 쉬운 설명 방식</expression>
+        <expression>콜론(:)을 활용한 주제-설명 구조</expression>
+      </permitted_expressions>
+      <prohibited_expressions>
+        <expression>검색과 무관한 감성적, 자극적 표현</expression>
+        <expression>기사 내용과 관련 없는 키워드 삽입(키워드 스터핑)</expression>
+        <expression>지나치게 모호하거나 클릭베이트성 표현</expression>
+        <expression>검색 알고리즘에 의해 스팸으로 인식될 수 있는 과도한 반복</expression>
+      </prohibited_expressions>
+      <examples>
+        <example>주택담보대출 금리 비교 2024년 최신판...은행별 최저 금리는?</example>
+        <example>코스피 3000 돌파 의미와 전망...개인투자자 대응전략 5가지</example>
+        <example>퇴직연금 IRP 계좌란? 세제혜택부터 운용방법까지 총정리</example>
+        <example>삼성전자 실적 발표: 3분기 영업이익 전망과 주가 영향 분석</example>
+      </examples>
+    </type>
+    
+    <type id="5">
+      <name>소셜미디어 공유형</name>
+      <purpose>소셜미디어에서의 공유와 확산을 극대화하는 제목 생성</purpose>
+      <platform_suitability>페이스북, 트위터, 인스타그램, 카카오톡 공유, 기타 SNS</platform_suitability>
+      <stylebook_adherence>핵심 사실 정확성만 유지, 소셜미디어 환경에 최적화 우선</stylebook_adherence>
+      <guidelines>
+        <guideline>감정적 반응을 유발하는 표현을 적극 사용할 것 (놀람, 공감, 분노 등)</guideline>
+        <guideline>"당신의", "우리", "함께" 등 포용적 표현을 활용할 것</guideline>
+        <guideline>현재 사회적 이슈나 트렌드와 연결시킬 것</guideline>
+        <guideline>짧고 임팩트 있는 문구로 시작할 것</guideline>
+        <guideline>공유하고 싶은 인사이트나 가치를 담을 것</guideline>
+        <guideline>해시태그로 활용 가능한 키워드나 문구를 포함할 것</guideline>
+        <guideline>이모지를 적절히 활용하여 시각적 주목도를 높일 것</guideline>
+      </guidelines>
+      <permitted_expressions>
+        <expression>감탄사와 감정 표현 ("충격!", "놀라운", "경악" 등)</expression>
+        <expression>직접적 호명과 대화체 ("당신도 모르는", "우리가 알아야 할" 등)</expression>
+        <expression>이모지와 특수문자의 적극적 활용</expression>
+        <expression>밈(meme)과 유행어 활용</expression>
+        <expression>자극적 표현 (사실에 기반한 경우)</expression>
+      </permitted_expressions>
+      <prohibited_expressions>
+        <expression>사실과 다른 내용 및 과장</expression>
+        <expression>혐오 발언이나 차별적 표현</expression>
+        <expression>기사 내용과 관련 없는 자극적 표현</expression>
+        <expression>개인 정보 침해 우려가 있는 표현</expression>
+      </prohibited_expressions>
+      <examples>
+        <example>충격! 20년차 증권맨도 모르는 주식시장의 숨겨진 진실 💰</example>
+        <example>당신이 모르는 새 오른 집값...MZ세대 내집마련 '희망고문' 언제까지</example>
+        <example>"월급 3일 만에 증발"...20대의 현실적인 자산관리 해법 👀</example>
+        <example>직장인 통장 텅장 만드는 '3대 지출'...당신도 해당되나요? #재테크</example>
+      </examples>
+    </type>
+</title_type_guidelines>

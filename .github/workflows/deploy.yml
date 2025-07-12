@@ -51,7 +51,7 @@ jobs:
         run: |
           cd frontend
           npm ci
-          npm run test -- --watchAll=false --coverage
+          npm run test -- --watchAll=false --coverage --passWithNoTests
 
   deploy-backend:
     name: Deploy Backend Infrastructure

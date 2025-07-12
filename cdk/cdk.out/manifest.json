@@ -1,0 +1,1032 @@
+{
+  "version": "45.0.0",
+  "artifacts": {
+    "BedrockDiyAuthStack.assets": {
+      "type": "cdk:asset-manifest",
+      "properties": {
+        "file": "BedrockDiyAuthStack.assets.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+      }
+    },
+    "BedrockDiyAuthStack": {
+      "type": "aws:cloudformation:stack",
+      "environment": "aws://887078546492/us-east-1",
+      "properties": {
+        "templateFile": "BedrockDiyAuthStack.template.json",
+        "terminationProtection": false,
+        "validateOnSynth": false,
+        "assumeRoleArn": "arn:${AWS::Partition}:iam::887078546492:role/cdk-hnb659fds-deploy-role-887078546492-us-east-1",
+        "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::887078546492:role/cdk-hnb659fds-cfn-exec-role-887078546492-us-east-1",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-887078546492-us-east-1/e0fb28d6bd0c542d4837b4f0162b2b933e8e4b225cf1cb7850b8b589bfff7504.json",
+        "requiresBootstrapStackVersion": 6,
+        "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
+        "additionalDependencies": [
+          "BedrockDiyAuthStack.assets"
+        ],
+        "lookupRole": {
+          "arn": "arn:${AWS::Partition}:iam::887078546492:role/cdk-hnb659fds-lookup-role-887078546492-us-east-1",
+          "requiresBootstrapStackVersion": 8,
+          "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version"
+        }
+      },
+      "dependencies": [
+        "BedrockDiyAuthStack.assets"
+      ],
+      "metadata": {
+        "/BedrockDiyAuthStack/BedrockDiyUserPool/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyUserPool9F10F9FA"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyUserPool/BedrockDiyWebClient/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyUserPoolBedrockDiyWebClient2F814CC5"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyUserPool/BedrockDiyDomain/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyUserPoolBedrockDiyDomain660B2B86"
+          }
+        ],
+        "/BedrockDiyAuthStack/PromptBucket/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PromptBucket1668FD1C"
+          }
+        ],
+        "/BedrockDiyAuthStack/ArticleBucket/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ArticleBucket38F6CD07"
+          }
+        ],
+        "/BedrockDiyAuthStack/ProjectTable": [
+          {
+            "type": "aws:cdk:hasPhysicalName",
+            "data": {
+              "Ref": "ProjectTableE109554C"
+            }
+          }
+        ],
+        "/BedrockDiyAuthStack/ProjectTable/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ProjectTableE109554C"
+          }
+        ],
+        "/BedrockDiyAuthStack/PromptMetaTable": [
+          {
+            "type": "aws:cdk:hasPhysicalName",
+            "data": {
+              "Ref": "PromptMetaTable0A0B3876"
+            }
+          }
+        ],
+        "/BedrockDiyAuthStack/PromptMetaTable/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PromptMetaTable0A0B3876"
+          }
+        ],
+        "/BedrockDiyAuthStack/ConversationTable": [
+          {
+            "type": "aws:cdk:hasPhysicalName",
+            "data": {
+              "Ref": "ConversationTable75C14D21"
+            }
+          }
+        ],
+        "/BedrockDiyAuthStack/ConversationTable/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ConversationTable75C14D21"
+          }
+        ],
+        "/BedrockDiyAuthStack/ExecutionTable": [
+          {
+            "type": "aws:cdk:hasPhysicalName",
+            "data": {
+              "Ref": "ExecutionTable914EA6E7"
+            }
+          }
+        ],
+        "/BedrockDiyAuthStack/ExecutionTable/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ExecutionTable914EA6E7"
+          }
+        ],
+        "/BedrockDiyAuthStack/ChatHistoryTable": [
+          {
+            "type": "aws:cdk:hasPhysicalName",
+            "data": {
+              "Ref": "ChatHistoryTableA22BA13C"
+            }
+          }
+        ],
+        "/BedrockDiyAuthStack/ChatHistoryTable/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ChatHistoryTableA22BA13C"
+          }
+        ],
+        "/BedrockDiyAuthStack/ChatSessionTable": [
+          {
+            "type": "aws:cdk:hasPhysicalName",
+            "data": {
+              "Ref": "ChatSessionTable9519B73E"
+            }
+          }
+        ],
+        "/BedrockDiyAuthStack/ChatSessionTable/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ChatSessionTable9519B73E"
+          }
+        ],
+        "/BedrockDiyAuthStack/IndexPromptDLQ/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "IndexPromptDLQ5C143C72"
+          }
+        ],
+        "/BedrockDiyAuthStack/IndexPromptQueue/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "IndexPromptQueueC7C25CCE"
+          }
+        ],
+        "/BedrockDiyAuthStack/CompletionTopic/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CompletionTopic50E1DF26"
+          }
+        ],
+        "/BedrockDiyAuthStack/ErrorTopic/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ErrorTopicA0904A23"
+          }
+        ],
+        "/BedrockDiyAuthStack/ProjectGuardrail": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ProjectGuardrail"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockAgentRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockAgentRole7C982E0C"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockAgentRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockAgentRoleDefaultPolicy1462CD5B"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockKnowledgeBaseRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockKnowledgeBaseRole24C5E17B"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockKnowledgeBaseRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockKnowledgeBaseRoleDefaultPolicy3434A684"
+          }
+        ],
+        "/BedrockDiyAuthStack/TitleNomicsAgent": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TitleNomicsAgent"
+          }
+        ],
+        "/BedrockDiyAuthStack/TitleNomicsAgentAlias": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "TitleNomicsAgentAlias"
+          }
+        ],
+        "/BedrockDiyAuthStack/LambdaRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LambdaRole3A44B857"
+          }
+        ],
+        "/BedrockDiyAuthStack/LambdaRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LambdaRoleDefaultPolicy75625A82"
+          }
+        ],
+        "/BedrockDiyAuthStack/LangChainLayer/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LangChainLayer8B014442"
+          }
+        ],
+        "/BedrockDiyAuthStack/GenerateFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GenerateFunctionD11A7A28"
+          }
+        ],
+        "/BedrockDiyAuthStack/LangChainRouterFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LangChainRouterFunctionAB4ACA22"
+          }
+        ],
+        "/BedrockDiyAuthStack/ProjectFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ProjectFunction5497A4ED"
+          }
+        ],
+        "/BedrockDiyAuthStack/AuthFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthFunctionA1CD5E0F"
+          }
+        ],
+        "/BedrockDiyAuthStack/SavePromptFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SavePromptFunction071F515F"
+          }
+        ],
+        "/BedrockDiyAuthStack/FetchPromptsFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "FetchPromptsFunction23F380BF"
+          }
+        ],
+        "/BedrockDiyAuthStack/BuildPayloadFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BuildPayloadFunction46C536B5"
+          }
+        ],
+        "/BedrockDiyAuthStack/SaveResultsFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SaveResultsFunctionC9B50291"
+          }
+        ],
+        "/BedrockDiyAuthStack/ErrorHandlerFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ErrorHandlerFunction246F95E6"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApi1AA2182A"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/CloudWatchRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiCloudWatchRoleA6EAEC85"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Account": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiAccountB5339E4D"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Deployment/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiDeployment43E7B7E522e8e84040fcf0f33a77d6702f8af2ab"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/DeploymentStage.prod/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiDeploymentStageprod6FFD6E49"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Endpoint": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiEndpoint902C0108"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiOPTIONSC7D3F4B3"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauth176DDB1C"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthOPTIONS8AF5488B"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signup/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthsignup9618154B"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signup/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthsignupOPTIONSD70B2340"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signup/POST/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..auth.signup": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthsignupPOSTApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTauthsignup2CEAE48A"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signup/POST/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..auth.signup": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthsignupPOSTApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTauthsignup9C8F7215"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signup/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthsignupPOST57234356"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signin/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthsignin895CA3E3"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signin/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthsigninOPTIONS5D5D0AC7"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signin/POST/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..auth.signin": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthsigninPOSTApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTauthsignin33E88A77"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signin/POST/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..auth.signin": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthsigninPOSTApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTauthsigninA0C8948C"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signin/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthsigninPOST420BD6E9"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/refresh/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthrefresh5C4E9EF5"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/refresh/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthrefreshOPTIONSA51C9932"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/refresh/POST/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..auth.refresh": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthrefreshPOSTApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTauthrefresh026C2D76"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/refresh/POST/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..auth.refresh": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthrefreshPOSTApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTauthrefreshD1F762E6"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/refresh/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthrefreshPOST1496DFB2"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signout/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthsignoutC0E164EA"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signout/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthsignoutOPTIONS54D8E6C5"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signout/POST/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..auth.signout": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthsignoutPOSTApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTauthsignoutD2EECF15"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signout/POST/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..auth.signout": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthsignoutPOSTApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTauthsignout34494698"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signout/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthsignoutPOST5713F2DA"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/verify/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthverifyD9F9DEFD"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/verify/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthverifyOPTIONS4AD32A8A"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/verify/POST/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..auth.verify": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthverifyPOSTApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTauthverifyEDBB080C"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/verify/POST/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..auth.verify": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthverifyPOSTApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTauthverifyAC560A52"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/verify/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthverifyPOST006F892A"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/forgot-password/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthforgotpassword54291A48"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/forgot-password/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthforgotpasswordOPTIONS63A970CB"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/forgot-password/POST/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..auth.forgot-password": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthforgotpasswordPOSTApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTauthforgotpassword17DB0723"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/forgot-password/POST/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..auth.forgot-password": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthforgotpasswordPOSTApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTauthforgotpasswordBDDE4499"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/forgot-password/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthforgotpasswordPOST6F44D25B"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/confirm-password/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthconfirmpasswordA96AC876"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/confirm-password/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthconfirmpasswordOPTIONS07023CE0"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/confirm-password/POST/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..auth.confirm-password": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthconfirmpasswordPOSTApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTauthconfirmpasswordB4736D78"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/confirm-password/POST/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..auth.confirm-password": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthconfirmpasswordPOSTApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTauthconfirmpassword0CCA4E8B"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/auth/confirm-password/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiauthconfirmpasswordPOST654B5CED"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojects9187E160"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsOPTIONSADC378B0"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/POST/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..projects": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsPOSTApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTprojects1E2A4F3E"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/POST/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..projects": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsPOSTApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTprojects0B0F83B2"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsPOST4F2D38A0"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/GET/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.GET..projects": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsGETApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FGETprojects4BF5F843"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/GET/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.GET..projects": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsGETApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FGETprojects34675779"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsGET28FFCCE0"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdE53CFE16"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdOPTIONSCAF11C39"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/GET/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.GET..projects.{projectId}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdGETApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FGETprojectsprojectIdDA4EF4A1"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/GET/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.GET..projects.{projectId}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdGETApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FGETprojectsprojectIdD221CA87"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdGET8D729916"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/generate/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdgenerate5AA4FFFF"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/generate/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdgenerateOPTIONS2AEECF38"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/generate/POST/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..projects.{projectId}.generate": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdgeneratePOSTApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTprojectsprojectIdgenerate15E8EAD6"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/generate/POST/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..projects.{projectId}.generate": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdgeneratePOSTApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTprojectsprojectIdgenerateE69C9629"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/generate/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdgeneratePOSTA83AFA7D"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/upload-url/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIduploadurl8FB1642E"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/upload-url/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIduploadurlOPTIONS1935001D"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/upload-url/GET/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.GET..projects.{projectId}.upload-url": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIduploadurlGETApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FGETprojectsprojectIduploadurl3F645DAF"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/upload-url/GET/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.GET..projects.{projectId}.upload-url": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIduploadurlGETApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FGETprojectsprojectIduploadurlB1450B49"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/upload-url/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIduploadurlGETD7522E98"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/chat/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdchat8A3DEEB1"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/chat/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdchatOPTIONSA8F09056"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/chat/POST/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..projects.{projectId}.chat": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdchatPOSTApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTprojectsprojectIdchat99407265"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/chat/POST/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..projects.{projectId}.chat": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdchatPOSTApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTprojectsprojectIdchat35A9909B"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/chat/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdchatPOST3232546E"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/chat/sessions/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdchatsessions017232B8"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/chat/sessions/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdchatsessionsOPTIONS1BB261EE"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/chat/sessions/GET/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.GET..projects.{projectId}.chat.sessions": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdchatsessionsGETApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FGETprojectsprojectIdchatsessions17C9BF80"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/chat/sessions/GET/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.GET..projects.{projectId}.chat.sessions": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdchatsessionsGETApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FGETprojectsprojectIdchatsessionsA44D4007"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/chat/sessions/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdchatsessionsGET478F1E81"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/chat/sessions/{sessionId}/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdchatsessionssessionId10D5E777"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/chat/sessions/{sessionId}/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdchatsessionssessionIdOPTIONSFC736633"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/chat/sessions/{sessionId}/GET/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.GET..projects.{projectId}.chat.sessions.{sessionId}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdchatsessionssessionIdGETApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FGETprojectsprojectIdchatsessionssessionIdA474CFF3"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/chat/sessions/{sessionId}/GET/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.GET..projects.{projectId}.chat.sessions.{sessionId}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdchatsessionssessionIdGETApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FGETprojectsprojectIdchatsessionssessionId12CC4E50"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/chat/sessions/{sessionId}/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdchatsessionssessionIdGETE5E917EA"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/chat/sessions/{sessionId}/DELETE/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.DELETE..projects.{projectId}.chat.sessions.{sessionId}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdchatsessionssessionIdDELETEApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FDELETEprojectsprojectIdchatsessionssessionIdF10CF93B"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/chat/sessions/{sessionId}/DELETE/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.DELETE..projects.{projectId}.chat.sessions.{sessionId}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdchatsessionssessionIdDELETEApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FDELETEprojectsprojectIdchatsessionssessionId257D1546"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/chat/sessions/{sessionId}/DELETE/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdchatsessionssessionIdDELETED13E9B9F"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprompts1E68E3C5"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApipromptsOPTIONS457DC2CB"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApipromptsprojectId7D54EB40"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApipromptsprojectIdOPTIONS1E9E4FEF"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/POST/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..prompts.{projectId}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApipromptsprojectIdPOSTApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTpromptsprojectIdE416A206"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/POST/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..prompts.{projectId}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApipromptsprojectIdPOSTApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTpromptsprojectIdFF796EC9"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApipromptsprojectIdPOST3DA6CFC0"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/GET/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.GET..prompts.{projectId}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApipromptsprojectIdGETApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FGETpromptsprojectId213314A0"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/GET/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.GET..prompts.{projectId}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApipromptsprojectIdGETApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FGETpromptsprojectId8393524B"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/GET/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApipromptsprojectIdGET355C3822"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/{promptId}/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApipromptsprojectIdpromptId9B0DE866"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/{promptId}/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApipromptsprojectIdpromptIdOPTIONS43E7BB5D"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/{promptId}/PUT/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.PUT..prompts.{projectId}.{promptId}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApipromptsprojectIdpromptIdPUTApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FPUTpromptsprojectIdpromptId2DA537AE"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/{promptId}/PUT/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.PUT..prompts.{projectId}.{promptId}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApipromptsprojectIdpromptIdPUTApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FPUTpromptsprojectIdpromptId3F17738E"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/{promptId}/PUT/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApipromptsprojectIdpromptIdPUTAB6B08A0"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/{promptId}/DELETE/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.DELETE..prompts.{projectId}.{promptId}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApipromptsprojectIdpromptIdDELETEApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FDELETEpromptsprojectIdpromptId6AA9D3D7"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/{promptId}/DELETE/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.DELETE..prompts.{projectId}.{promptId}": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApipromptsprojectIdpromptIdDELETEApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FDELETEpromptsprojectIdpromptId61A0890E"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/{promptId}/DELETE/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApipromptsprojectIdpromptIdDELETEF3254681"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApiAuthorizer/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiAuthorizer2BB71853"
+          }
+        ],
+        "/BedrockDiyAuthStack/GenerateErrorAlarm/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GenerateErrorAlarmE8D59242"
+          }
+        ],
+        "/BedrockDiyAuthStack/ProjectErrorAlarm/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ProjectErrorAlarmEFDF66E6"
+          }
+        ],
+        "/BedrockDiyAuthStack/LangChainRouterErrorAlarm/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "LangChainRouterErrorAlarm57435E22"
+          }
+        ],
+        "/BedrockDiyAuthStack/SavePromptErrorAlarm/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "SavePromptErrorAlarm3BFF9698"
+          }
+        ],
+        "/BedrockDiyAuthStack/AuthErrorAlarm/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "AuthErrorAlarm94F97B7C"
+          }
+        ],
+        "/BedrockDiyAuthStack/DLQMessageAlarm/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "DLQMessageAlarmA2D77E30"
+          }
+        ],
+        "/BedrockDiyAuthStack/ApiGatewayUrl": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ApiGatewayUrl"
+          }
+        ],
+        "/BedrockDiyAuthStack/ApiGatewayDomain": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "ApiGatewayDomain"
+          }
+        ],
+        "/BedrockDiyAuthStack/PromptBucketName": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "PromptBucketName"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockAgentId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockAgentId"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockAgentAliasId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockAgentAliasId"
+          }
+        ],
+        "/BedrockDiyAuthStack/GuardrailId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "GuardrailId"
+          }
+        ],
+        "/BedrockDiyAuthStack/UserPoolId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UserPoolId"
+          }
+        ],
+        "/BedrockDiyAuthStack/UserPoolClientId": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "UserPoolClientId"
+          }
+        ],
+        "/BedrockDiyAuthStack/CognitoDomainUrl": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CognitoDomainUrl"
+          }
+        ],
+        "/BedrockDiyAuthStack/CDKMetadata/Default": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CDKMetadata"
+          }
+        ],
+        "/BedrockDiyAuthStack/BootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BootstrapVersion"
+          }
+        ],
+        "/BedrockDiyAuthStack/CheckBootstrapVersion": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "CheckBootstrapVersion"
+          }
+        ]
+      },
+      "displayName": "BedrockDiyAuthStack"
+    },
+    "Tree": {
+      "type": "cdk:tree",
+      "properties": {
+        "file": "tree.json"
+      }
+    }
+  },
+  "minimumCliVersion": "2.1020.2"
+}

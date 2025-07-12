@@ -6,6 +6,7 @@ import {
   CheckCircleIcon,
   ClockIcon,
   ExclamationTriangleIcon,
+  PencilSquareIcon,
 } from "@heroicons/react/24/outline";
 
 const PromptUpload = ({ categories, promptStatus, onUpload }) => {
@@ -25,6 +26,25 @@ const PromptUpload = ({ categories, promptStatus, onUpload }) => {
       await onUpload(categoryId, file);
     } catch (error) {
       console.error("Upload failed:", error);
+    } finally {
+      setUploadingCategory(null);
+    }
+  };
+
+  const handleTextUpload = async (categoryId, text, filename = "직접입력.txt") => {
+    if (!text.trim()) {
+      alert("텍스트를 입력해주세요.");
+      return;
+    }
+
+    try {
+      setUploadingCategory(categoryId);
+      // 텍스트를 File 객체로 변환
+      const blob = new Blob([text], { type: "text/plain" });
+      const file = new File([blob], filename, { type: "text/plain" });
+      await onUpload(categoryId, file);
+    } catch (error) {
+      console.error("Text upload failed:", error);
     } finally {
       setUploadingCategory(null);
     }
@@ -67,12 +87,10 @@ const PromptUpload = ({ categories, promptStatus, onUpload }) => {
           프롬프트 파일 업로드 안내
         </h3>
         <div className="space-y-2 text-sm text-blue-800">
-          <p>• 각 카테고리별로 txt 파일을 업로드하세요</p>
-          <p>• 파일 업로드 후 자동으로 임베딩 생성 및 색인이 진행됩니다</p>
+          <p>• 각 카테고리별로 txt 파일을 업로드하거나 직접 텍스트를 입력하세요</p>
+          <p>• 파일 업로드 또는 텍스트 입력 후 자동으로 임베딩 생성 및 색인이 진행됩니다</p>
           <p>• 필수 프롬프트를 모두 업로드해야 제목 생성이 가능합니다</p>
-          <p>
-            • 기존 프롬프트 파일들을 활용하여 각 카테고리에 맞게 업로드하세요
-          </p>
+          <p>• 파일 드래그앤드롭, 클릭 업로드, 또는 "직접 입력" 버튼을 통해 텍스트를 붙여넣을 수 있습니다</p>
         </div>
       </div>
 
@@ -90,6 +108,7 @@ const PromptUpload = ({ categories, promptStatus, onUpload }) => {
               status={promptStatus[category.id]}
               isUploading={uploadingCategory === category.id}
               onUpload={(files) => handleFileUpload(category.id, files)}
+              onTextUpload={(text) => handleTextUpload(category.id, text)}
               getStatusIcon={() => getStatusIcon(category.id)}
               getStatusText={() => getStatusText(category.id)}
             />
@@ -111,6 +130,7 @@ const PromptUpload = ({ categories, promptStatus, onUpload }) => {
               status={promptStatus[category.id]}
               isUploading={uploadingCategory === category.id}
               onUpload={(files) => handleFileUpload(category.id, files)}
+              onTextUpload={(text) => handleTextUpload(category.id, text)}
               getStatusIcon={() => getStatusIcon(category.id)}
               getStatusText={() => getStatusText(category.id)}
             />
@@ -172,9 +192,13 @@ const PromptUploadCard = ({
   status,
   isUploading,
   onUpload,
+  onTextUpload,
   getStatusIcon,
   getStatusText,
 }) => {
+  const [showTextInput, setShowTextInput] = useState(false);
+  const [textContent, setTextContent] = useState("");
+
   const { getRootProps, getInputProps, isDragActive } = useDropzone({
     onDrop: onUpload,
     accept: {
@@ -183,6 +207,12 @@ const PromptUploadCard = ({
     maxFiles: 1,
     disabled: isUploading,
   });
+
+  const handleTextSubmit = () => {
+    onTextUpload(textContent);
+    setTextContent("");
+    setShowTextInput(false);
+  };
 
   return (
     <div
@@ -205,25 +235,69 @@ const PromptUploadCard = ({
         <div className="flex-shrink-0 ml-3">{getStatusIcon()}</div>
       </div>
 
-      <div {...getRootProps()} className="cursor-pointer">
-        <input {...getInputProps()} />
+      {showTextInput ? (
+        <div className="space-y-4">
+          <textarea
+            value={textContent}
+            onChange={(e) => setTextContent(e.target.value)}
+            placeholder="프롬프트 텍스트를 여기에 붙여넣거나 직접 입력하세요..."
+            className="w-full h-32 p-3 border border-gray-300 rounded-md resize-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+            disabled={isUploading}
+          />
+          <div className="flex space-x-2">
+            <button
+              onClick={handleTextSubmit}
+              disabled={isUploading || !textContent.trim()}
+              className="flex-1 bg-blue-600 text-white px-4 py-2 rounded-md hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+            >
+              {isUploading ? "업로드 중..." : "텍스트 업로드"}
+            </button>
+            <button
+              onClick={() => {
+                setShowTextInput(false);
+                setTextContent("");
+              }}
+              disabled={isUploading}
+              className="px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 disabled:opacity-50 text-sm"
+            >
+              취소
+            </button>
+          </div>
+        </div>
+      ) : (
+        <div className="space-y-3">
+          <div {...getRootProps()} className="cursor-pointer">
+            <input {...getInputProps()} />
 
-        {isUploading ? (
-          <div className="text-center py-4">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
-            <p className="text-sm text-gray-600 mt-2">업로드 중...</p>
+            {isUploading ? (
+              <div className="text-center py-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+                <p className="text-sm text-gray-600 mt-2">업로드 중...</p>
+              </div>
+            ) : (
+              <div className="text-center py-4">
+                <CloudArrowUpIcon className="mx-auto h-8 w-8 text-gray-400" />
+                <p className="text-sm text-gray-600 mt-2">
+                  {isDragActive
+                    ? "파일을 여기에 드롭하세요"
+                    : "txt 파일을 드래그하거나 클릭하여 업로드"}
+                </p>
+              </div>
+            )}
           </div>
-        ) : (
-          <div className="text-center py-4">
-            <CloudArrowUpIcon className="mx-auto h-8 w-8 text-gray-400" />
-            <p className="text-sm text-gray-600 mt-2">
-              {isDragActive
-                ? "파일을 여기에 드롭하세요"
-                : "txt 파일을 드래그하거나 클릭하여 업로드"}
-            </p>
+
+          <div className="text-center">
+            <button
+              onClick={() => setShowTextInput(true)}
+              disabled={isUploading}
+              className="inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm leading-4 font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50"
+            >
+              <PencilSquareIcon className="h-4 w-4 mr-2" />
+              직접 입력
+            </button>
           </div>
-        )}
-      </div>
+        </div>
+      )}
 
       {status?.fileName && (
         <div className="mt-3 p-2 bg-gray-100 rounded text-sm">

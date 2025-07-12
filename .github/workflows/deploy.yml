@@ -1,0 +1,175 @@
+name: Deploy TITLE-NOMICS
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+env:
+  AWS_REGION: us-east-1
+  NODE_VERSION: 18
+  PYTHON_VERSION: 3.11
+
+jobs:
+  test:
+    name: Test and Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Cache Python dependencies
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('cdk/requirements.txt') }}
+
+      - name: Cache Node dependencies
+        uses: actions/cache@v3
+        with:
+          path: frontend/node_modules
+          key: ${{ runner.os }}-node-${{ hashFiles('frontend/package-lock.json') }}
+
+      - name: Lint Backend
+        run: |
+          cd cdk
+          pip install -r requirements.txt
+          python -m py_compile *.py
+
+      - name: Test Frontend
+        run: |
+          cd frontend
+          npm ci
+          npm run test -- --watchAll=false --coverage
+
+  deploy-backend:
+    name: Deploy Backend Infrastructure
+    runs-on: ubuntu-latest
+    needs: test
+    if: github.ref == 'refs/heads/main'
+    outputs:
+      api-url: ${{ steps.deploy.outputs.api-url }}
+      bucket-name: ${{ steps.deploy.outputs.bucket-name }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Install CDK
+        run: npm install -g aws-cdk
+
+      - name: Deploy Backend Stack
+        id: deploy
+        run: |
+          cd cdk
+          pip install -r requirements.txt
+
+          # CDK Bootstrap if needed
+          cdk bootstrap --require-approval never
+
+          # Deploy main stack
+          cdk deploy BedrockDiyAuthStack --require-approval never --outputs-file outputs.json
+
+          # Extract outputs
+          API_URL=$(cat outputs.json | jq -r '.BedrockDiyAuthStack.ApiGatewayUrl')
+          BUCKET_NAME=$(cat outputs.json | jq -r '.BedrockDiyAuthStack.PromptBucketName')
+
+          echo "api-url=$API_URL" >> $GITHUB_OUTPUT
+          echo "bucket-name=$BUCKET_NAME" >> $GITHUB_OUTPUT
+
+          echo "Backend deployed successfully"
+          echo "API URL: $API_URL"
+
+  deploy-frontend:
+    name: Deploy Frontend
+    runs-on: ubuntu-latest
+    needs: [test, deploy-backend]
+    if: github.ref == 'refs/heads/main'
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Build and Deploy Frontend
+        run: |
+          cd frontend
+          npm ci
+
+          # Set API URL from backend deployment
+          echo "REACT_APP_API_URL=${{ needs.deploy-backend.outputs.api-url }}" > .env
+
+          # Build production version
+          npm run build
+
+          echo "Frontend built successfully"
+          echo "Build files ready in ./build/"
+
+      - name: Deploy to S3 and CloudFront
+        run: |
+          cd cdk
+          pip install -r requirements.txt
+
+          # Deploy frontend stack
+          cdk deploy FrontendStack --require-approval never --outputs-file frontend-outputs.json
+
+          # Get CloudFront URL
+          FRONTEND_URL=$(cat frontend-outputs.json | jq -r '.FrontendStack.WebsiteURL')
+          echo "Frontend deployed to: $FRONTEND_URL"
+
+  notify:
+    name: Deployment Notification
+    runs-on: ubuntu-latest
+    needs: [deploy-backend, deploy-frontend]
+    if: always()
+    steps:
+      - name: Success Notification
+        if: needs.deploy-backend.result == 'success' && needs.deploy-frontend.result == 'success'
+        run: |
+          echo "Deployment completed successfully!"
+          echo "Backend API: ${{ needs.deploy-backend.outputs.api-url }}"
+          echo "Frontend: Ready for production"
+
+      - name: Failure Notification
+        if: needs.deploy-backend.result == 'failure' || needs.deploy-frontend.result == 'failure'
+        run: |
+          echo "Deployment failed!"
+          echo "Please check the logs for details"
+          exit 1

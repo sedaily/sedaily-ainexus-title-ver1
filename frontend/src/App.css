@@ -175,11 +175,15 @@ code {
 
 /* 툴팁 */
 .tooltip {
-  @apply absolute z-10 px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm opacity-0 tooltip-arrow;
+  @apply absolute z-10 px-3 py-2 text-sm font-medium text-white bg-gray-900 rounded-lg shadow-sm opacity-0;
 }
 
 .tooltip.show {
   @apply opacity-100;
+}
+
+.tooltip-arrow {
+  @apply absolute w-2 h-2 bg-gray-900 transform rotate-45;
 }
 
 /* 에러 상태 */

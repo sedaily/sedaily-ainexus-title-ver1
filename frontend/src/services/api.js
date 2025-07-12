@@ -3,7 +3,7 @@ import axios from "axios";
 // API 기본 URL (환경 변수 또는 기본값)
 const API_BASE_URL =
   process.env.REACT_APP_API_URL ||
-  "https://your-api-gateway-url.amazonaws.com/prod";
+  "https://vph0fu827a.execute-api.us-east-1.amazonaws.com/prod";
 
 // Axios 인스턴스 생성
 const api = axios.create({
@@ -17,6 +17,13 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     console.log("API 요청:", config.method?.toUpperCase(), config.url);
+    
+    // 인증 토큰 추가 (API Gateway Cognito Authorizer는 ID Token을 요구)
+    const token = localStorage.getItem('idToken') || localStorage.getItem('accessToken');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    
     return config;
   },
   (error) => {
@@ -36,6 +43,18 @@ api.interceptors.response.use(
       error.response?.status,
       error.response?.data || error.message
     );
+    
+    // 401 오류 시 토큰 갱신 시도 또는 로그인 페이지로 리다이렉트
+    if (error.response?.status === 401) {
+      // 토큰 만료 처리
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('idToken');
+      localStorage.removeItem('refreshToken');
+      
+      // 로그인 페이지로 리다이렉트 (실제 구현 시 React Router 사용)
+      window.location.href = '/login';
+    }
+    
     return Promise.reject(error);
   }
 );
@@ -74,8 +93,8 @@ export const projectAPI = {
 
   // 업로드 URL 요청
   getUploadUrl: async (projectId, category, filename) => {
-    const response = await api.get(`/presign-url`, {
-      params: { projectId, category, filename },
+    const response = await api.get(`/projects/${projectId}/upload-url`, {
+      params: { category, filename },
     });
     return response.data;
   },
@@ -260,6 +279,223 @@ export const chatAPI = {
   },
 };
 
+// 🆕 Bedrock Agent 채팅 API
+export const agentChatAPI = {
+  // Agent 채팅 메시지 전송
+  sendAgentMessage: async (
+    projectId,
+    message,
+    sessionId = null,
+    userId = "default"
+  ) => {
+    const response = await api.post(`/projects/${projectId}/agent-chat`, {
+      message,
+      sessionId,
+      userId,
+    });
+    return response.data;
+  },
+
+  // Agent 채팅 세션 목록 조회
+  getAgentChatSessions: async (projectId) => {
+    const response = await api.get(`/projects/${projectId}/agent-chat/sessions`);
+    return response.data;
+  },
+
+  // Agent 채팅 히스토리 조회
+  getAgentChatHistory: async (projectId, sessionId) => {
+    const response = await api.get(
+      `/projects/${projectId}/agent-chat/sessions/${sessionId}`
+    );
+    return response.data;
+  },
+
+  // Agent 채팅 세션 삭제
+  deleteAgentChatSession: async (projectId, sessionId) => {
+    const response = await api.delete(
+      `/projects/${projectId}/agent-chat/sessions/${sessionId}`
+    );
+    return response.data;
+  },
+
+  // Agent 스트리밍 채팅 (향후 구현용)
+  streamingAgentChat: async (projectId, message, sessionId, onMessage) => {
+    try {
+      const response = await agentChatAPI.sendAgentMessage(projectId, message, sessionId);
+
+      // 실제 스트리밍이 아니므로 즉시 완전한 응답 반환
+      if (onMessage) {
+        onMessage({
+          type: "message",
+          content: response.message,
+          sessionId: response.sessionId,
+          metadata: response.metadata,
+        });
+      }
+
+      return response;
+    } catch (error) {
+      if (onMessage) {
+        onMessage({
+          type: "error",
+          error: error.message,
+        });
+      }
+      throw error;
+    }
+  },
+};
+
+// 🆕 프롬프트 카드 관리 API
+export const promptCardAPI = {
+  // 프롬프트 카드 목록 조회 (step_order 순으로 정렬)
+  getPromptCards: async (projectId, includeContent = false, includeDisabled = false) => {
+    const params = {};
+    if (includeContent) params.include_content = 'true';
+    if (includeDisabled) params.include_disabled = 'true';
+    
+    const response = await api.get(`/prompts/${projectId}`, { params });
+    return response.data;
+  },
+
+  // 새 프롬프트 카드 생성
+  createPromptCard: async (projectId, promptData) => {
+    const response = await api.post(`/prompts/${projectId}`, promptData);
+    return response.data;
+  },
+
+  // 프롬프트 카드 수정
+  updatePromptCard: async (projectId, promptId, promptData) => {
+    const response = await api.put(`/prompts/${projectId}/${promptId}`, promptData);
+    return response.data;
+  },
+
+  // 프롬프트 카드 삭제
+  deletePromptCard: async (projectId, promptId) => {
+    const response = await api.delete(`/prompts/${projectId}/${promptId}`);
+    return response.data;
+  },
+
+  // 프롬프트 카드 순서 변경
+  reorderPromptCard: async (projectId, promptId, newStepOrder) => {
+    const response = await api.put(`/prompts/${projectId}/${promptId}`, {
+      step_order: newStepOrder
+    });
+    return response.data;
+  },
+
+  // 프롬프트 카드 활성/비활성 토글
+  togglePromptCard: async (projectId, promptId, enabled) => {
+    const response = await api.put(`/prompts/${projectId}/${promptId}`, {
+      enabled: enabled
+    });
+    return response.data;
+  }
+};
+
+// 🆕 인증 API
+export const authAPI = {
+  // 회원가입
+  signup: async (userData) => {
+    const response = await api.post("/auth/signup", userData);
+    return response.data;
+  },
+
+  // 로그인
+  signin: async (credentials) => {
+    const response = await api.post("/auth/signin", credentials);
+    const { accessToken, idToken, refreshToken } = response.data;
+    
+    // 토큰 저장
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('idToken', idToken);
+    localStorage.setItem('refreshToken', refreshToken);
+    
+    return response.data;
+  },
+
+  // 로그아웃
+  signout: async () => {
+    try {
+      await api.post("/auth/signout");
+    } finally {
+      // 로컬 토큰 삭제
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('idToken');
+      localStorage.removeItem('refreshToken');
+    }
+  },
+
+  // 토큰 갱신
+  refreshToken: async () => {
+    const refreshToken = localStorage.getItem('refreshToken');
+    if (!refreshToken) {
+      throw new Error('리프레시 토큰이 없습니다');
+    }
+
+    const response = await api.post("/auth/refresh", { refreshToken });
+    const { accessToken, idToken } = response.data;
+    
+    // 새 토큰 저장
+    localStorage.setItem('accessToken', accessToken);
+    localStorage.setItem('idToken', idToken);
+    
+    return response.data;
+  },
+
+  // 이메일 인증
+  verifyEmail: async (verificationData) => {
+    const response = await api.post("/auth/verify", verificationData);
+    return response.data;
+  },
+
+  // 비밀번호 찾기
+  forgotPassword: async (email) => {
+    const response = await api.post("/auth/forgot-password", { email });
+    return response.data;
+  },
+
+  // 비밀번호 재설정
+  confirmPassword: async (resetData) => {
+    const response = await api.post("/auth/confirm-password", resetData);
+    return response.data;
+  },
+
+  // 현재 사용자 정보 (토큰에서 추출)
+  getCurrentUser: () => {
+    const token = localStorage.getItem('idToken');
+    if (!token) return null;
+    
+    try {
+      // JWT 토큰 디코딩 (간단한 방법 - 실제로는 jwt-decode 라이브러리 사용 권장)
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      return {
+        email: payload.email,
+        name: payload.name,
+        sub: payload.sub
+      };
+    } catch (error) {
+      console.error('토큰 디코딩 오류:', error);
+      return null;
+    }
+  },
+
+  // 로그인 상태 확인
+  isAuthenticated: () => {
+    const token = localStorage.getItem('accessToken');
+    if (!token) return false;
+    
+    try {
+      // 토큰 만료 시간 확인
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      const currentTime = Date.now() / 1000;
+      return payload.exp > currentTime;
+    } catch (error) {
+      return false;
+    }
+  }
+};
+
 // 파일 업로드 API
 export const uploadAPI = {
   // S3 Pre-signed URL로 파일 업로드
@@ -273,7 +509,7 @@ export const uploadAPI = {
   },
 };
 
-// 프롬프트 카테고리 정의
+// 프롬프트 카테고리 정의 (레거시 - 기존 파일 업로드용)
 export const PROMPT_CATEGORIES = [
   {
     id: "title_type_guidelines",
@@ -340,6 +576,92 @@ export const PROMPT_CATEGORIES = [
     name: "핵심 지식",
     description: "제목 작성 핵심 지식",
     required: true,
+  },
+];
+
+// 🆕 프롬프트 카드 카테고리 정의 (새로운 카드 시스템용)
+export const PROMPT_CARD_CATEGORIES = [
+  {
+    id: "instruction",
+    name: "지시사항",
+    description: "기본 작업 지시 및 목표 설정",
+    color: "blue",
+    icon: "📋",
+  },
+  {
+    id: "knowledge",
+    name: "지식 기반",
+    description: "도메인 지식 및 참고 정보",
+    color: "purple",
+    icon: "📚",
+  },
+  {
+    id: "summary",
+    name: "요약 규칙",
+    description: "내용 요약 및 압축 가이드라인",
+    color: "green",
+    icon: "📝",
+  },
+  {
+    id: "style_guide",
+    name: "스타일 가이드",
+    description: "브랜드 톤앤매너 및 작성 스타일",
+    color: "orange",
+    icon: "🎨",
+  },
+  {
+    id: "validation",
+    name: "검증 기준",
+    description: "품질 확인 및 검증 룰",
+    color: "red",
+    icon: "✅",
+  },
+  {
+    id: "enhancement",
+    name: "개선 지침",
+    description: "결과 향상 및 최적화 방법",
+    color: "yellow",
+    icon: "⚡",
+  },
+];
+
+// 사용 가능한 AI 모델 목록
+export const AVAILABLE_MODELS = [
+  {
+    id: "anthropic.claude-3-5-sonnet-20241022-v2:0",
+    name: "Claude 3.5 Sonnet (최신)",
+    description: "가장 최신이고 성능이 뛰어난 모델",
+    maxTokens: 200000,
+  },
+  {
+    id: "anthropic.claude-3-sonnet-20240229-v1:0",
+    name: "Claude 3 Sonnet",
+    description: "균형잡힌 성능과 속도",
+    maxTokens: 200000,
+  },
+  {
+    id: "anthropic.claude-3-haiku-20240307-v1:0",
+    name: "Claude 3 Haiku",
+    description: "빠른 속도, 효율적인 처리",
+    maxTokens: 200000,
+  },
+  {
+    id: "anthropic.claude-instant-v1",
+    name: "Claude Instant",
+    description: "즉시 응답, 간단한 작업용",
+    maxTokens: 100000,
+  },
+  {
+    id: "amazon.titan-text-lite-v1",
+    name: "Titan Text Lite",
+    description: "가벼운 텍스트 처리",
+    maxTokens: 4000,
+  },
+  {
+    id: "amazon.titan-text-express-v1",
+    name: "Titan Text Express",
+    description: "빠른 텍스트 생성",
+    maxTokens: 8000,
   },
 ];
 

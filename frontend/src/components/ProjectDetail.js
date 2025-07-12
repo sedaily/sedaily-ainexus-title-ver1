@@ -10,6 +10,7 @@ import {
   ExclamationTriangleIcon,
   Cog8ToothIcon,
   ChatBubbleLeftRightIcon,
+  BeakerIcon,
 } from "@heroicons/react/24/outline";
 import {
   projectAPI,
@@ -17,11 +18,14 @@ import {
   uploadAPI,
   handleAPIError,
   PROMPT_CATEGORIES,
+  promptCardAPI,
 } from "../services/api";
 import PromptUpload from "./PromptUpload";
+import PromptCardManager from "./PromptCardManager";
 import ArticleInput from "./ArticleInput";
 import ResultDisplay from "./ResultDisplay";
 import ChatInterface from "./ChatInterface";
+import BedrockAgentChat from "./BedrockAgentChat";
 
 const ProjectDetail = () => {
   const { projectId } = useParams();
@@ -30,14 +34,16 @@ const ProjectDetail = () => {
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [activeTab, setActiveTab] = useState("setup");
+  const [activeTab, setActiveTab] = useState("prompt-cards");
   const [promptStatus, setPromptStatus] = useState({});
+  const [promptCards, setPromptCards] = useState([]);
   const [generationResult, setGenerationResult] = useState(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [executionProgress, setExecutionProgress] = useState(null);
 
   useEffect(() => {
     loadProject();
+    loadPromptCards();
   }, [projectId]);
 
   const loadProject = async () => {
@@ -63,6 +69,17 @@ const ProjectDetail = () => {
       toast.error(errorInfo.message);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const loadPromptCards = async () => {
+    try {
+      const response = await promptCardAPI.getPromptCards(projectId, false, true);
+      setPromptCards(response.promptCards || []);
+    } catch (error) {
+      console.error("프롬프트 카드 로딩 실패:", error);
+      // 에러가 발생해도 기존 기능은 유지되도록 함
+      setPromptCards([]);
     }
   };
 
@@ -142,6 +159,13 @@ const ProjectDetail = () => {
   };
 
   const canGenerate = () => {
+    // 새로운 프롬프트 카드 시스템: 최소 1개의 활성화된 카드가 있으면 생성 가능
+    const enabledPromptCards = promptCards.filter(card => card.enabled);
+    if (enabledPromptCards.length > 0) {
+      return true;
+    }
+
+    // 레거시 시스템: 기존 필수 카테고리 체크 (하위 호환성)
     const requiredCategories = PROMPT_CATEGORIES.filter((cat) => cat.required);
     return requiredCategories.every((cat) => promptStatus[cat.id]?.indexed);
   };
@@ -217,7 +241,9 @@ const ProjectDetail = () => {
                   : "bg-yellow-100 text-yellow-800"
               }`}
             >
-              {canGenerate() ? "제목 생성 준비됨" : "프롬프트 설정 필요"}
+              {canGenerate() 
+                ? `제목 생성 준비됨 (${promptCards.filter(card => card.enabled).length}개 카드 활성)` 
+                : "프롬프트 카드 또는 파일 업로드 필요"}
             </span>
 
             {/* 실행 상태 표시 */}
@@ -247,7 +273,18 @@ const ProjectDetail = () => {
             }`}
           >
             <CloudArrowUpIcon className="h-5 w-5 inline mr-2" />
-            프롬프트 설정
+            프롬프트 설정 (레거시)
+          </button>
+          <button
+            onClick={() => setActiveTab("prompt-cards")}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "prompt-cards"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
+          >
+            <DocumentTextIcon className="h-5 w-5 inline mr-2" />
+            프롬프트 카드
           </button>
           <button
             onClick={() => setActiveTab("generate")}
@@ -269,7 +306,18 @@ const ProjectDetail = () => {
             }`}
           >
             <ChatBubbleLeftRightIcon className="h-5 w-5 inline mr-2" />
-            AI 채팅
+            LangChain 채팅
+          </button>
+          <button
+            onClick={() => setActiveTab("agent-chat")}
+            className={`py-2 px-1 border-b-2 font-medium text-sm ${
+              activeTab === "agent-chat"
+                ? "border-blue-500 text-blue-600"
+                : "border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300"
+            }`}
+          >
+            <BeakerIcon className="h-5 w-5 inline mr-2" />
+            Bedrock Agent 채팅
           </button>
           {generationResult && (
             <button
@@ -297,6 +345,13 @@ const ProjectDetail = () => {
           />
         )}
 
+        {activeTab === "prompt-cards" && (
+          <PromptCardManager 
+            projectId={projectId} 
+            onCardsChanged={loadPromptCards}
+          />
+        )}
+
         {activeTab === "generate" && (
           <ArticleInput
             canGenerate={canGenerate()}
@@ -308,6 +363,16 @@ const ProjectDetail = () => {
         {activeTab === "chat" && (
           <div className="h-[calc(100vh-16rem)]">
             <ChatInterface projectId={projectId} projectName={project?.name} />
+          </div>
+        )}
+
+        {activeTab === "agent-chat" && (
+          <div className="h-[calc(100vh-16rem)]">
+            <BedrockAgentChat 
+              projectId={projectId} 
+              projectName={project?.name} 
+              projectInfo={project}
+            />
           </div>
         )}
 

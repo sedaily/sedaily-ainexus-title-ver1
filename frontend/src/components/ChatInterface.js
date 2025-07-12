@@ -23,17 +23,30 @@ const ChatInterface = ({ projectId, projectName }) => {
   const [sessionLoading, setSessionLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  useEffect(() => {
-    loadChatSessions();
-  }, [loadChatSessions]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  const loadChatHistory = useCallback(async (sessionId) => {
+    try {
+      const response = await chatAPI.getChatHistory(projectId, sessionId);
+
+      // 메시지 포매팅
+      const formattedMessages = response.messages.map((msg) => ({
+        id: msg.sk,
+        role: msg.role || "user",
+        content: msg.content || msg.data?.content || "",
+        timestamp: new Date(msg.timestamp || Date.now()).toISOString(),
+        metadata: msg.metadata || {},
+      }));
+
+      setMessages(formattedMessages);
+    } catch (error) {
+      const errorInfo = handleAPIError(error);
+      toast.error(`채팅 히스토리 로드 실패: ${errorInfo.message}`);
+      setMessages([]);
+    }
+  }, [projectId]);
 
   const loadChatSessions = useCallback(async () => {
     try {
@@ -55,28 +68,16 @@ const ChatInterface = ({ projectId, projectName }) => {
     } finally {
       setSessionLoading(false);
     }
-  }, [projectId]);
+  }, [projectId, loadChatHistory]);
 
-  const loadChatHistory = async (sessionId) => {
-    try {
-      const response = await chatAPI.getChatHistory(projectId, sessionId);
+  useEffect(() => {
+    loadChatSessions();
+  }, [loadChatSessions]);
 
-      // 메시지 포맷팅
-      const formattedMessages = response.messages.map((msg) => ({
-        id: msg.sk,
-        role: msg.role || "user",
-        content: msg.content || msg.data?.content || "",
-        timestamp: new Date(msg.timestamp || Date.now()).toISOString(),
-        metadata: msg.metadata || {},
-      }));
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
-      setMessages(formattedMessages);
-    } catch (error) {
-      const errorInfo = handleAPIError(error);
-      toast.error(`채팅 히스토리 로드 실패: ${errorInfo.message}`);
-      setMessages([]);
-    }
-  };
 
   const startNewSession = () => {
     const newSessionId = generateSessionId();

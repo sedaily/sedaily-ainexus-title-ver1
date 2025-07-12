@@ -41,11 +41,6 @@ const ProjectDetail = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [executionProgress, setExecutionProgress] = useState(null);
 
-  useEffect(() => {
-    loadProject();
-    loadPromptCards();
-  }, [loadProject, loadPromptCards]);
-
   const loadProject = useCallback(async () => {
     try {
       setLoading(true);
@@ -82,6 +77,11 @@ const ProjectDetail = () => {
       setPromptCards([]);
     }
   }, [projectId]);
+
+  useEffect(() => {
+    loadProject();
+    loadPromptCards();
+  }, [loadProject, loadPromptCards]);
 
   const handlePromptUpload = async (categoryId, file) => {
     try {

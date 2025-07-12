@@ -22,17 +22,23 @@ const BedrockAgentChat = ({ projectId, projectName, projectInfo }) => {
   const [sessionLoading, setSessionLoading] = useState(false);
   const messagesEndRef = useRef(null);
 
-  useEffect(() => {
-    loadAgentChatSessions();
-  }, [loadAgentChatSessions]);
-
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
+
+  const loadAgentChatHistory = useCallback(async (sessionId) => {
+    try {
+      await chatAPI.getChatHistory(projectId, sessionId);
+      
+      // Bedrock Agent는 세션 히스토리를 내부적으로 관리하므로
+      // 여기서는 UI 상태만 초기화
+      setMessages([]);
+    } catch (error) {
+      const errorInfo = handleAPIError(error);
+      toast.error(`Agent 채팅 히스토리 로드 실패: ${errorInfo.message}`);
+      setMessages([]);
+    }
+  }, [projectId]);
 
   const loadAgentChatSessions = useCallback(async () => {
     try {
@@ -54,21 +60,15 @@ const BedrockAgentChat = ({ projectId, projectName, projectInfo }) => {
     } finally {
       setSessionLoading(false);
     }
-  }, [projectId]);
+  }, [projectId, loadAgentChatHistory]);
 
-  const loadAgentChatHistory = async (sessionId) => {
-    try {
-      await chatAPI.getChatHistory(projectId, sessionId);
-      
-      // Bedrock Agent는 세션 히스토리를 내부적으로 관리하므로
-      // 여기서는 UI 상태만 초기화
-      setMessages([]);
-    } catch (error) {
-      const errorInfo = handleAPIError(error);
-      toast.error(`Agent 채팅 히스토리 로드 실패: ${errorInfo.message}`);
-      setMessages([]);
-    }
-  };
+  useEffect(() => {
+    loadAgentChatSessions();
+  }, [loadAgentChatSessions]);
+
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages]);
 
   const startNewAgentSession = () => {
     const newSessionId = generateSessionId();

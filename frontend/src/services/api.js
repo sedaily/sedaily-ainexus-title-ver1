@@ -628,19 +628,19 @@ export const PROMPT_CARD_CATEGORIES = [
 // 사용 가능한 AI 모델 목록
 export const AVAILABLE_MODELS = [
   {
-    id: "anthropic.claude-3-5-sonnet-20241022-v2:0",
+    id: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
     name: "Claude 3.5 Sonnet (최신)",
     description: "가장 최신이고 성능이 뛰어난 모델",
     maxTokens: 200000,
   },
   {
-    id: "anthropic.claude-3-sonnet-20240229-v1:0",
+    id: "us.anthropic.claude-3-sonnet-20240229-v1:0",
     name: "Claude 3 Sonnet",
     description: "균형잡힌 성능과 속도",
     maxTokens: 200000,
   },
   {
-    id: "anthropic.claude-3-haiku-20240307-v1:0",
+    id: "us.anthropic.claude-3-haiku-20240307-v1:0",
     name: "Claude 3 Haiku",
     description: "빠른 속도, 효율적인 처리",
     maxTokens: 200000,

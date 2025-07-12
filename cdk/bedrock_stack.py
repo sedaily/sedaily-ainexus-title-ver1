@@ -611,7 +611,7 @@ class BedrockDiyStack(Stack):
                 "EXECUTION_TABLE": self.execution_table.table_name,
                 "PROMPT_META_TABLE": self.prompt_meta_table.table_name,
                 "PROMPT_BUCKET": self.prompt_bucket.bucket_name,
-                "BEDROCK_MODEL_ID": "anthropic.claude-3-5-sonnet-20241022-v2:0",
+                "BEDROCK_MODEL_ID": "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
                 "REGION": self.region
             }
         )
@@ -633,8 +633,8 @@ class BedrockDiyStack(Stack):
                 "PROMPT_META_TABLE": self.prompt_meta_table.table_name,
                 "PROMPT_BUCKET": self.prompt_bucket.bucket_name,
                 "REGION": self.region,
-                "BEDROCK_MODEL_ID": "anthropic.claude-3-5-sonnet-20241022-v2:0",
-                "BEDROCK_SUMMARY_MODEL_ID": "anthropic.claude-3-haiku-20240307-v1:0"
+                "BEDROCK_MODEL_ID": "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+                "BEDROCK_SUMMARY_MODEL_ID": "us.anthropic.claude-3-haiku-20240307-v1:0"
             }
         )
 

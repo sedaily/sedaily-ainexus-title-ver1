@@ -367,7 +367,7 @@ const PromptCardModal = ({ isOpen, onClose, onSave, editingCard, projectId }) =>
     title: "",
     description: "",
     prompt_text: "",
-    model: "anthropic.claude-3-5-sonnet-20241022-v2:0",
+    model: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
     temperature: 0.7,
     enabled: true,
   });
@@ -389,7 +389,7 @@ const PromptCardModal = ({ isOpen, onClose, onSave, editingCard, projectId }) =>
         title: "",
         description: "",
         prompt_text: "",
-        model: "anthropic.claude-3-5-sonnet-20241022-v2:0",
+        model: "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
         temperature: 0.7,
         enabled: true,
       });

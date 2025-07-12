@@ -946,7 +946,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "79c7408c47657c3f2a29d65b663b3f91ca94e2df6a18c4284cf67686b3bc33c7.zip"
+     "S3Key": "090419fbaf1d154febe8215d526d12cddac2bef4f8bec0de16ad80bfe1d2df02.zip"
     },
     "Environment": {
      "Variables": {
@@ -960,7 +960,7 @@
       "PROMPT_BUCKET": {
        "Ref": "PromptBucket1668FD1C"
       },
-      "BEDROCK_MODEL_ID": "anthropic.claude-3-5-sonnet-20241022-v2:0",
+      "BEDROCK_MODEL_ID": "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
       "REGION": "us-east-1"
      }
     },
@@ -982,7 +982,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/GenerateFunction/Resource",
-    "aws:asset:path": "asset.79c7408c47657c3f2a29d65b663b3f91ca94e2df6a18c4284cf67686b3bc33c7",
+    "aws:asset:path": "asset.090419fbaf1d154febe8215d526d12cddac2bef4f8bec0de16ad80bfe1d2df02",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -1009,8 +1009,8 @@
        "Ref": "PromptBucket1668FD1C"
       },
       "REGION": "us-east-1",
-      "BEDROCK_MODEL_ID": "anthropic.claude-3-5-sonnet-20241022-v2:0",
-      "BEDROCK_SUMMARY_MODEL_ID": "anthropic.claude-3-haiku-20240307-v1:0"
+      "BEDROCK_MODEL_ID": "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
+      "BEDROCK_SUMMARY_MODEL_ID": "us.anthropic.claude-3-haiku-20240307-v1:0"
      }
     },
     "FunctionName": "bedrock-diy-langchain-router-auth",
@@ -1128,7 +1128,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "a828006e567d93d64da33db19c2a0a0ab2b27def45d5a415668a4efebdee86d9.zip"
+     "S3Key": "53428fe20760e21452b0888670668d8053a9049017baa357fd9be244b44277dd.zip"
     },
     "Environment": {
      "Variables": {
@@ -1159,7 +1159,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/SavePromptFunction/Resource",
-    "aws:asset:path": "asset.a828006e567d93d64da33db19c2a0a0ab2b27def45d5a415668a4efebdee86d9",
+    "aws:asset:path": "asset.53428fe20760e21452b0888670668d8053a9049017baa357fd9be244b44277dd",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -1245,7 +1245,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "4b1ba5a60d441c34c00aac76aaa31b801b69a6b90774696e87dbec4bfe1b177b.zip"
+     "S3Key": "4111f6e265cc57bdcc417869aaa3bac439a2c12e58550fcdfc9aadc54ab94706.zip"
     },
     "Environment": {
      "Variables": {
@@ -1279,7 +1279,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/SaveResultsFunction/Resource",
-    "aws:asset:path": "asset.4b1ba5a60d441c34c00aac76aaa31b801b69a6b90774696e87dbec4bfe1b177b",
+    "aws:asset:path": "asset.4111f6e265cc57bdcc417869aaa3bac439a2c12e58550fcdfc9aadc54ab94706",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }

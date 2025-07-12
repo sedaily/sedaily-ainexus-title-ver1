@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import {
   ChatBubbleLeftRightIcon,
@@ -6,10 +6,7 @@ import {
   TrashIcon,
   PlusIcon,
   ClockIcon,
-  CpuChipIcon,
-  DocumentTextIcon,
   UserIcon,
-  SparklesIcon,
   InformationCircleIcon,
   BeakerIcon,
   CogIcon,
@@ -27,7 +24,7 @@ const BedrockAgentChat = ({ projectId, projectName, projectInfo }) => {
 
   useEffect(() => {
     loadAgentChatSessions();
-  }, [projectId]);
+  }, [loadAgentChatSessions]);
 
   useEffect(() => {
     scrollToBottom();
@@ -37,7 +34,7 @@ const BedrockAgentChat = ({ projectId, projectName, projectInfo }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const loadAgentChatSessions = async () => {
+  const loadAgentChatSessions = useCallback(async () => {
     try {
       setSessionLoading(true);
       const response = await chatAPI.getChatSessions(projectId);
@@ -57,11 +54,11 @@ const BedrockAgentChat = ({ projectId, projectName, projectInfo }) => {
     } finally {
       setSessionLoading(false);
     }
-  };
+  }, [projectId]);
 
   const loadAgentChatHistory = async (sessionId) => {
     try {
-      const response = await chatAPI.getChatHistory(projectId, sessionId);
+      await chatAPI.getChatHistory(projectId, sessionId);
       
       // Bedrock Agent는 세션 히스토리를 내부적으로 관리하므로
       // 여기서는 UI 상태만 초기화

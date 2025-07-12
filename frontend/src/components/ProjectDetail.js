@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import {
@@ -44,9 +44,9 @@ const ProjectDetail = () => {
   useEffect(() => {
     loadProject();
     loadPromptCards();
-  }, [projectId]);
+  }, [loadProject, loadPromptCards]);
 
-  const loadProject = async () => {
+  const loadProject = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -70,9 +70,9 @@ const ProjectDetail = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [projectId]);
 
-  const loadPromptCards = async () => {
+  const loadPromptCards = useCallback(async () => {
     try {
       const response = await promptCardAPI.getPromptCards(projectId, false, true);
       setPromptCards(response.promptCards || []);
@@ -81,7 +81,7 @@ const ProjectDetail = () => {
       // 에러가 발생해도 기존 기능은 유지되도록 함
       setPromptCards([]);
     }
-  };
+  }, [projectId]);
 
   const handlePromptUpload = async (categoryId, file) => {
     try {

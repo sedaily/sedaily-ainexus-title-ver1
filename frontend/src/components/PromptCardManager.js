@@ -6,8 +6,6 @@ import {
   TrashIcon,
   EyeIcon,
   EyeSlashIcon,
-  ChevronUpIcon,
-  ChevronDownIcon,
   Cog6ToothIcon,
   DocumentTextIcon,
   SparklesIcon,

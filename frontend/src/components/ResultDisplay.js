@@ -5,7 +5,6 @@ import {
   ClipboardDocumentIcon,
   ChartBarIcon,
   EyeIcon,
-  ShareIcon,
   TrophyIcon,
 } from "@heroicons/react/24/outline";
 import { toast } from "react-hot-toast";

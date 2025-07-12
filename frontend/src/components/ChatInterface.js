@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import {
   ChatBubbleLeftRightIcon,
@@ -25,7 +25,7 @@ const ChatInterface = ({ projectId, projectName }) => {
 
   useEffect(() => {
     loadChatSessions();
-  }, [projectId]);
+  }, [loadChatSessions]);
 
   useEffect(() => {
     scrollToBottom();
@@ -35,7 +35,7 @@ const ChatInterface = ({ projectId, projectName }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
 
-  const loadChatSessions = async () => {
+  const loadChatSessions = useCallback(async () => {
     try {
       setSessionLoading(true);
       const response = await chatAPI.getChatSessions(projectId);
@@ -55,7 +55,7 @@ const ChatInterface = ({ projectId, projectName }) => {
     } finally {
       setSessionLoading(false);
     }
-  };
+  }, [projectId]);
 
   const loadChatHistory = async (sessionId) => {
     try {

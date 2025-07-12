@@ -3,13 +3,11 @@ import { useNavigate } from "react-router-dom";
 import Login from "./Login";
 import Signup from "./Signup";
 import EmailVerification from "./EmailVerification";
-import { useAuth } from "../contexts/AuthContext";
 
 const AuthContainer = ({ onAuthSuccess }) => {
   const [currentView, setCurrentView] = useState("login"); // 'login', 'signup', 'verify'
   const [signupEmail, setSignupEmail] = useState("");
   const navigate = useNavigate();
-  const { login, signup, verifyEmail } = useAuth();
 
   const handleLoginSuccess = async (response) => {
     // AuthContext의 상태가 업데이트되면 자동으로 App.js에서 인증된 화면으로 전환됨

@@ -919,34 +919,12 @@
     "aws:cdk:path": "BedrockDiyAuthStack/LambdaRole/DefaultPolicy/Resource"
    }
   },
-  "LangChainLayer8B014442": {
-   "Type": "AWS::Lambda::LayerVersion",
-   "Properties": {
-    "CompatibleRuntimes": [
-     "python3.11"
-    ],
-    "Content": {
-     "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "a76db727400ebc2fa2fb2ada5ebb132c937b4620f0aa2f2398e53d19d171b477.zip"
-    },
-    "Description": "LangChain and related dependencies for Bedrock integration",
-    "LayerName": "langchain-dependencies"
-   },
-   "UpdateReplacePolicy": "Delete",
-   "DeletionPolicy": "Delete",
-   "Metadata": {
-    "aws:cdk:path": "BedrockDiyAuthStack/LangChainLayer/Resource",
-    "aws:asset:path": "asset.a76db727400ebc2fa2fb2ada5ebb132c937b4620f0aa2f2398e53d19d171b477.zip",
-    "aws:asset:is-bundled": false,
-    "aws:asset:property": "Content"
-   }
-  },
   "GenerateFunctionD11A7A28": {
    "Type": "AWS::Lambda::Function",
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "090419fbaf1d154febe8215d526d12cddac2bef4f8bec0de16ad80bfe1d2df02.zip"
+     "S3Key": "e5b6e1ed7b60a2f9511e09cecda2d8f7ec02af80a2dcb2aa143ed2e7f1ceaabc.zip"
     },
     "Environment": {
      "Variables": {
@@ -982,7 +960,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/GenerateFunction/Resource",
-    "aws:asset:path": "asset.090419fbaf1d154febe8215d526d12cddac2bef4f8bec0de16ad80bfe1d2df02",
+    "aws:asset:path": "asset.e5b6e1ed7b60a2f9511e09cecda2d8f7ec02af80a2dcb2aa143ed2e7f1ceaabc",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -992,7 +970,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "2497fbe935b036dc8e77022f4766bbfd1737d27bd5c7257985cefb6e3b680f2b.zip"
+     "S3Key": "98f8d271dbcf10ff156a2d755d852b95dbcb340a521748ffa8b522e1566fdaef.zip"
     },
     "Environment": {
      "Variables": {
@@ -1015,12 +993,7 @@
     },
     "FunctionName": "bedrock-diy-langchain-router-auth",
     "Handler": "langchain_router.handler",
-    "Layers": [
-     {
-      "Ref": "LangChainLayer8B014442"
-     }
-    ],
-    "MemorySize": 2048,
+    "MemorySize": 1024,
     "Role": {
      "Fn::GetAtt": [
       "LambdaRole3A44B857",
@@ -1036,7 +1009,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/LangChainRouterFunction/Resource",
-    "aws:asset:path": "asset.2497fbe935b036dc8e77022f4766bbfd1737d27bd5c7257985cefb6e3b680f2b",
+    "aws:asset:path": "asset.98f8d271dbcf10ff156a2d755d852b95dbcb340a521748ffa8b522e1566fdaef",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -1046,7 +1019,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "c9449de211c30fd87a813a3871a8058a40940f158d7c9f69d6611c5133c251e4.zip"
+     "S3Key": "4f587b0d3635345f43cfbc7b11a7b56092eb9af3e5981288af240ba73e267193.zip"
     },
     "Environment": {
      "Variables": {
@@ -1077,7 +1050,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/ProjectFunction/Resource",
-    "aws:asset:path": "asset.c9449de211c30fd87a813a3871a8058a40940f158d7c9f69d6611c5133c251e4",
+    "aws:asset:path": "asset.4f587b0d3635345f43cfbc7b11a7b56092eb9af3e5981288af240ba73e267193",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -1128,7 +1101,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "53428fe20760e21452b0888670668d8053a9049017baa357fd9be244b44277dd.zip"
+     "S3Key": "98c6cbbb188bef97e151e58355e4f70f3be03099c46481f4036efe9ead04395c.zip"
     },
     "Environment": {
      "Variables": {
@@ -1159,7 +1132,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/SavePromptFunction/Resource",
-    "aws:asset:path": "asset.53428fe20760e21452b0888670668d8053a9049017baa357fd9be244b44277dd",
+    "aws:asset:path": "asset.98c6cbbb188bef97e151e58355e4f70f3be03099c46481f4036efe9ead04395c",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -4930,7 +4903,7 @@
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
-    "Analytics": "v2:deflate64:H4sIAAAAAAAA/1WRT2/bMAzFP0vvitamA3Z2U2yXFs3SP9eCllmHjSx6ooTAE/TdC8lOm574I/ksvWet9fryp768gKOsTHdYWWp1egxgDgqO8poM944C6/Qs6LfMVm3e3CefYGMJXThfLZNTe8sDkDsXzJOs5Fqnm2gOWD9faC43IJhVNzkYuGt1eoLWYlFVyEr+iU5/I8Y6rJCVONHpiUcyVVkgqxY7z+ag0+bN/YngOw9UkzT94rtCYwkkK4JBpx3Pd9W6ZUtmKu1MWVkY2g50uoMJ/Qt6Ia7xvvW/ozNhWZzzFv1AUiQl/yuIYBDdlKJgpB4CHmHSaYcSmpGqjS9sjOHogrrF0fI0LAHOuscAffU+ww6FozdYfqe6x7DnriwXOm2XSxaeX/30VtLEsGdP/9FXA59dVsZy7I4QzF6nxoIfqqBAzl9n12jFDbm+CB5iGGPIajuFPbsf1/pqrX9dvAvRykcXaEC9m+sHX8kEOKACAAA="
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/02RwU4jMQyGn4V7GqCsxHkoghPaboEz8mTcqWkmno0TVUOUd0fJTKEnf7b/xL+TtV7f/NE3V3CSlemOK0utTq8BzFHBST6S4d5RYJ3eBf2W2arN3v3wGTaW0IXL1lI5p488ALlLwVzJSu50eojmiPX4QnN4AMGsusnBwF2r0xu0FouqQlbyX3T6FzHWYoWsxIlObzySqcoCWbXYeTZHnTZ79xzBdx6obtL0i+8KjSWQrAgGnXY8z6pxy5bMVNKZsrIwtB3o9BSdCcR1tUveoh9IhLiu+AEiGEQ3JSgYqYeAJ5h02qGEZqQ66RcbYzi6oB5xtDwNi8eL7DVAX+3NsEPh6A2WF1MvGA7cleZC5+4yZOH5Y8/fIU0MB/b0hb4a+MmyMpZjd4JgDjo1FvxQBQVy/r27rlbckOuL4G8MYwxZbadwYHd9p2/X+v7qU4hWPrpAA+rdHL8BLb8l1IMCAAA="
    },
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/CDKMetadata/Default"

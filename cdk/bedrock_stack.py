@@ -586,15 +586,7 @@ class BedrockDiyStack(Stack):
             )
         )
 
-        # LangChain Lambda Layer 생성
-        langchain_layer = lambda_.LayerVersion(
-            self, "LangChainLayer",
-            layer_version_name="langchain-dependencies",
-            code=lambda_.Code.from_asset("../lambda_layers/langchain-layer.zip"),
-            compatible_runtimes=[lambda_.Runtime.PYTHON_3_11],
-            description="LangChain and related dependencies for Bedrock integration",
-            removal_policy=RemovalPolicy.DESTROY
-        )
+        # LangChain Layer 제거됨 - 간소화된 버전 사용
 
         # 1. 제목 생성 Lambda (메인 기능)
         self.generate_lambda = lambda_.Function(
@@ -616,7 +608,7 @@ class BedrockDiyStack(Stack):
             }
         )
 
-        # 2. 채팅 라우터 Lambda (LangChain 기반 프롬프트 체이닝)
+        # 2. 채팅 라우터 Lambda (간소화된 버전)
         self.langchain_router_lambda = lambda_.Function(
             self, "LangChainRouterFunction",
             function_name="bedrock-diy-langchain-router-auth",
@@ -625,8 +617,7 @@ class BedrockDiyStack(Stack):
             code=lambda_.Code.from_asset("../lambda/langchain_router"),
             role=lambda_role,
             timeout=Duration.minutes(5),
-            memory_size=2048,
-            layers=[langchain_layer],
+            memory_size=1024,
             environment={
                 "CHAT_HISTORY_TABLE": self.chat_history_table.table_name,
                 "CHAT_SESSION_TABLE": self.chat_session_table.table_name,

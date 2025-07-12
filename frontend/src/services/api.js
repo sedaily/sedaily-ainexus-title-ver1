@@ -1,4 +1,5 @@
 import axios from "axios";
+import React from "react"; // Added for useDebounce
 
 // API 기본 URL (환경 변수 또는 기본값)
 const API_BASE_URL =
@@ -17,13 +18,14 @@ const api = axios.create({
 api.interceptors.request.use(
   (config) => {
     console.log("API 요청:", config.method?.toUpperCase(), config.url);
-    
+
     // 인증 토큰 추가 (API Gateway Cognito Authorizer는 ID Token을 요구)
-    const token = localStorage.getItem('idToken') || localStorage.getItem('accessToken');
+    const token =
+      localStorage.getItem("idToken") || localStorage.getItem("accessToken");
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
     }
-    
+
     return config;
   },
   (error) => {
@@ -43,18 +45,18 @@ api.interceptors.response.use(
       error.response?.status,
       error.response?.data || error.message
     );
-    
+
     // 401 오류 시 토큰 갱신 시도 또는 로그인 페이지로 리다이렉트
     if (error.response?.status === 401) {
       // 토큰 만료 처리
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('idToken');
-      localStorage.removeItem('refreshToken');
-      
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("idToken");
+      localStorage.removeItem("refreshToken");
+
       // 로그인 페이지로 리다이렉트 (실제 구현 시 React Router 사용)
-      window.location.href = '/login';
+      window.location.href = "/login";
     }
-    
+
     return Promise.reject(error);
   }
 );
@@ -103,10 +105,17 @@ export const projectAPI = {
 // 제목 생성 API (Step Functions 기반)
 export const generateAPI = {
   // 제목 생성 시작 (Step Functions 실행)
-  startTitleGeneration: async (projectId, article) => {
-    const response = await api.post(`/projects/${projectId}/generate`, {
+  startTitleGeneration: async (projectId, article, aiSettings) => {
+    const payload = {
       article,
-    });
+    };
+    
+    // AI 설정이 있으면 추가
+    if (aiSettings) {
+      payload.aiSettings = aiSettings;
+    }
+    
+    const response = await api.post(`/projects/${projectId}/generate`, payload);
     return response.data;
   },
 
@@ -119,6 +128,13 @@ export const generateAPI = {
 
   // 폴링을 통한 결과 대기
   pollForResult: async (executionArn, maxRetries = 30, interval = 2000) => {
+    if (!executionArn || executionArn === 'undefined') {
+      return {
+        success: false,
+        error: "실행 ARN이 없습니다. 직접 모드에서는 폴링이 필요하지 않습니다.",
+      };
+    }
+
     let retries = 0;
 
     while (retries < maxRetries) {
@@ -171,40 +187,67 @@ export const generateAPI = {
     };
   },
 
-  // 제목 생성 (시작 + 폴링)
-  generateTitle: async (projectId, article, onProgress) => {
+  // 제목 생성 (직접 모드 + Step Functions 모드 지원)
+  generateTitle: async (projectId, article, onProgress, aiSettings) => {
     try {
-      // Step Functions 실행 시작
+      // 제목 생성 시작
       const startResponse = await generateAPI.startTitleGeneration(
         projectId,
-        article
+        article,
+        aiSettings
       );
 
-      if (onProgress) {
-        onProgress({
-          status: "started",
-          message: "제목 생성이 시작되었습니다...",
-          executionArn: startResponse.executionArn,
-        });
-      }
+      // 직접 모드인 경우 (mode가 'direct'이거나 result가 바로 있는 경우)
+      if (startResponse.mode === 'direct' || startResponse.result) {
+        if (onProgress) {
+          onProgress({
+            status: "completed",
+            message: "제목 생성이 완료되었습니다!",
+            result: startResponse.result,
+          });
+        }
 
-      // 폴링을 통한 결과 대기
-      const pollResponse = await generateAPI.pollForResult(
-        startResponse.executionArn
-      );
-
-      if (pollResponse.success) {
         return {
-          conversationId: pollResponse.data.conversationId,
+          conversationId: startResponse.executionId || 'direct-' + Date.now(),
           projectId: projectId,
-          result: pollResponse.data.result,
-          usage: pollResponse.data.usage,
-          timestamp: pollResponse.data.completedAt || new Date().toISOString(),
-          executionArn: startResponse.executionArn,
+          result: startResponse.result,
+          usage: startResponse.usage || {},
+          timestamp: startResponse.timestamp || new Date().toISOString(),
+          mode: 'direct'
         };
-      } else {
-        throw new Error(pollResponse.error);
       }
+
+      // Step Functions 모드인 경우
+      if (startResponse.executionArn) {
+        if (onProgress) {
+          onProgress({
+            status: "started",
+            message: "제목 생성이 시작되었습니다...",
+            executionArn: startResponse.executionArn,
+          });
+        }
+
+        // 폴링을 통한 결과 대기
+        const pollResponse = await generateAPI.pollForResult(
+          startResponse.executionArn
+        );
+
+        if (pollResponse.success) {
+          return {
+            conversationId: pollResponse.data.conversationId,
+            projectId: projectId,
+            result: pollResponse.data.result,
+            usage: pollResponse.data.usage,
+            timestamp: pollResponse.data.completedAt || new Date().toISOString(),
+            executionArn: startResponse.executionArn,
+            mode: 'stepfunctions'
+          };
+        } else {
+          throw new Error(pollResponse.error);
+        }
+      }
+      
+      throw new Error('알 수 없는 응답 형식입니다');
     } catch (error) {
       console.error("제목 생성 실패:", error);
       throw error;
@@ -298,7 +341,9 @@ export const agentChatAPI = {
 
   // Agent 채팅 세션 목록 조회
   getAgentChatSessions: async (projectId) => {
-    const response = await api.get(`/projects/${projectId}/agent-chat/sessions`);
+    const response = await api.get(
+      `/projects/${projectId}/agent-chat/sessions`
+    );
     return response.data;
   },
 
@@ -321,7 +366,11 @@ export const agentChatAPI = {
   // Agent 스트리밍 채팅 (향후 구현용)
   streamingAgentChat: async (projectId, message, sessionId, onMessage) => {
     try {
-      const response = await agentChatAPI.sendAgentMessage(projectId, message, sessionId);
+      const response = await agentChatAPI.sendAgentMessage(
+        projectId,
+        message,
+        sessionId
+      );
 
       // 실제 스트리밍이 아니므로 즉시 완전한 응답 반환
       if (onMessage) {
@@ -349,11 +398,15 @@ export const agentChatAPI = {
 // 🆕 프롬프트 카드 관리 API
 export const promptCardAPI = {
   // 프롬프트 카드 목록 조회 (step_order 순으로 정렬)
-  getPromptCards: async (projectId, includeContent = false, includeDisabled = false) => {
+  getPromptCards: async (
+    projectId,
+    includeContent = false,
+    includeDisabled = false
+  ) => {
     const params = {};
-    if (includeContent) params.include_content = 'true';
-    if (includeDisabled) params.include_disabled = 'true';
-    
+    if (includeContent) params.include_content = "true";
+    if (includeDisabled) params.include_disabled = "true";
+
     const response = await api.get(`/prompts/${projectId}`, { params });
     return response.data;
   },
@@ -366,7 +419,10 @@ export const promptCardAPI = {
 
   // 프롬프트 카드 수정
   updatePromptCard: async (projectId, promptId, promptData) => {
-    const response = await api.put(`/prompts/${projectId}/${promptId}`, promptData);
+    const response = await api.put(
+      `/prompts/${projectId}/${promptId}`,
+      promptData
+    );
     return response.data;
   },
 
@@ -379,7 +435,7 @@ export const promptCardAPI = {
   // 프롬프트 카드 순서 변경
   reorderPromptCard: async (projectId, promptId, newStepOrder) => {
     const response = await api.put(`/prompts/${projectId}/${promptId}`, {
-      step_order: newStepOrder
+      step_order: newStepOrder,
     });
     return response.data;
   },
@@ -387,10 +443,10 @@ export const promptCardAPI = {
   // 프롬프트 카드 활성/비활성 토글
   togglePromptCard: async (projectId, promptId, enabled) => {
     const response = await api.put(`/prompts/${projectId}/${promptId}`, {
-      enabled: enabled
+      enabled: enabled,
     });
     return response.data;
-  }
+  },
 };
 
 // 🆕 인증 API
@@ -405,12 +461,12 @@ export const authAPI = {
   signin: async (credentials) => {
     const response = await api.post("/auth/signin", credentials);
     const { accessToken, idToken, refreshToken } = response.data;
-    
+
     // 토큰 저장
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('idToken', idToken);
-    localStorage.setItem('refreshToken', refreshToken);
-    
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("idToken", idToken);
+    localStorage.setItem("refreshToken", refreshToken);
+
     return response.data;
   },
 
@@ -420,26 +476,26 @@ export const authAPI = {
       await api.post("/auth/signout");
     } finally {
       // 로컬 토큰 삭제
-      localStorage.removeItem('accessToken');
-      localStorage.removeItem('idToken');
-      localStorage.removeItem('refreshToken');
+      localStorage.removeItem("accessToken");
+      localStorage.removeItem("idToken");
+      localStorage.removeItem("refreshToken");
     }
   },
 
   // 토큰 갱신
   refreshToken: async () => {
-    const refreshToken = localStorage.getItem('refreshToken');
+    const refreshToken = localStorage.getItem("refreshToken");
     if (!refreshToken) {
-      throw new Error('리프레시 토큰이 없습니다');
+      throw new Error("리프레시 토큰이 없습니다");
     }
 
     const response = await api.post("/auth/refresh", { refreshToken });
     const { accessToken, idToken } = response.data;
-    
+
     // 새 토큰 저장
-    localStorage.setItem('accessToken', accessToken);
-    localStorage.setItem('idToken', idToken);
-    
+    localStorage.setItem("accessToken", accessToken);
+    localStorage.setItem("idToken", idToken);
+
     return response.data;
   },
 
@@ -463,37 +519,37 @@ export const authAPI = {
 
   // 현재 사용자 정보 (토큰에서 추출)
   getCurrentUser: () => {
-    const token = localStorage.getItem('idToken');
+    const token = localStorage.getItem("idToken");
     if (!token) return null;
-    
+
     try {
       // JWT 토큰 디코딩 (간단한 방법 - 실제로는 jwt-decode 라이브러리 사용 권장)
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const payload = JSON.parse(atob(token.split(".")[1]));
       return {
         email: payload.email,
         name: payload.name,
-        sub: payload.sub
+        sub: payload.sub,
       };
     } catch (error) {
-      console.error('토큰 디코딩 오류:', error);
+      console.error("토큰 디코딩 오류:", error);
       return null;
     }
   },
 
   // 로그인 상태 확인
   isAuthenticated: () => {
-    const token = localStorage.getItem('accessToken');
+    const token = localStorage.getItem("accessToken");
     if (!token) return false;
-    
+
     try {
       // 토큰 만료 시간 확인
-      const payload = JSON.parse(atob(token.split('.')[1]));
+      const payload = JSON.parse(atob(token.split(".")[1]));
       const currentTime = Date.now() / 1000;
       return payload.exp > currentTime;
     } catch (error) {
       return false;
     }
-  }
+  },
 };
 
 // 파일 업로드 API
@@ -509,7 +565,7 @@ export const uploadAPI = {
   },
 };
 
-// 프롬프트 카테고리 정의 (레거시 - 기존 파일 업로드용)
+// 🆕 프롬프트 카테고리 정의 (레거시 - 기존 파일 업로드용)
 export const PROMPT_CATEGORIES = [
   {
     id: "title_type_guidelines",
@@ -687,6 +743,350 @@ export const handleAPIError = (error) => {
       status: -1,
     };
   }
+};
+
+// 기본 프로젝트 카테고리 정의 (이모지 제거, 전문적 디자인)
+export const DEFAULT_PROJECT_CATEGORIES = [
+  {
+    id: "news",
+    name: "뉴스/언론",
+    color: "blue",
+    description: "뉴스 기사, 언론 보도 제목 생성",
+    isDefault: true,
+  },
+  {
+    id: "business",
+    name: "비즈니스",
+    color: "green",
+    description: "비즈니스 문서, 기업 커뮤니케이션",
+    isDefault: true,
+  },
+  {
+    id: "corporate",
+    name: "기업 홍보",
+    color: "purple",
+    description: "기업 홍보, 마케팅 콘텐츠",
+    isDefault: true,
+  },
+  {
+    id: "education",
+    name: "교육/연구",
+    color: "orange",
+    description: "교육 자료, 연구 논문, 학술 자료",
+    isDefault: true,
+  },
+  {
+    id: "marketing",
+    name: "마케팅/광고",
+    color: "yellow",
+    description: "광고 카피, 마케팅 캠페인",
+    isDefault: true,
+  },
+  {
+    id: "social",
+    name: "소셜미디어",
+    color: "indigo",
+    description: "SNS 포스팅, 소셜 콘텐츠",
+    isDefault: true,
+  },
+  {
+    id: "tech",
+    name: "기술/IT",
+    color: "cyan",
+    description: "기술 문서, IT 뉴스, 개발 관련",
+    isDefault: true,
+  },
+];
+
+// 사용자 정의 카테고리 API
+export const categoryAPI = {
+  // 사용자 카테고리 목록 조회
+  getUserCategories: async () => {
+    try {
+      const response = await api.get("/categories");
+      return response.data;
+    } catch (error) {
+      // 백엔드 API가 없는 경우 로컬 스토리지 사용
+      const savedCategories = localStorage.getItem("userCategories");
+      if (savedCategories) {
+        return JSON.parse(savedCategories);
+      }
+      return { categories: DEFAULT_PROJECT_CATEGORIES };
+    }
+  },
+
+  // 사용자 카테고리 생성
+  createCategory: async (categoryData) => {
+    try {
+      const response = await api.post("/categories", categoryData);
+      return response.data;
+    } catch (error) {
+      // 로컬 스토리지 사용
+      const savedCategories = localStorage.getItem("userCategories");
+      const categories = savedCategories
+        ? JSON.parse(savedCategories)
+        : { categories: [...DEFAULT_PROJECT_CATEGORIES] };
+
+      const newCategory = {
+        ...categoryData,
+        id: `custom_${Date.now()}`,
+        isDefault: false,
+        createdAt: new Date().toISOString(),
+      };
+
+      categories.categories.push(newCategory);
+      localStorage.setItem("userCategories", JSON.stringify(categories));
+      return newCategory;
+    }
+  },
+
+  // 사용자 카테고리 수정
+  updateCategory: async (categoryId, categoryData) => {
+    try {
+      const response = await api.put(`/categories/${categoryId}`, categoryData);
+      return response.data;
+    } catch (error) {
+      // 로컬 스토리지 사용
+      const savedCategories = localStorage.getItem("userCategories");
+      const categories = savedCategories
+        ? JSON.parse(savedCategories)
+        : { categories: [...DEFAULT_PROJECT_CATEGORIES] };
+
+      const categoryIndex = categories.categories.findIndex(
+        (cat) => cat.id === categoryId
+      );
+      if (categoryIndex !== -1) {
+        categories.categories[categoryIndex] = {
+          ...categories.categories[categoryIndex],
+          ...categoryData,
+          updatedAt: new Date().toISOString(),
+        };
+        localStorage.setItem("userCategories", JSON.stringify(categories));
+        return categories.categories[categoryIndex];
+      }
+      throw new Error("카테고리를 찾을 수 없습니다");
+    }
+  },
+
+  // 사용자 카테고리 삭제
+  deleteCategory: async (categoryId) => {
+    try {
+      const response = await api.delete(`/categories/${categoryId}`);
+      return response.data;
+    } catch (error) {
+      // 로컬 스토리지 사용
+      const savedCategories = localStorage.getItem("userCategories");
+      const categories = savedCategories
+        ? JSON.parse(savedCategories)
+        : { categories: [...DEFAULT_PROJECT_CATEGORIES] };
+
+      const categoryIndex = categories.categories.findIndex(
+        (cat) => cat.id === categoryId
+      );
+      if (categoryIndex !== -1) {
+        // 기본 카테고리는 삭제할 수 없음
+        if (categories.categories[categoryIndex].isDefault) {
+          throw new Error("기본 카테고리는 삭제할 수 없습니다");
+        }
+
+        categories.categories.splice(categoryIndex, 1);
+        localStorage.setItem("userCategories", JSON.stringify(categories));
+        return { success: true };
+      }
+      throw new Error("카테고리를 찾을 수 없습니다");
+    }
+  },
+};
+
+// 프로젝트 카테고리 변경 API
+export const projectCategoryAPI = {
+  // 프로젝트 카테고리 변경
+  updateProjectCategory: async (projectId, categoryId) => {
+    try {
+      const response = await api.put(`/projects/${projectId}/category`, {
+        category: categoryId,
+      });
+      return response.data;
+    } catch (error) {
+      // 임시로 클라이언트에서 처리 (실제로는 백엔드에서 처리해야 함)
+      console.log(`프로젝트 ${projectId}의 카테고리를 ${categoryId}로 변경`);
+      return { success: true, projectId, category: categoryId };
+    }
+  },
+};
+
+//프로젝트 통계 정보 API
+export const projectStatsAPI = {
+  // 프로젝트 상세 통계 조회
+  getProjectStats: async (projectId) => {
+    const response = await api.get(`/projects/${projectId}/stats`);
+    return response.data;
+  },
+
+  // 모든 프로젝트 통계 요약
+  getAllProjectsStats: async () => {
+    const response = await api.get("/projects/stats");
+    return response.data;
+  },
+};
+
+// 프롬프트 통계 정보 계산 유틸리티
+export const calculatePromptStats = (promptCards) => {
+  const stats = {
+    totalCards: promptCards.length,
+    activeCards: promptCards.filter((card) => card.enabled !== false).length,
+    totalTokens: 0,
+    totalSize: 0,
+    avgTokensPerCard: 0,
+    categories: new Set(),
+    models: new Set(),
+    temperatureRange: { min: 1, max: 0 },
+  };
+
+  promptCards.forEach((card) => {
+    // 카테고리 수집
+    stats.categories.add(card.category);
+
+    // 모델 수집
+    stats.models.add(card.model);
+
+    // 프롬프트 텍스트 통계
+    if (card.prompt_text) {
+      const textLength = card.prompt_text.length;
+      stats.totalSize += textLength;
+
+      // 대략적인 토큰 수 계산 (영어: 4자/토큰, 한국어: 2자/토큰)
+      const estimatedTokens = Math.ceil(textLength / 2.5);
+      stats.totalTokens += estimatedTokens;
+    }
+
+    // 온도 범위 계산
+    const temp = parseFloat(card.temperature);
+    if (temp < stats.temperatureRange.min) stats.temperatureRange.min = temp;
+    if (temp > stats.temperatureRange.max) stats.temperatureRange.max = temp;
+  });
+
+  // 평균 토큰 계산
+  stats.avgTokensPerCard =
+    stats.totalCards > 0 ? Math.round(stats.totalTokens / stats.totalCards) : 0;
+
+  // Set을 배열로 변환
+  stats.categories = Array.from(stats.categories);
+  stats.models = Array.from(stats.models);
+
+  return stats;
+};
+
+// 🆕 파일 크기 포맷팅 유틸리티
+export const formatFileSize = (bytes) => {
+  if (bytes === 0) return "0 B";
+  const k = 1024;
+  const sizes = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(k));
+  return parseFloat((bytes / Math.pow(k, i)).toFixed(1)) + " " + sizes[i];
+};
+
+// 🆕 토큰 수 포맷팅 유틸리티
+export const formatTokenCount = (tokens) => {
+  if (tokens < 1000) return tokens.toString();
+  if (tokens < 1000000) return (tokens / 1000).toFixed(1) + "K";
+  return (tokens / 1000000).toFixed(1) + "M";
+};
+
+// 🆕 카테고리 관련 유틸리티 (수정됨)
+export const getCategoryInfo = (categoryId, userCategories = []) => {
+  const allCategories = [...DEFAULT_PROJECT_CATEGORIES, ...userCategories];
+  return (
+    allCategories.find((cat) => cat.id === categoryId) ||
+    DEFAULT_PROJECT_CATEGORIES.find((cat) => cat.id === "news")
+  );
+};
+
+// 🆕 카테고리별 색상 클래스 반환 (수정됨)
+export const getCategoryColorClasses = (color) => {
+  const colors = {
+    blue: "bg-blue-100 text-blue-800 border-blue-200",
+    green: "bg-green-100 text-green-800 border-green-200",
+    purple: "bg-purple-100 text-purple-800 border-purple-200",
+    orange: "bg-orange-100 text-orange-800 border-orange-200",
+    yellow: "bg-yellow-100 text-yellow-800 border-yellow-200",
+    indigo: "bg-indigo-100 text-indigo-800 border-indigo-200",
+    cyan: "bg-cyan-100 text-cyan-800 border-cyan-200",
+    red: "bg-red-100 text-red-800 border-red-200",
+    pink: "bg-pink-100 text-pink-800 border-pink-200",
+    gray: "bg-gray-100 text-gray-800 border-gray-200",
+  };
+  return colors[color] || colors.gray;
+};
+
+// 🆕 색상 옵션 (카테고리 생성 시 사용)
+export const COLOR_OPTIONS = [
+  { id: "blue", name: "파란색", class: "bg-blue-500" },
+  { id: "green", name: "초록색", class: "bg-green-500" },
+  { id: "purple", name: "보라색", class: "bg-purple-500" },
+  { id: "orange", name: "주황색", class: "bg-orange-500" },
+  { id: "yellow", name: "노란색", class: "bg-yellow-500" },
+  { id: "indigo", name: "남색", class: "bg-indigo-500" },
+  { id: "cyan", name: "청록색", class: "bg-cyan-500" },
+  { id: "red", name: "빨간색", class: "bg-red-500" },
+  { id: "pink", name: "분홍색", class: "bg-pink-500" },
+  { id: "gray", name: "회색", class: "bg-gray-500" },
+];
+
+// 🆕 프로젝트 검색 및 필터링 유틸리티
+export const filterProjects = (projects, { category, searchQuery, sortBy }) => {
+  let filtered = [...projects];
+
+  // 카테고리 필터링
+  if (category && category !== "all") {
+    filtered = filtered.filter((project) => project.category === category);
+  }
+
+  // 검색 필터링
+  if (searchQuery && searchQuery.trim()) {
+    const query = searchQuery.toLowerCase().trim();
+    filtered = filtered.filter(
+      (project) =>
+        project.name.toLowerCase().includes(query) ||
+        (project.description &&
+          project.description.toLowerCase().includes(query)) ||
+        (project.tags &&
+          project.tags.some((tag) => tag.toLowerCase().includes(query)))
+    );
+  }
+
+  // 정렬
+  switch (sortBy) {
+    case "name":
+      filtered.sort((a, b) => a.name.localeCompare(b.name));
+      break;
+    case "updated":
+      filtered.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      break;
+    case "created":
+    default:
+      filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+      break;
+  }
+
+  return filtered;
+};
+
+// 🆕 디바운스 훅 (검색 최적화용)
+export const useDebounce = (value, delay) => {
+  const [debouncedValue, setDebouncedValue] = React.useState(value);
+
+  React.useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
 };
 
 export default api;

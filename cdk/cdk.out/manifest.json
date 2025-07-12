@@ -18,7 +18,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::887078546492:role/cdk-hnb659fds-deploy-role-887078546492-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::887078546492:role/cdk-hnb659fds-cfn-exec-role-887078546492-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-887078546492-us-east-1/913275e3b1f33cbc657c61c9e8027196dbf2db962d3811e12a538ae6a1c300db.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-887078546492-us-east-1/3b4f9b71ad95c0cb8e2d1537ac28c5da8246128757724ca102c5422a287b4aef.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -224,12 +224,6 @@
           {
             "type": "aws:cdk:logicalId",
             "data": "LambdaRoleDefaultPolicy75625A82"
-          }
-        ],
-        "/BedrockDiyAuthStack/LangChainLayer/Resource": [
-          {
-            "type": "aws:cdk:logicalId",
-            "data": "LangChainLayer8B014442"
           }
         ],
         "/BedrockDiyAuthStack/GenerateFunction/Resource": [

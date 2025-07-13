@@ -6,6 +6,9 @@ const API_BASE_URL =
   process.env.REACT_APP_API_URL ||
   "https://vph0fu827a.execute-api.us-east-1.amazonaws.com/prod";
 
+// 개발 환경에서 CORS 우회용 모키 모드
+const IS_MOCK_MODE = process.env.NODE_ENV === 'development' && process.env.REACT_APP_USE_MOCK !== 'false';
+
 // Axios 인스턴스 생성
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -109,12 +112,12 @@ export const generateAPI = {
     const payload = {
       article,
     };
-    
+
     // AI 설정이 있으면 추가
     if (aiSettings) {
       payload.aiSettings = aiSettings;
     }
-    
+
     const response = await api.post(`/projects/${projectId}/generate`, payload);
     return response.data;
   },
@@ -128,7 +131,7 @@ export const generateAPI = {
 
   // 폴링을 통한 결과 대기
   pollForResult: async (executionArn, maxRetries = 30, interval = 2000) => {
-    if (!executionArn || executionArn === 'undefined') {
+    if (!executionArn || executionArn === "undefined") {
       return {
         success: false,
         error: "실행 ARN이 없습니다. 직접 모드에서는 폴링이 필요하지 않습니다.",
@@ -198,7 +201,7 @@ export const generateAPI = {
       );
 
       // 직접 모드인 경우 (mode가 'direct'이거나 result가 바로 있는 경우)
-      if (startResponse.mode === 'direct' || startResponse.result) {
+      if (startResponse.mode === "direct" || startResponse.result) {
         if (onProgress) {
           onProgress({
             status: "completed",
@@ -208,12 +211,13 @@ export const generateAPI = {
         }
 
         return {
-          conversationId: startResponse.executionId || 'direct-' + Date.now(),
+          conversationId: startResponse.executionId || "direct-" + Date.now(),
           projectId: projectId,
           result: startResponse.result,
           usage: startResponse.usage || {},
           timestamp: startResponse.timestamp || new Date().toISOString(),
-          mode: 'direct'
+          mode: "direct",
+          debug: startResponse.debug || {}
         };
       }
 
@@ -238,158 +242,19 @@ export const generateAPI = {
             projectId: projectId,
             result: pollResponse.data.result,
             usage: pollResponse.data.usage,
-            timestamp: pollResponse.data.completedAt || new Date().toISOString(),
+            timestamp:
+              pollResponse.data.completedAt || new Date().toISOString(),
             executionArn: startResponse.executionArn,
-            mode: 'stepfunctions'
+            mode: "stepfunctions",
           };
         } else {
           throw new Error(pollResponse.error);
         }
       }
-      
-      throw new Error('알 수 없는 응답 형식입니다');
+
+      throw new Error("알 수 없는 응답 형식입니다");
     } catch (error) {
       console.error("제목 생성 실패:", error);
-      throw error;
-    }
-  },
-};
-
-// 🆕 채팅 API (LangChain 기반)
-export const chatAPI = {
-  // 채팅 메시지 전송
-  sendMessage: async (
-    projectId,
-    message,
-    sessionId = null,
-    userId = "default"
-  ) => {
-    const response = await api.post(`/projects/${projectId}/chat`, {
-      message,
-      sessionId,
-      userId,
-    });
-    return response.data;
-  },
-
-  // 채팅 세션 목록 조회
-  getChatSessions: async (projectId) => {
-    const response = await api.get(`/projects/${projectId}/chat/sessions`);
-    return response.data;
-  },
-
-  // 채팅 히스토리 조회
-  getChatHistory: async (projectId, sessionId) => {
-    const response = await api.get(
-      `/projects/${projectId}/chat/sessions/${sessionId}`
-    );
-    return response.data;
-  },
-
-  // 채팅 세션 삭제
-  deleteChatSession: async (projectId, sessionId) => {
-    const response = await api.delete(
-      `/projects/${projectId}/chat/sessions/${sessionId}`
-    );
-    return response.data;
-  },
-
-  // 스트리밍 채팅 (WebSocket 대체용)
-  streamingChat: async (projectId, message, sessionId, onMessage) => {
-    try {
-      const response = await chatAPI.sendMessage(projectId, message, sessionId);
-
-      // 실제 스트리밍이 아니므로 즉시 완전한 응답 반환
-      if (onMessage) {
-        onMessage({
-          type: "message",
-          content: response.message,
-          sessionId: response.sessionId,
-          metadata: response.metadata,
-        });
-      }
-
-      return response;
-    } catch (error) {
-      if (onMessage) {
-        onMessage({
-          type: "error",
-          error: error.message,
-        });
-      }
-      throw error;
-    }
-  },
-};
-
-// 🆕 Bedrock Agent 채팅 API
-export const agentChatAPI = {
-  // Agent 채팅 메시지 전송
-  sendAgentMessage: async (
-    projectId,
-    message,
-    sessionId = null,
-    userId = "default"
-  ) => {
-    const response = await api.post(`/projects/${projectId}/agent-chat`, {
-      message,
-      sessionId,
-      userId,
-    });
-    return response.data;
-  },
-
-  // Agent 채팅 세션 목록 조회
-  getAgentChatSessions: async (projectId) => {
-    const response = await api.get(
-      `/projects/${projectId}/agent-chat/sessions`
-    );
-    return response.data;
-  },
-
-  // Agent 채팅 히스토리 조회
-  getAgentChatHistory: async (projectId, sessionId) => {
-    const response = await api.get(
-      `/projects/${projectId}/agent-chat/sessions/${sessionId}`
-    );
-    return response.data;
-  },
-
-  // Agent 채팅 세션 삭제
-  deleteAgentChatSession: async (projectId, sessionId) => {
-    const response = await api.delete(
-      `/projects/${projectId}/agent-chat/sessions/${sessionId}`
-    );
-    return response.data;
-  },
-
-  // Agent 스트리밍 채팅 (향후 구현용)
-  streamingAgentChat: async (projectId, message, sessionId, onMessage) => {
-    try {
-      const response = await agentChatAPI.sendAgentMessage(
-        projectId,
-        message,
-        sessionId
-      );
-
-      // 실제 스트리밍이 아니므로 즉시 완전한 응답 반환
-      if (onMessage) {
-        onMessage({
-          type: "message",
-          content: response.message,
-          sessionId: response.sessionId,
-          metadata: response.metadata,
-        });
-      }
-
-      return response;
-    } catch (error) {
-      if (onMessage) {
-        onMessage({
-          type: "error",
-          error: error.message,
-        });
-      }
       throw error;
     }
   },
@@ -636,48 +501,61 @@ export const PROMPT_CATEGORIES = [
 ];
 
 // 🆕 프롬프트 카드 카테고리 정의 (새로운 카드 시스템용)
+// 프롬프트 오케스트레이션 카테고리 체계
 export const PROMPT_CARD_CATEGORIES = [
   {
-    id: "instruction",
-    name: "지시사항",
-    description: "기본 작업 지시 및 목표 설정",
-    color: "blue",
-    icon: "📋",
-  },
-  {
-    id: "knowledge",
-    name: "지식 기반",
-    description: "도메인 지식 및 참고 정보",
+    id: "role",
+    name: "역할 (Role)",
+    description: "모델이 맡게 될 페르소나 및 역할 정의",
     color: "purple",
-    icon: "📚",
+    icon: "🎭",
+    order: 1,
+    orchestration_step: "persona_definition"
   },
   {
-    id: "summary",
-    name: "요약 규칙",
-    description: "내용 요약 및 압축 가이드라인",
+    id: "guideline",
+    name: "가이드라인 (Guideline)",
+    description: "명확한 제한사항, 룰, 조건",
+    color: "blue",
+    icon: "📦",
+    order: 2,
+    orchestration_step: "constraint_definition"
+  },
+  {
+    id: "workflow",
+    name: "워크플로우 (Workflow)",
+    description: "작업을 수행할 단계, 순서",
     color: "green",
-    icon: "📝",
+    icon: "🧩",
+    order: 3,
+    orchestration_step: "process_execution"
   },
   {
-    id: "style_guide",
-    name: "스타일 가이드",
-    description: "브랜드 톤앤매너 및 작성 스타일",
+    id: "output_format",
+    name: "출력결과 (Output Format)",
+    description: "최종 결과물 포맷 정의",
     color: "orange",
-    icon: "🎨",
+    icon: "🎯",
+    order: 4,
+    orchestration_step: "format_validation"
   },
   {
-    id: "validation",
-    name: "검증 기준",
-    description: "품질 확인 및 검증 룰",
-    color: "red",
-    icon: "✅",
-  },
-  {
-    id: "enhancement",
-    name: "개선 지침",
-    description: "결과 향상 및 최적화 방법",
+    id: "few_shot",
+    name: "예시 (Few-shot)",
+    description: "few-shot learning 예제",
     color: "yellow",
-    icon: "⚡",
+    icon: "💡",
+    order: 5,
+    orchestration_step: "example_learning"
+  },
+  {
+    id: "scoring",
+    name: "검수 (Scoring)",
+    description: "검수 규칙 및 평가 기준",
+    color: "red",
+    icon: "🔍",
+    order: 6,
+    orchestration_step: "quality_assessment"
   },
 ];
 
@@ -884,11 +762,6 @@ export const categoryAPI = {
         (cat) => cat.id === categoryId
       );
       if (categoryIndex !== -1) {
-        // 기본 카테고리는 삭제할 수 없음
-        if (categories.categories[categoryIndex].isDefault) {
-          throw new Error("기본 카테고리는 삭제할 수 없습니다");
-        }
-
         categories.categories.splice(categoryIndex, 1);
         localStorage.setItem("userCategories", JSON.stringify(categories));
         return { success: true };
@@ -975,6 +848,138 @@ export const calculatePromptStats = (promptCards) => {
   stats.models = Array.from(stats.models);
 
   return stats;
+};
+
+// 프롬프트 오케스트레이션 API
+export const orchestrationAPI = {
+  // 오케스트레이션 실행
+  executeOrchestration: async (projectId, articleContent, orchestrationConfig = {}) => {
+    // 개발 환경에서 CORS 문제 우회용 모키 응답
+    if (IS_MOCK_MODE) {
+      console.log("🚀 모키 모드: AI 제목 생성 시뮬레이션");
+      
+      // 실제와 유사한 응답 시뮬레이션
+      await new Promise(resolve => setTimeout(resolve, 2000)); // 2초 지연
+      
+      // 실제 API와 동일한 응답 구조 사용
+      return {
+        message: '제목 생성이 완료되었습니다',
+        executionId: `mock-${Date.now()}`,
+        projectId: 'mock-project',
+        result: `1. AI가 제안하는 혁신적인 제목 1번
+2. 데이터 기반으로 생성된 매력적인 제목 2번
+3. 독자의 관심을 끄는 최적화된 제목 3번
+4. SEO와 가독성을 고려한 제목 4번
+5. 감정적 어필이 강한 제목 5번`,
+        mode: 'mock',
+        timestamp: new Date().toISOString(),
+        debug: {
+          promptCount: orchestrationConfig.enabledSteps?.length || 5,
+          usedDefaultGuidelines: false,
+          combinedPromptsLength: 1500,
+          promptTitles: orchestrationConfig.enabledSteps || ["instruction", "knowledge", "secondary", "style_guide", "validation"],
+          firstPromptPreview: "모키 모드에서 실행된 프롬프트입니다..."
+        }
+      };
+    }
+
+    // 실제 API 호출 - /generate 엔드포인트 사용
+    const response = await api.post(`/projects/${projectId}/generate`, {
+      article: articleContent,
+      useStepFunction: false, // 직접 모드 사용
+      enabledSteps: orchestrationConfig.enabledSteps || [],
+      temperature: orchestrationConfig.temperature || 0.7
+    });
+    return response.data;
+  },
+
+  // 오케스트레이션 상태 조회
+  getOrchestrationStatus: async (projectId, executionId) => {
+    const response = await api.get(`/projects/${projectId}/orchestrate/${executionId}/status`);
+    return response.data;
+  },
+
+  // 오케스트레이션 결과 조회
+  getOrchestrationResult: async (projectId, executionId) => {
+    const response = await api.get(`/projects/${projectId}/orchestrate/${executionId}/result`);
+    return response.data;
+  },
+
+  // 오케스트레이션 로그 조회
+  getOrchestrationLogs: async (projectId, executionId) => {
+    const response = await api.get(`/projects/${projectId}/orchestrate/${executionId}/logs`);
+    return response.data;
+  },
+
+  // 오케스트레이션 전략 테스트
+  testOrchestrationStep: async (projectId, stepType, promptContent, articleContent) => {
+    const response = await api.post(`/projects/${projectId}/orchestrate/test`, {
+      stepType,
+      promptContent,
+      articleContent
+    });
+    return response.data;
+  },
+
+  // 오케스트레이션 고도화 설정
+  updateOrchestrationConfig: async (projectId, config) => {
+    const response = await api.put(`/projects/${projectId}/orchestration-config`, config);
+    return response.data;
+  },
+
+  // 오케스트레이션 메트릭 조회
+  getOrchestrationMetrics: async (projectId, timeRange = '24h') => {
+    const response = await api.get(`/projects/${projectId}/orchestration-metrics`, {
+      params: { timeRange }
+    });
+    return response.data;
+  }
+};
+
+// 오케스트레이션 단계 정의
+export const ORCHESTRATION_STEPS = {
+  PERSONA_DEFINITION: {
+    id: 'persona_definition',
+    name: '역할 정의',
+    description: 'AI 모델에게 역할과 페르소나를 부여',
+    order: 1,
+    required: true
+  },
+  CONSTRAINT_DEFINITION: {
+    id: 'constraint_definition', 
+    name: '제약 조건 설정',
+    description: '명확한 룰과 제한사항 적용',
+    order: 2,
+    required: true
+  },
+  PROCESS_EXECUTION: {
+    id: 'process_execution',
+    name: '워크플로우 실행',
+    description: '단계별 작업 프로세스 수행',
+    order: 3,
+    required: true
+  },
+  FORMAT_VALIDATION: {
+    id: 'format_validation',
+    name: '포맷 검증',
+    description: '출력 결과물 포맷 검증 및 조정',
+    order: 4,
+    required: false
+  },
+  EXAMPLE_LEARNING: {
+    id: 'example_learning',
+    name: '예시 학습',
+    description: 'Few-shot 예제를 통한 학습 및 측고',
+    order: 5,
+    required: false
+  },
+  QUALITY_ASSESSMENT: {
+    id: 'quality_assessment',
+    name: '품질 평가',
+    description: '결과물 품질 평가 및 점수 매기기',
+    order: 6,
+    required: false
+  }
 };
 
 // 🆕 파일 크기 포맷팅 유틸리티

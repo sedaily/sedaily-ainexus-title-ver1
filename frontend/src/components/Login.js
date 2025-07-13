@@ -102,15 +102,7 @@ const Login = ({ onLoginSuccess, onSwitchToSignup }) => {
             </button>
           </div>
 
-          <div className="text-center space-y-2">
-            <button
-              type="button"
-              onClick={onSwitchToSignup}
-              className="text-blue-600 hover:text-blue-500 text-sm"
-            >
-              회원가입
-            </button>
-          </div>
+          {/* 회원가입 버튼 제거 - 내부 직원용 시스템 */}
         </form>
       </div>
     </div>

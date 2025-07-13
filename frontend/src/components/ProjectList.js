@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import {
   FolderOpenIcon,
@@ -17,6 +17,10 @@ import {
   SparklesIcon,
   ArrowPathIcon,
   Cog6ToothIcon,
+  FolderIcon,
+  XMarkIcon,
+  ChevronDownIcon,
+  CheckIcon,
 } from "@heroicons/react/24/outline";
 import {
   projectAPI,
@@ -33,8 +37,11 @@ import {
   promptCardAPI,
   COLOR_OPTIONS,
 } from "../services/api";
+import { ProjectListSkeleton, ProjectCardSkeleton } from "./SkeletonLoader";
+import CreateProject from "./CreateProject";
 
 const ProjectList = () => {
+  const navigate = useNavigate();
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
@@ -44,11 +51,17 @@ const ProjectList = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState("created");
   const [viewMode, setViewMode] = useState("grid");
+  const [sortDropdownOpen, setSortDropdownOpen] = useState(false);
+  const sortDropdownRef = useRef(null);
 
   // 카테고리 상태
   const [userCategories, setUserCategories] = useState([]);
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showCategoryManager, setShowCategoryManager] = useState(false);
+
+  // 프로젝트 편집 상태
+  const [editingProject, setEditingProject] = useState(null);
+  const [showEditModal, setShowEditModal] = useState(false);
 
   // 드래그앤드롭 상태
   const [draggedProject, setDraggedProject] = useState(null);
@@ -62,6 +75,8 @@ const ProjectList = () => {
     totalTokens: 0,
     categoriesUsed: 0,
   });
+
+  const [showCreateModal, setShowCreateModal] = useState(false);
 
   useEffect(() => {
     loadProjects();
@@ -140,13 +155,47 @@ const ProjectList = () => {
       return;
     }
 
+    // 낙관적 업데이트: 즉시 UI에서 프로젝트 제거
+    const originalProjects = [...projects];
+    const updatedProjects = projects.filter((p) => p.projectId !== projectId);
+    setProjects(updatedProjects);
+
+    // 통계도 업데이트
+    const newStats = { ...overallStats };
+    newStats.totalProjects = Math.max(0, newStats.totalProjects - 1);
+    setOverallStats(newStats);
+
+    // 즉시 성공 토스트 표시
+    toast.success("프로젝트가 삭제되었습니다");
+
     try {
+      // 백그라운드에서 실제 삭제 진행
       await projectAPI.deleteProject(projectId);
-      toast.success("프로젝트가 삭제되었습니다");
-      loadProjects();
+      console.log("프로젝트 삭제 성공:", projectId);
     } catch (err) {
-      const errorInfo = handleAPIError(err);
-      toast.error(errorInfo.message);
+      console.error("프로젝트 삭제 오류:", err);
+
+      // 실패 시 원래 상태로 복원
+      setProjects(originalProjects);
+      setOverallStats(overallStats); // 원래 통계로 복원
+
+      let errorMessage = "프로젝트 삭제에 실패했습니다";
+
+      if (err.response?.status === 403) {
+        errorMessage =
+          "삭제 권한이 없습니다. S3 파일 삭제 권한을 확인해주세요.";
+      } else if (err.response?.status === 404) {
+        errorMessage = "이미 삭제된 프로젝트입니다";
+        // 404의 경우 실제로는 삭제된 것이므로 복원하지 않음
+        return;
+      } else if (err.response) {
+        errorMessage =
+          err.response.data?.message || `서버 오류 (${err.response.status})`;
+      } else if (err.request) {
+        errorMessage = "네트워크 오류: CORS 또는 연결 문제";
+      }
+
+      toast.error(errorMessage);
     }
   };
 
@@ -161,16 +210,44 @@ const ProjectList = () => {
     }
   };
 
+  // 프로젝트 편집 함수들
+  const handleEditProject = (project) => {
+    setEditingProject(project);
+    setShowEditModal(true);
+  };
+
+  const handleUpdateProject = async (projectData) => {
+    try {
+      await projectAPI.updateProject(editingProject.projectId, projectData);
+      toast.success("프로젝트가 수정되었습니다");
+      setShowEditModal(false);
+      setEditingProject(null);
+      loadProjects();
+    } catch (err) {
+      const errorInfo = handleAPIError(err);
+      toast.error(`프로젝트 수정 실패: ${errorInfo.message}`);
+    }
+  };
+
+  const handleCancelEdit = () => {
+    setShowEditModal(false);
+    setEditingProject(null);
+  };
+
   // 드래그앤드롭 핸들러들
   const handleDragStart = (e, project) => {
     setDraggedProject(project);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/html", e.target);
+    if (e.dataTransfer) {
+      e.dataTransfer.effectAllowed = "move";
+      e.dataTransfer.setData("text/html", e.target.outerHTML);
+    }
   };
 
   const handleDragOver = (e, categoryId) => {
     e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
+    if (e.dataTransfer) {
+      e.dataTransfer.dropEffect = "move";
+    }
     setDropTargetCategory(categoryId);
   };
 
@@ -184,9 +261,14 @@ const ProjectList = () => {
   const handleDrop = async (e, categoryId) => {
     e.preventDefault();
     setDropTargetCategory(null);
-    
-    if (draggedProject && categoryId !== draggedProject.category) {
-      await changeProjectCategory(draggedProject.projectId, categoryId);
+
+    if (draggedProject) {
+      // "전체" 카테고리로 드래그하면 카테고리를 기본값으로 설정
+      const targetCategory = categoryId === "all" ? "news" : categoryId;
+
+      if (targetCategory !== draggedProject.category) {
+        await changeProjectCategory(draggedProject.projectId, targetCategory);
+      }
     }
     setDraggedProject(null);
   };
@@ -216,6 +298,34 @@ const ProjectList = () => {
     return stats;
   }, [projects, userCategories]);
 
+  // 드롭다운 외부 클릭 감지
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        sortDropdownRef.current &&
+        !sortDropdownRef.current.contains(event.target)
+      ) {
+        setSortDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  // 정렬 옵션 데이터
+  const sortOptions = [
+    { value: "created", label: "생성일순" },
+    { value: "updated", label: "수정일순" },
+    { value: "name", label: "이름순" },
+  ];
+
+  const currentSortOption = sortOptions.find(
+    (option) => option.value === sortBy
+  );
+
   if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
@@ -242,6 +352,10 @@ const ProjectList = () => {
     );
   }
 
+  const handleCreateSuccess = () => {
+    loadProjects(); // 프로젝트 목록 새로고침
+  };
+
   return (
     <div className="space-y-6">
       {/* 헤더 & 전체 통계 */}
@@ -252,34 +366,6 @@ const ProjectList = () => {
             AI 제목 생성 프로젝트를 관리하고 새로운 프로젝트를 생성하세요
           </p>
         </div>
-
-        {/* 전체 통계 */}
-        <div className="flex items-center space-x-6 bg-white rounded-xl border border-gray-200 px-6 py-4 shadow-sm">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-blue-600">
-              {overallStats.totalProjects}
-            </div>
-            <div className="text-xs text-gray-500">프로젝트</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">
-              {overallStats.totalPrompts}
-            </div>
-            <div className="text-xs text-gray-500">프롬프트</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600">
-              {formatTokenCount(overallStats.totalTokens)}
-            </div>
-            <div className="text-xs text-gray-500">토큰</div>
-          </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-orange-600">
-              {overallStats.categoriesUsed}
-            </div>
-            <div className="text-xs text-gray-500">카테고리</div>
-          </div>
-        </div>
       </div>
 
       {/* 드래그 안내 메시지 */}
@@ -288,7 +374,8 @@ const ProjectList = () => {
           <div className="flex items-center space-x-2">
             <div className="w-2 h-2 bg-blue-500 rounded-full animate-pulse"></div>
             <p className="text-blue-700 font-medium">
-              "{draggedProject.name}" 프로젝트를 원하는 카테고리에 드래그해서 놓으세요
+              "{draggedProject.name}" 프로젝트를 원하는 카테고리에 드래그해서
+              놓으세요
             </p>
           </div>
         </div>
@@ -352,7 +439,7 @@ const ProjectList = () => {
 
           <button
             onClick={() => setShowCategoryManager(true)}
-            className="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors"
+            className="flex items-center px-3 py-2 text-sm font-medium text-gray-600 hover:text-gray-900 hover:bg-gray-50 rounded-lg transition-colors whitespace-nowrap"
           >
             <Cog6ToothIcon className="h-4 w-4 mr-1" />
             카테고리 관리
@@ -373,18 +460,53 @@ const ProjectList = () => {
             />
           </div>
 
-          {/* 정렬 옵션 */}
+          {/* 정렬 옵션 - 커스텀 드롭다운 */}
           <div className="flex items-center space-x-3">
             <FunnelIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-            <select
-              value={sortBy}
-              onChange={(e) => setSortBy(e.target.value)}
-              className="pl-4 pr-8 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 min-w-0 whitespace-nowrap"
-            >
-              <option value="created">생성일순</option>
-              <option value="updated">수정일순</option>
-              <option value="name">이름순</option>
-            </select>
+            <div className="relative" ref={sortDropdownRef}>
+              <button
+                onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
+                className="flex items-center justify-between pl-4 pr-3 py-3 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 min-w-[140px]"
+              >
+                <div className="flex items-center space-x-2">
+                  <span className="text-gray-700 font-medium">
+                    {currentSortOption?.label}
+                  </span>
+                </div>
+                <ChevronDownIcon
+                  className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
+                    sortDropdownOpen ? "rotate-180" : ""
+                  }`}
+                />
+              </button>
+
+              {/* 드롭다운 메뉴 */}
+              {sortDropdownOpen && (
+                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                  {sortOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        setSortBy(option.value);
+                        setSortDropdownOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors duration-150 ${
+                        sortBy === option.value
+                          ? "bg-blue-50 text-blue-600"
+                          : "text-gray-700"
+                      }`}
+                    >
+                      <div className="flex items-center space-x-2">
+                        <span className="font-medium">{option.label}</span>
+                      </div>
+                      {sortBy === option.value && (
+                        <CheckIcon className="h-4 w-4 text-blue-600" />
+                      )}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
 
           {/* 뷰 모드 */}
@@ -408,12 +530,12 @@ const ProjectList = () => {
           </div>
 
           {/* 새 프로젝트 버튼 */}
-          <Link
-            to="/create"
+          <button
+            onClick={() => setShowCreateModal(true)}
             className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
             <PlusIcon className="h-4 w-4 mr-2" />새 프로젝트
-          </Link>
+          </button>
         </div>
       </div>
 
@@ -431,12 +553,12 @@ const ProjectList = () => {
               ? "다른 조건으로 검색해보세요"
               : "첫 번째 프로젝트를 생성해보세요"}
           </p>
-          <Link
-            to="/create"
+          <button
+            onClick={() => setShowCreateModal(true)}
             className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
           >
             <PlusIcon className="h-4 w-4 mr-2" />새 프로젝트 생성
-          </Link>
+          </button>
         </div>
       ) : (
         <div
@@ -452,16 +574,25 @@ const ProjectList = () => {
               project={project}
               stats={projectStats[project.projectId]}
               onDelete={deleteProject}
+              onEdit={handleEditProject}
               onCategoryChange={changeProjectCategory}
               onDragStart={handleDragStart}
               onDragEnd={handleDragEnd}
               viewMode={viewMode}
               userCategories={userCategories}
               isDragging={draggedProject?.projectId === project.projectId}
+              navigate={navigate}
             />
           ))}
         </div>
       )}
+
+      {/* 새 프로젝트 생성 모달 */}
+      <CreateProject
+        isOpen={showCreateModal}
+        onClose={() => setShowCreateModal(false)}
+        onSuccess={handleCreateSuccess}
+      />
 
       {/* 카테고리 관리 모달 */}
       {showCategoryManager && (
@@ -471,6 +602,15 @@ const ProjectList = () => {
           categories={userCategories}
         />
       )}
+
+      {/* 프로젝트 편집 모달 */}
+      <ProjectEditModal
+        project={editingProject}
+        userCategories={userCategories}
+        isOpen={showEditModal}
+        onSave={handleUpdateProject}
+        onCancel={handleCancelEdit}
+      />
     </div>
   );
 };
@@ -479,18 +619,32 @@ const ProjectCard = ({
   project,
   stats,
   onDelete,
+  onEdit,
   onCategoryChange,
   onDragStart,
   onDragEnd,
   viewMode,
   userCategories,
   isDragging,
+  navigate,
 }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [showCategoryMenu, setShowCategoryMenu] = useState(false);
+  const [showMoveMenu, setShowMoveMenu] = useState(false);
   const menuRef = useRef(null);
   const categoryMenuRef = useRef(null);
+  const moveMenuRef = useRef(null);
   const categoryInfo = getCategoryInfo(project.category, userCategories);
+
+  // 카드 클릭 핸들러
+  const handleCardClick = (e) => {
+    // 메뉴 버튼이나 카테고리 버튼을 클릭한 경우 무시
+    if (e.target.closest("button") || e.target.closest("a")) {
+      return;
+    }
+    // 프로젝트 상세 페이지로 이동
+    navigate(`/projects/${project.projectId}`);
+  };
 
   // 외부 클릭 시 메뉴 닫기
   useEffect(() => {
@@ -504,6 +658,9 @@ const ProjectCard = ({
       ) {
         setShowCategoryMenu(false);
       }
+      if (moveMenuRef.current && !moveMenuRef.current.contains(event.target)) {
+        setShowMoveMenu(false);
+      }
     };
 
     document.addEventListener("mousedown", handleClickOutside);
@@ -514,11 +671,12 @@ const ProjectCard = ({
 
   if (viewMode === "list") {
     return (
-      <div 
+      <div
         draggable
         onDragStart={(e) => onDragStart(e, project)}
         onDragEnd={onDragEnd}
-        className={`bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all cursor-move ${
+        onClick={handleCardClick}
+        className={`bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all cursor-pointer ${
           isDragging ? "opacity-50 scale-95 shadow-lg" : ""
         }`}
       >
@@ -598,12 +756,48 @@ const ProjectCard = ({
             </div>
 
             <div className="flex items-center space-x-3">
-              <Link
-                to={`/projects/${project.projectId}`}
-                className="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-              >
-                열기
-              </Link>
+              {/* 폴더 이동 메뉴 */}
+              <div className="relative" ref={moveMenuRef}>
+                <button
+                  onClick={() => setShowMoveMenu(!showMoveMenu)}
+                  className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100"
+                  title="폴더 이동"
+                >
+                  <FolderIcon className="h-5 w-5" />
+                </button>
+
+                {showMoveMenu && (
+                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-10">
+                    <div className="py-1">
+                      <div className="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                        카테고리 선택
+                      </div>
+                      {userCategories.map((category) => (
+                        <button
+                          key={category.id}
+                          onClick={() => {
+                            onCategoryChange(project.projectId, category.id);
+                            setShowMoveMenu(false);
+                          }}
+                          className={`flex items-center w-full px-4 py-2 text-sm hover:bg-gray-50 ${
+                            project.category === category.id
+                              ? "bg-blue-50 text-blue-700 font-medium"
+                              : "text-gray-700"
+                          }`}
+                        >
+                          <div
+                            className={`w-2 h-2 rounded-full bg-${category.color}-500 mr-3`}
+                          ></div>
+                          {category.name}
+                          {project.category === category.id && (
+                            <span className="ml-auto text-blue-600">✓</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </div>
 
               <div className="relative" ref={menuRef}>
                 <button
@@ -616,14 +810,26 @@ const ProjectCard = ({
                 {showMenu && (
                   <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-10">
                     <div className="py-1">
-                      <Link
-                        to={`/projects/${project.projectId}`}
-                        className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                        onClick={() => setShowMenu(false)}
+                      <button
+                        onClick={() => {
+                          navigate(`/projects/${project.projectId}`);
+                          setShowMenu(false);
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                       >
                         <PencilIcon className="h-4 w-4 mr-3" />
                         편집
-                      </Link>
+                      </button>
+                      <button
+                        onClick={() => {
+                          setShowMoveMenu(true);
+                          setShowMenu(false);
+                        }}
+                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        <FolderIcon className="h-4 w-4 mr-3" />
+                        폴더 이동
+                      </button>
                       <button
                         onClick={() => {
                           onDelete(project.projectId, project.name);
@@ -646,11 +852,12 @@ const ProjectCard = ({
   }
 
   return (
-    <div 
+    <div
       draggable
       onDragStart={(e) => onDragStart(e, project)}
       onDragEnd={onDragEnd}
-      className={`bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all cursor-move ${
+      onClick={handleCardClick}
+      className={`bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all cursor-pointer ${
         isDragging ? "opacity-50 scale-95 shadow-lg" : ""
       }`}
     >
@@ -673,7 +880,8 @@ const ProjectCard = ({
           <div className="relative" ref={menuRef}>
             <button
               onClick={() => setShowMenu(!showMenu)}
-              className="text-gray-400 hover:text-gray-600 p-1 rounded-lg hover:bg-gray-100"
+              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+              title="프로젝트 옵션"
             >
               <EllipsisHorizontalIcon className="h-5 w-5" />
             </button>
@@ -681,14 +889,26 @@ const ProjectCard = ({
             {showMenu && (
               <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-10">
                 <div className="py-1">
-                  <Link
-                    to={`/projects/${project.projectId}`}
-                    className="flex items-center px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                    onClick={() => setShowMenu(false)}
+                  <button
+                    onClick={() => {
+                      navigate(`/projects/${project.projectId}`);
+                      setShowMenu(false);
+                    }}
+                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
                   >
                     <PencilIcon className="h-4 w-4 mr-3" />
                     편집
-                  </Link>
+                  </button>
+                  <button
+                    onClick={() => {
+                      setShowMoveMenu(true);
+                      setShowMenu(false);
+                    }}
+                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
+                  >
+                    <FolderIcon className="h-4 w-4 mr-3" />
+                    폴더 이동
+                  </button>
                   <button
                     onClick={() => {
                       onDelete(project.projectId, project.name);
@@ -702,10 +922,42 @@ const ProjectCard = ({
                 </div>
               </div>
             )}
+
+            {showMoveMenu && (
+              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-10">
+                <div className="py-1">
+                  <div className="px-4 py-2 text-xs font-medium text-gray-500 uppercase tracking-wide">
+                    카테고리 선택
+                  </div>
+                  {userCategories.map((category) => (
+                    <button
+                      key={category.id}
+                      onClick={() => {
+                        onCategoryChange(project.projectId, category.id);
+                        setShowMoveMenu(false);
+                      }}
+                      className={`flex items-center w-full px-4 py-2 text-sm hover:bg-gray-50 ${
+                        project.category === category.id
+                          ? "bg-blue-50 text-blue-700 font-medium"
+                          : "text-gray-700"
+                      }`}
+                    >
+                      <div
+                        className={`w-2 h-2 rounded-full bg-${category.color}-500 mr-3`}
+                      ></div>
+                      {category.name}
+                      {project.category === category.id && (
+                        <span className="ml-auto text-blue-600">✓</span>
+                      )}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         </div>
 
-        {/* 카테고리 배지 */}
+        {/* 카테고리 배지와 폴더 이동 */}
         <div className="flex items-center justify-between mb-4">
           <div className="relative" ref={categoryMenuRef}>
             <button
@@ -741,41 +993,6 @@ const ProjectCard = ({
                 </div>
               </div>
             )}
-          </div>
-
-          <span
-            className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-              project.status === "active"
-                ? "bg-green-100 text-green-800"
-                : "bg-gray-100 text-gray-800"
-            }`}
-          >
-            {project.status === "active" ? "활성" : "비활성"}
-          </span>
-        </div>
-
-        {/* 통계 정보 */}
-        <div className="grid grid-cols-2 gap-4 mb-4">
-          <div className="bg-blue-50 rounded-lg p-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-blue-600 font-medium">
-                프롬프트
-              </span>
-              <DocumentTextIcon className="h-4 w-4 text-blue-600" />
-            </div>
-            <div className="text-lg font-bold text-blue-700 mt-1">
-              {stats?.totalCards || 0}개
-            </div>
-          </div>
-
-          <div className="bg-purple-50 rounded-lg p-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-purple-600 font-medium">토큰</span>
-              <SparklesIcon className="h-4 w-4 text-purple-600" />
-            </div>
-            <div className="text-lg font-bold text-purple-700 mt-1">
-              {formatTokenCount(stats?.totalTokens || 0)}
-            </div>
           </div>
         </div>
 
@@ -825,15 +1042,6 @@ const ProjectCard = ({
             </div>
           </div>
         )}
-
-        <div className="mt-6">
-          <Link
-            to={`/projects/${project.projectId}`}
-            className="w-full inline-flex justify-center items-center px-4 py-2 border border-blue-600 text-sm font-medium rounded-lg text-blue-600 bg-white hover:bg-blue-50"
-          >
-            프로젝트 열기
-          </Link>
-        </div>
       </div>
     </div>
   );
@@ -975,7 +1183,7 @@ const CategoryManager = ({ onClose, onSave, categories }) => {
                       <button
                         onClick={() => handleDeleteCategory(category.id)}
                         className="p-2 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                        title={category.isDefault ? "기본 카테고리도 삭제 가능합니다" : "삭제"}
+                        title="삭제"
                       >
                         <TrashIcon className="h-4 w-4" />
                       </button>
@@ -1083,6 +1291,218 @@ const CategoryForm = ({ category, onSubmit, onCancel }) => {
         </button>
       </div>
     </form>
+  );
+};
+
+// 프로젝트 편집 모달 컴포넌트
+const ProjectEditModal = ({
+  project,
+  userCategories,
+  isOpen,
+  onSave,
+  onCancel,
+}) => {
+  const [formData, setFormData] = useState({
+    name: "",
+    description: "",
+    category: "",
+  });
+  const [categoryDropdownOpen, setCategoryDropdownOpen] = useState(false);
+  const categoryDropdownRef = useRef(null);
+
+  useEffect(() => {
+    if (project) {
+      setFormData({
+        name: project.name || "",
+        description: project.description || "",
+        category: project.category || userCategories[0]?.id || "",
+      });
+    }
+  }, [project, userCategories]);
+
+  // 드롭다운 외부 클릭 감지
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (
+        categoryDropdownRef.current &&
+        !categoryDropdownRef.current.contains(event.target)
+      ) {
+        setCategoryDropdownOpen(false);
+      }
+    };
+
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, []);
+
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    if (!formData.name.trim()) {
+      toast.error("프로젝트 이름을 입력해주세요");
+      return;
+    }
+    if (!formData.category) {
+      toast.error("카테고리를 선택해주세요");
+      return;
+    }
+    onSave(formData);
+  };
+
+  const handleCategorySelect = (categoryId) => {
+    setFormData({ ...formData, category: categoryId });
+    setCategoryDropdownOpen(false);
+  };
+
+  const handleModalClose = () => {
+    setCategoryDropdownOpen(false);
+    onCancel();
+  };
+
+  // 현재 선택된 카테고리 정보
+  const currentCategory = userCategories.find(
+    (category) => category.id === formData.category
+  );
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+      <div className="bg-white rounded-lg max-w-md w-full">
+        <div className="flex items-center justify-between p-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">프로젝트 편집</h3>
+          <button
+            onClick={handleModalClose}
+            className="text-gray-400 hover:text-gray-600"
+          >
+            <XMarkIcon className="h-5 w-5" />
+          </button>
+        </div>
+
+        <form onSubmit={handleSubmit} className="p-4 space-y-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              프로젝트 이름 *
+            </label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="프로젝트 이름을 입력하세요"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              설명
+            </label>
+            <textarea
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+              rows={3}
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              placeholder="프로젝트 설명을 입력하세요"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">
+              카테고리 *
+            </label>
+            {userCategories.length === 0 ? (
+              <div className="text-center py-4 border-2 border-dashed border-gray-300 rounded-lg">
+                <p className="text-gray-500 text-sm">
+                  사용할 수 있는 카테고리가 없습니다.
+                </p>
+                <p className="text-xs text-gray-400 mt-1">
+                  카테고리를 먼저 생성해주세요.
+                </p>
+              </div>
+            ) : (
+              <div className="relative" ref={categoryDropdownRef}>
+                <button
+                  type="button"
+                  onClick={() => setCategoryDropdownOpen(!categoryDropdownOpen)}
+                  className="w-full flex items-center justify-between px-3 py-2 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200"
+                  disabled={userCategories.length === 0}
+                >
+                  <div className="flex items-center space-x-2">
+                    {currentCategory && (
+                      <div
+                        className={`w-3 h-3 rounded-full bg-${currentCategory.color}-500`}
+                      ></div>
+                    )}
+                    <span className="text-gray-700 font-medium">
+                      {currentCategory?.name || "카테고리 선택"}
+                    </span>
+                  </div>
+                  <ChevronDownIcon
+                    className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
+                      categoryDropdownOpen ? "rotate-180" : ""
+                    }`}
+                  />
+                </button>
+
+                {/* 드롭다운 메뉴 */}
+                {categoryDropdownOpen && (
+                  <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                    {userCategories.map((category) => (
+                      <button
+                        key={category.id}
+                        type="button"
+                        onClick={() => handleCategorySelect(category.id)}
+                        className={`w-full flex items-center justify-between px-3 py-2 text-left hover:bg-gray-50 transition-colors duration-150 ${
+                          formData.category === category.id
+                            ? "bg-blue-50 text-blue-600"
+                            : "text-gray-700"
+                        }`}
+                      >
+                        <div className="flex items-center space-x-2">
+                          <div
+                            className={`w-3 h-3 rounded-full bg-${category.color}-500`}
+                          ></div>
+                          <span className="font-medium">{category.name}</span>
+                        </div>
+                        {formData.category === category.id && (
+                          <CheckIcon className="h-4 w-4 text-blue-600" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end space-x-3 pt-4">
+            <button
+              type="button"
+              onClick={handleModalClose}
+              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
+            >
+              취소
+            </button>
+            <button
+              type="submit"
+              disabled={
+                !formData.name.trim() ||
+                !formData.category ||
+                userCategories.length === 0
+              }
+              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              저장
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
   );
 };
 

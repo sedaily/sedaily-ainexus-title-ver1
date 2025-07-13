@@ -2,7 +2,7 @@ from aws_cdk import (
     Stack,
     aws_s3 as s3,
     aws_dynamodb as dynamodb,
-    aws_opensearchservice as opensearch,
+    # aws_opensearchservice as opensearch,  # FAISS 사용으로 임시 비활성화
     aws_lambda as lambda_,
     aws_apigateway as apigateway,
     aws_iam as iam,
@@ -15,6 +15,7 @@ from aws_cdk import (
     aws_bedrock as bedrock,
     aws_sqs as sqs,
     aws_cognito as cognito,
+    aws_ec2 as ec2,
     RemovalPolicy,
     Duration,
     CfnOutput
@@ -35,7 +36,7 @@ class BedrockDiyStack(Stack):
         # 3. DynamoDB 테이블들 생성
         self.create_dynamodb_tables()
         
-        # 4. OpenSearch 도메인 생성 (임시 비활성화 - Agent만 먼저 구현)
+        # 4. OpenSearch 도메인 생성 (FAISS 사용으로 임시 비활성화)
         # self.create_opensearch_domain()
         
         # 5. SQS DLQ 생성
@@ -59,8 +60,8 @@ class BedrockDiyStack(Stack):
         # 10. API Gateway 생성
         self.create_api_gateway()
         
-        # 11. S3 이벤트 트리거 설정 (현재 비활성화)
-        # self.setup_s3_triggers()
+        # 11. S3 이벤트 트리거 설정
+        self.setup_s3_triggers()
         
         # 12. CloudWatch 알람 설정 (강화)
         self.create_cloudwatch_alarms()
@@ -77,7 +78,7 @@ class BedrockDiyStack(Stack):
         self.user_pool = cognito.UserPool(
             self, "BedrockDiyUserPool",
             user_pool_name="bedrock-diy-users",
-            self_sign_up_enabled=True,
+            self_sign_up_enabled=False,
             sign_in_aliases=cognito.SignInAliases(
                 email=True,
                 username=False
@@ -95,8 +96,8 @@ class BedrockDiyStack(Stack):
             ),
             password_policy=cognito.PasswordPolicy(
                 min_length=8,
-                require_lowercase=True,
-                require_uppercase=True,
+                require_lowercase=False,
+                require_uppercase=False,
                 require_digits=True,
                 require_symbols=True
             ),
@@ -164,6 +165,20 @@ class BedrockDiyStack(Stack):
                 s3.LifecycleRule(
                     enabled=True,
                     expiration=Duration.days(30)  # 30일 후 자동 삭제
+                )
+            ]
+        )
+
+        # FAISS 인덱스 저장용 버킷
+        self.faiss_bucket = s3.Bucket(
+            self, "FaissBucket",
+            bucket_name=f"bedrock-diy-faiss-{self.account}-{self.region}",
+            removal_policy=RemovalPolicy.DESTROY,
+            versioned=True,  # 인덱스 버전 관리
+            lifecycle_rules=[
+                s3.LifecycleRule(
+                    enabled=True,
+                    noncurrent_version_expiration=Duration.days(7)  # 이전 버전 7일 후 삭제
                 )
             ]
         )
@@ -244,81 +259,34 @@ class BedrockDiyStack(Stack):
             time_to_live_attribute="ttl"
         )
 
-        # 🆕 채팅 히스토리 테이블 (LangChain용)
-        self.chat_history_table = dynamodb.Table(
-            self, "ChatHistoryTable",
-            table_name="bedrock-diy-chat-history-auth",
-            partition_key=dynamodb.Attribute(
-                name="pk",  # projectId#userId
-                type=dynamodb.AttributeType.STRING
-            ),
-            sort_key=dynamodb.Attribute(
-                name="sk",  # TS#<epoch>
-                type=dynamodb.AttributeType.STRING
-            ),
-            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
-            removal_policy=RemovalPolicy.DESTROY,
-            time_to_live_attribute="ttl"  # 90일 후 자동 삭제
-        )
-
-        # GSI for recent messages query
-        self.chat_history_table.add_global_secondary_index(
-            index_name="role-timestamp-index",
-            partition_key=dynamodb.Attribute(
-                name="pk",
-                type=dynamodb.AttributeType.STRING
-            ),
-            sort_key=dynamodb.Attribute(
-                name="timestamp",
-                type=dynamodb.AttributeType.NUMBER
-            ),
-            projection_type=dynamodb.ProjectionType.ALL
-        )
-
-        # 🆕 채팅 세션 메타데이터 테이블
-        self.chat_session_table = dynamodb.Table(
-            self, "ChatSessionTable",
-            table_name="bedrock-diy-chat-sessions-auth",
-            partition_key=dynamodb.Attribute(
-                name="projectId",
-                type=dynamodb.AttributeType.STRING
-            ),
-            sort_key=dynamodb.Attribute(
-                name="sessionId",
-                type=dynamodb.AttributeType.STRING
-            ),
-            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
-            removal_policy=RemovalPolicy.DESTROY
-        )
-
-    def create_opensearch_domain(self):
-        """OpenSearch 도메인 생성"""
-        self.opensearch_domain = opensearch.Domain(
-            self, "OpenSearchDomain",
-            version=opensearch.EngineVersion.OPENSEARCH_2_5,
-            domain_name="bedrock-diy-search",
-            capacity=opensearch.CapacityConfig(
-                data_nodes=1,
-                data_node_instance_type="t3.small.search",
-                master_nodes=0
-            ),
-            ebs=opensearch.EbsOptions(
-                volume_size=10,
-                volume_type="gp3"
-            ),
-            zone_awareness=opensearch.ZoneAwarenessConfig(
-                enabled=False
-            ),
-            removal_policy=RemovalPolicy.DESTROY,
-            # 개발 환경용 - 프로덕션에서는 VPC 내부에 배치
-            access_policies=[
-                iam.PolicyStatement(
-                    actions=["es:*"],
-                    principals=[iam.ArnPrincipal("*")],
-                    resources=["*"]
-                )
-            ]
-        )
+    # def create_opensearch_domain(self):
+    #     """OpenSearch 도메인 생성 - FAISS 사용으로 임시 비활성화"""
+    #     self.opensearch_domain = opensearch.Domain(
+    #         self, "OpenSearchDomain",
+    #         version=opensearch.EngineVersion.OPENSEARCH_2_5,
+    #         domain_name="bedrock-diy-search",
+    #         capacity=opensearch.CapacityConfig(
+    #             data_nodes=1,
+    #             data_node_instance_type="t3.small.search",
+    #             master_nodes=0
+    #         ),
+    #         ebs=opensearch.EbsOptions(
+    #             volume_size=10,
+    #             volume_type=ec2.EbsDeviceVolumeType.GP3
+    #         ),
+    #         zone_awareness=opensearch.ZoneAwarenessConfig(
+    #             enabled=False
+    #         ),
+    #         removal_policy=RemovalPolicy.DESTROY,
+    #         # 개발 환경용 - 프로덕션에서는 VPC 내부에 배치
+    #         access_policies=[
+    #             iam.PolicyStatement(
+    #                 actions=["es:*"],
+    #                 principals=[iam.ArnPrincipal("*")],
+    #                 resources=["*"]
+    #             )
+    #         ]
+    #     )
 
     def create_sqs_dlq(self):
         """SQS DLQ 생성"""
@@ -566,27 +534,37 @@ class BedrockDiyStack(Stack):
                     "dynamodb:Scan",
                     "sqs:SendMessage",
                     "sqs:ReceiveMessage",
-                    "sns:Publish"
+                    "sns:Publish",
+                    "bedrock:InvokeModel",  # Bedrock 임베딩 모델 호출 권한
+                    # "es:ESHttpPost", # OpenSearch 접근 권한 추가
                 ],
                 resources=[
                     self.prompt_bucket.bucket_arn + "/*",
                     self.article_bucket.bucket_arn + "/*",
+                    self.faiss_bucket.bucket_arn + "/*",  # FAISS 버킷 권한 추가
                     self.project_table.table_arn,
                     self.prompt_meta_table.table_arn,
                     self.prompt_meta_table.table_arn + "/index/projectId-stepOrder-index",
                     self.conversation_table.table_arn,
                     self.execution_table.table_arn,
-                    self.chat_history_table.table_arn,
-                    self.chat_session_table.table_arn,
                     self.dlq.queue_arn,
                     self.index_queue.queue_arn,
                     self.completion_topic.topic_arn,
-                    self.error_topic.topic_arn
+                    self.error_topic.topic_arn,
+                    f"arn:aws:bedrock:{self.region}::foundation-model/amazon.titan-embed-text-v1",  # 임베딩 모델 권한
+                    # self.opensearch_domain.domain_arn + "/*", # OpenSearch 도메인 권한 추가
                 ]
             )
         )
 
-        # LangChain Layer 제거됨 - 간소화된 버전 사용
+        # FAISS Lambda Layer 생성
+        self.faiss_layer = lambda_.LayerVersion(
+            self, "FAISSLayer",
+            layer_version_name="bedrock-diy-faiss-layer",
+            code=lambda_.Code.from_asset("../lambda/layers/faiss"),
+            compatible_runtimes=[lambda_.Runtime.PYTHON_3_11],
+            description="FAISS and utilities for vector search"
+        )
 
         # 1. 제목 생성 Lambda (메인 기능)
         self.generate_lambda = lambda_.Function(
@@ -598,38 +576,21 @@ class BedrockDiyStack(Stack):
             role=lambda_role,
             timeout=Duration.minutes(3),
             memory_size=1024,
+            layers=[self.faiss_layer],  # FAISS Layer 추가
             environment={
                 "STATE_MACHINE_ARN": "",
                 "EXECUTION_TABLE": self.execution_table.table_name,
                 "PROMPT_META_TABLE": self.prompt_meta_table.table_name,
                 "PROMPT_BUCKET": self.prompt_bucket.bucket_name,
+                "FAISS_BUCKET": self.faiss_bucket.bucket_name,  # FAISS 버킷 추가
                 "BEDROCK_MODEL_ID": "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
-                "REGION": self.region
-            }
-        )
-
-        # 2. 채팅 라우터 Lambda (간소화된 버전)
-        self.langchain_router_lambda = lambda_.Function(
-            self, "LangChainRouterFunction",
-            function_name="bedrock-diy-langchain-router-auth",
-            runtime=lambda_.Runtime.PYTHON_3_11,
-            handler="langchain_router.handler",
-            code=lambda_.Code.from_asset("../lambda/langchain_router"),
-            role=lambda_role,
-            timeout=Duration.minutes(5),
-            memory_size=1024,
-            environment={
-                "CHAT_HISTORY_TABLE": self.chat_history_table.table_name,
-                "CHAT_SESSION_TABLE": self.chat_session_table.table_name,
-                "PROMPT_META_TABLE": self.prompt_meta_table.table_name,
-                "PROMPT_BUCKET": self.prompt_bucket.bucket_name,
+                "BEDROCK_EMBED_MODEL_ID": "amazon.titan-embed-text-v1",  # 임베딩 모델 추가
                 "REGION": self.region,
-                "BEDROCK_MODEL_ID": "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
-                "BEDROCK_SUMMARY_MODEL_ID": "us.anthropic.claude-3-haiku-20240307-v1:0"
+                # "OPENSEARCH_ENDPOINT": self.opensearch_domain.domain_endpoint, # 엔드포인트 환경변수 추가
             }
         )
 
-        # 3. 프로젝트 관리 Lambda
+        # 2. 프로젝트 관리 Lambda
         self.project_lambda = lambda_.Function(
             self, "ProjectFunction",
             function_name="bedrock-diy-project-auth",
@@ -646,7 +607,7 @@ class BedrockDiyStack(Stack):
             }
         )
 
-        # 4. 인증 Lambda
+        # 3. 인증 Lambda
         self.auth_lambda = lambda_.Function(
             self, "AuthFunction",
             function_name="bedrock-diy-auth-main",
@@ -663,7 +624,7 @@ class BedrockDiyStack(Stack):
             }
         )
 
-        # 5. 프롬프트 저장 Lambda (임베딩 포함)
+        # 4. 프롬프트 저장 Lambda (임베딩 포함)
         self.save_prompt_lambda = lambda_.Function(
             self, "SavePromptFunction",
             function_name="bedrock-diy-save-prompt-auth",
@@ -673,11 +634,37 @@ class BedrockDiyStack(Stack):
             role=lambda_role,
             timeout=Duration.minutes(5),
             memory_size=1024,
+            layers=[self.faiss_layer],  # FAISS Layer 추가
             environment={
                 "PROMPT_META_TABLE": self.prompt_meta_table.table_name,
                 "PROMPT_BUCKET": self.prompt_bucket.bucket_name,
-                "REGION": self.region
+                "FAISS_BUCKET": self.faiss_bucket.bucket_name,  # FAISS 버킷 추가
+                "BEDROCK_EMBED_MODEL_ID": "amazon.titan-embed-text-v1",  # 임베딩 모델 추가
+                "REGION": self.region,
+                # "OPENSEARCH_ENDPOINT": self.opensearch_domain.domain_endpoint, # 엔드포인트 환경변수 추가
             }
+        )
+        
+        # 5. 프롬프트 인덱싱 Lambda (S3 트리거용)
+        self.index_prompt_lambda = lambda_.Function(
+            self, "IndexPromptFunction",
+            function_name="bedrock-diy-index-prompt-auth",
+            runtime=lambda_.Runtime.PYTHON_3_11,
+            handler="index_prompt.handler",
+            code=lambda_.Code.from_asset("../lambda/index_prompt"),
+            role=lambda_role,
+            timeout=Duration.minutes(5),
+            memory_size=1024,
+            layers=[self.faiss_layer],  # FAISS Layer 추가
+            environment={
+                "PROMPT_META_TABLE": self.prompt_meta_table.table_name,
+                "FAISS_BUCKET": self.faiss_bucket.bucket_name,  # FAISS 버킷 추가
+                "BEDROCK_EMBED_MODEL_ID": "amazon.titan-embed-text-v1",  # 임베딩 모델 추가
+                "REGION": self.region,
+                # "OPENSEARCH_ENDPOINT": self.opensearch_domain.domain_endpoint,
+            },
+            dead_letter_queue_enabled=True,
+            dead_letter_queue=self.dlq
         )
 
         # Step Functions 관련 Lambda들 (조건부 생성)
@@ -755,16 +742,12 @@ class BedrockDiyStack(Stack):
 
     def create_api_gateway(self):
         """API Gateway 생성 - 정리된 버전"""
-        # REST API 생성
+        # REST API 생성 (CORS preflight 자동 생성 비활성화)
         self.api = apigateway.RestApi(
             self, "BedrockDiyApi",
             rest_api_name="bedrock-diy-api",
-            description="TITLE-NOMICS API - 서울경제신문 AI 제목 생성 시스템",
-            default_cors_preflight_options=apigateway.CorsOptions(
-                allow_origins=apigateway.Cors.ALL_ORIGINS,
-                allow_methods=apigateway.Cors.ALL_METHODS,
-                allow_headers=["*", "Authorization"]
-            )
+            description="서울경제신문 AI 제목 생성 시스템"
+            # default_cors_preflight_options 제거 - 수동으로 OPTIONS 메소드 추가
         )
 
         # Cognito Authorizer 생성
@@ -780,9 +763,6 @@ class BedrockDiyStack(Stack):
         
         # 프로젝트 관련 경로 생성
         self.create_project_routes()
-        
-        # 채팅 관련 경로 생성
-        self.create_chat_routes()
         
         # 프롬프트 관리 경로 생성
         self.create_prompt_routes()
@@ -820,6 +800,33 @@ class BedrockDiyStack(Stack):
             authorization_type=apigateway.AuthorizationType.COGNITO,
             authorizer=self.api_authorizer
         )
+        
+        # OPTIONS /projects (CORS preflight)
+        projects_resource.add_method(
+            "OPTIONS",
+            apigateway.MockIntegration(
+                integration_responses=[{
+                    'statusCode': '200',
+                    'responseParameters': {
+                        'method.response.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                        'method.response.header.Access-Control-Allow-Origin': "'*'",
+                        'method.response.header.Access-Control-Allow-Methods': "'GET,POST,PUT,DELETE,OPTIONS'"
+                    }
+                }],
+                request_templates={
+                    'application/json': '{"statusCode": 200}'
+                }
+            ),
+            method_responses=[{
+                'statusCode': '200',
+                'responseParameters': {
+                    'method.response.header.Access-Control-Allow-Headers': True,
+                    'method.response.header.Access-Control-Allow-Origin': True,
+                    'method.response.header.Access-Control-Allow-Methods': True
+                }
+            }],
+            authorization_type=apigateway.AuthorizationType.NONE
+        )
 
         # /projects/{id} 리소스
         project_resource = projects_resource.add_resource("{projectId}")
@@ -831,6 +838,33 @@ class BedrockDiyStack(Stack):
             authorization_type=apigateway.AuthorizationType.COGNITO,
             authorizer=self.api_authorizer
         )
+        
+        # OPTIONS /projects/{id} (CORS preflight)
+        project_resource.add_method(
+            "OPTIONS",
+            apigateway.MockIntegration(
+                integration_responses=[{
+                    'statusCode': '200',
+                    'responseParameters': {
+                        'method.response.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                        'method.response.header.Access-Control-Allow-Origin': "'*'",
+                        'method.response.header.Access-Control-Allow-Methods': "'GET,POST,PUT,DELETE,OPTIONS'"
+                    }
+                }],
+                request_templates={
+                    'application/json': '{"statusCode": 200}'
+                }
+            ),
+            method_responses=[{
+                'statusCode': '200',
+                'responseParameters': {
+                    'method.response.header.Access-Control-Allow-Headers': True,
+                    'method.response.header.Access-Control-Allow-Origin': True,
+                    'method.response.header.Access-Control-Allow-Methods': True
+                }
+            }],
+            authorization_type=apigateway.AuthorizationType.NONE
+        )
 
         # POST /projects/{id}/generate (제목 생성)
         generate_resource = project_resource.add_resource("generate")
@@ -839,6 +873,33 @@ class BedrockDiyStack(Stack):
             apigateway.LambdaIntegration(self.generate_lambda),
             authorization_type=apigateway.AuthorizationType.COGNITO,
             authorizer=self.api_authorizer
+        )
+        
+        # OPTIONS /projects/{id}/generate (CORS preflight)
+        generate_resource.add_method(
+            "OPTIONS",
+            apigateway.MockIntegration(
+                integration_responses=[{
+                    'statusCode': '200',
+                    'responseParameters': {
+                        'method.response.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                        'method.response.header.Access-Control-Allow-Origin': "'*'",
+                        'method.response.header.Access-Control-Allow-Methods': "'GET,POST,PUT,DELETE,OPTIONS'"
+                    }
+                }],
+                request_templates={
+                    'application/json': '{"statusCode": 200}'
+                }
+            ),
+            method_responses=[{
+                'statusCode': '200',
+                'responseParameters': {
+                    'method.response.header.Access-Control-Allow-Headers': True,
+                    'method.response.header.Access-Control-Allow-Origin': True,
+                    'method.response.header.Access-Control-Allow-Methods': True
+                }
+            }],
+            authorization_type=apigateway.AuthorizationType.NONE
         )
 
         # GET /projects/{id}/upload-url (파일 업로드용 pre-signed URL)
@@ -849,45 +910,32 @@ class BedrockDiyStack(Stack):
             authorization_type=apigateway.AuthorizationType.COGNITO,
             authorizer=self.api_authorizer
         )
-
-    def create_chat_routes(self):
-        """채팅 관련 API 경로 생성"""
-        projects_resource = self.api.root.get_resource("projects")
-        project_resource = projects_resource.get_resource("{projectId}")
         
-        # POST /projects/{id}/chat (LangChain 채팅 - 프롬프트 체이닝)
-        chat_resource = project_resource.add_resource("chat")
-        chat_resource.add_method(
-            "POST",
-            apigateway.LambdaIntegration(self.langchain_router_lambda),
-            authorization_type=apigateway.AuthorizationType.COGNITO,
-            authorizer=self.api_authorizer
-        )
-
-        # GET /projects/{id}/chat/sessions (채팅 세션 목록)
-        chat_sessions_resource = chat_resource.add_resource("sessions")
-        chat_sessions_resource.add_method(
-            "GET",
-            apigateway.LambdaIntegration(self.langchain_router_lambda),
-            authorization_type=apigateway.AuthorizationType.COGNITO,
-            authorizer=self.api_authorizer
-        )
-
-        # GET /projects/{id}/chat/sessions/{sessionId} (채팅 히스토리)
-        chat_session_resource = chat_sessions_resource.add_resource("{sessionId}")
-        chat_session_resource.add_method(
-            "GET",
-            apigateway.LambdaIntegration(self.langchain_router_lambda),
-            authorization_type=apigateway.AuthorizationType.COGNITO,
-            authorizer=self.api_authorizer
-        )
-
-        # DELETE /projects/{id}/chat/sessions/{sessionId} (채팅 세션 삭제)
-        chat_session_resource.add_method(
-            "DELETE",
-            apigateway.LambdaIntegration(self.langchain_router_lambda),
-            authorization_type=apigateway.AuthorizationType.COGNITO,
-            authorizer=self.api_authorizer
+        # OPTIONS /projects/{id}/upload-url (CORS preflight)
+        upload_url_resource.add_method(
+            "OPTIONS",
+            apigateway.MockIntegration(
+                integration_responses=[{
+                    'statusCode': '200',
+                    'responseParameters': {
+                        'method.response.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                        'method.response.header.Access-Control-Allow-Origin': "'*'",
+                        'method.response.header.Access-Control-Allow-Methods': "'GET,POST,PUT,DELETE,OPTIONS'"
+                    }
+                }],
+                request_templates={
+                    'application/json': '{"statusCode": 200}'
+                }
+            ),
+            method_responses=[{
+                'statusCode': '200',
+                'responseParameters': {
+                    'method.response.header.Access-Control-Allow-Headers': True,
+                    'method.response.header.Access-Control-Allow-Origin': True,
+                    'method.response.header.Access-Control-Allow-Methods': True
+                }
+            }],
+            authorization_type=apigateway.AuthorizationType.NONE
         )
 
     def create_prompt_routes(self):
@@ -911,6 +959,33 @@ class BedrockDiyStack(Stack):
             authorizer=self.api_authorizer
         )
         
+        # OPTIONS /prompts/{projectId} (CORS preflight)
+        prompts_project_resource.add_method(
+            "OPTIONS",
+            apigateway.MockIntegration(
+                integration_responses=[{
+                    'statusCode': '200',
+                    'responseParameters': {
+                        'method.response.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                        'method.response.header.Access-Control-Allow-Origin': "'*'",
+                        'method.response.header.Access-Control-Allow-Methods': "'GET,POST,PUT,DELETE,OPTIONS'"
+                    }
+                }],
+                request_templates={
+                    'application/json': '{"statusCode": 200}'
+                }
+            ),
+            method_responses=[{
+                'statusCode': '200',
+                'responseParameters': {
+                    'method.response.header.Access-Control-Allow-Headers': True,
+                    'method.response.header.Access-Control-Allow-Origin': True,
+                    'method.response.header.Access-Control-Allow-Methods': True
+                }
+            }],
+            authorization_type=apigateway.AuthorizationType.NONE
+        )
+        
         # /prompts/{projectId}/{promptId} 리소스
         prompt_card_resource = prompts_project_resource.add_resource("{promptId}")
         
@@ -928,6 +1003,33 @@ class BedrockDiyStack(Stack):
             apigateway.LambdaIntegration(self.save_prompt_lambda),
             authorization_type=apigateway.AuthorizationType.COGNITO,
             authorizer=self.api_authorizer
+        )
+        
+        # OPTIONS /prompts/{projectId}/{promptId} (CORS preflight)
+        prompt_card_resource.add_method(
+            "OPTIONS",
+            apigateway.MockIntegration(
+                integration_responses=[{
+                    'statusCode': '200',
+                    'responseParameters': {
+                        'method.response.header.Access-Control-Allow-Headers': "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+                        'method.response.header.Access-Control-Allow-Origin': "'*'",
+                        'method.response.header.Access-Control-Allow-Methods': "'GET,POST,PUT,DELETE,OPTIONS'"
+                    }
+                }],
+                request_templates={
+                    'application/json': '{"statusCode": 200}'
+                }
+            ),
+            method_responses=[{
+                'statusCode': '200',
+                'responseParameters': {
+                    'method.response.header.Access-Control-Allow-Headers': True,
+                    'method.response.header.Access-Control-Allow-Origin': True,
+                    'method.response.header.Access-Control-Allow-Methods': True
+                }
+            }],
+            authorization_type=apigateway.AuthorizationType.NONE
         )
 
     def create_step_functions(self):
@@ -1003,7 +1105,6 @@ class BedrockDiyStack(Stack):
         lambda_funcs = [
             (self.generate_lambda, "Generate"),
             (self.project_lambda, "Project"),
-            (self.langchain_router_lambda, "LangChainRouter"),
             (self.save_prompt_lambda, "SavePrompt"),
             (self.auth_lambda, "Auth")
         ]
@@ -1060,6 +1161,14 @@ class BedrockDiyStack(Stack):
             ]
         )
 
+    def setup_s3_triggers(self):
+        """S3 이벤트 트리거 설정"""
+        self.prompt_bucket.add_event_notification(
+            s3.EventType.OBJECT_CREATED,
+            s3_notifications.LambdaDestination(self.index_prompt_lambda),
+            s3.NotificationKeyFilter(prefix="prompts/")
+        )
+
     def create_outputs(self):
         """CDK 출력값 생성"""
         CfnOutput(
@@ -1089,6 +1198,13 @@ class BedrockDiyStack(Stack):
         )
         
         CfnOutput(
+            self, "FaissBucketName",
+            value=self.faiss_bucket.bucket_name,
+            description="FAISS 인덱스 S3 버킷 이름",
+            export_name="FaissBucketName"
+        )
+        
+        CfnOutput(
             self, "BedrockAgentId",
             value=self.bedrock_agent.attr_agent_id,
             description="Bedrock Agent ID",
@@ -1103,7 +1219,7 @@ class BedrockDiyStack(Stack):
         )
         
         # CfnOutput(
-        #     self, "OpenSearchEndpoint",
+        #     self, "OpenSearchEndpoint", 
         #     value=self.opensearch_domain.domain_endpoint,
         #     description="OpenSearch 도메인 엔드포인트"
         # )

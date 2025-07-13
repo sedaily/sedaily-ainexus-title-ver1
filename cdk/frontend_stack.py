@@ -64,7 +64,7 @@ class FrontendStack(Stack):
         behaviors = {
             # 정적 파일들은 캐싱
             "*.js": cloudfront.BehaviorOptions(
-                origin=origins.S3BucketOrigin(
+                origin=origins.S3Origin(
                     self.website_bucket,
                     origin_access_identity=origin_access_identity
                 ),
@@ -73,7 +73,7 @@ class FrontendStack(Stack):
                 compress=True
             ),
             "*.css": cloudfront.BehaviorOptions(
-                origin=origins.S3BucketOrigin(
+                origin=origins.S3Origin(
                     self.website_bucket,
                     origin_access_identity=origin_access_identity
                 ),
@@ -100,7 +100,7 @@ class FrontendStack(Stack):
         self.distribution = cloudfront.Distribution(
             self, "Distribution",
             default_behavior=cloudfront.BehaviorOptions(
-                origin=origins.S3BucketOrigin(
+                origin=origins.S3Origin(
                     self.website_bucket,
                     origin_access_identity=origin_access_identity
                 ),

@@ -3,6 +3,7 @@ from aws_cdk import (
     aws_s3 as s3,
     aws_cloudfront as cloudfront,
     aws_cloudfront_origins as origins,
+    aws_apigateway as apigateway,
     aws_s3_deployment as s3_deployment,
     aws_certificatemanager as acm,
     aws_route53 as route53,
@@ -18,7 +19,7 @@ import os
 import urllib.parse
 
 class FrontendStack(Stack):
-    def __init__(self, scope: Construct, construct_id: str, api_gateway_url: str = None, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, api_gateway_url: str | None = None, rest_api: apigateway.RestApi | None = None, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
         
         # S3 버킷 생성 (정적 웹사이트 호스팅)
@@ -49,17 +50,26 @@ class FrontendStack(Stack):
         self.website_bucket.grant_read(origin_access_identity)
         
         # API Gateway URL 처리
-        origin_path = ""
-        if api_gateway_url:
-            parsed = urllib.parse.urlparse(api_gateway_url)
-            api_domain = parsed.netloc or parsed.path  # netloc 없을 때 대비
-            origin_path = parsed.path if parsed.path not in ("", "/") else ""
+        api_origin_for_behavior = None
+        if rest_api is not None:
+            api_origin_for_behavior = origins.RestApiOrigin(
+                rest_api,
+                origin_path=f"/{rest_api.deployment_stage.stage_name}",
+            )
+            api_domain = "via-rest-api-object"
         else:
-            # 백엔드 스택에서 가져오기 (Cross-stack reference)
-            try:
-                api_domain = Fn.import_value("ApiGatewayDomain")
-            except:
-                api_domain = "api.example.com"  # 기본값
+            origin_path = ""
+            if api_gateway_url:
+                parsed = urllib.parse.urlparse(api_gateway_url)
+                api_domain = parsed.netloc or parsed.path
+                origin_path = parsed.path if parsed.path not in ("", "/") else ""
+                api_origin_for_behavior = origins.HttpOrigin(
+                    api_domain,
+                    origin_path=origin_path,
+                    protocol_policy=cloudfront.OriginProtocolPolicy.HTTPS_ONLY,
+                )
+            else:
+                api_origin_for_behavior = None
         
         # CloudFront 동작 설정
         behaviors = {
@@ -85,13 +95,9 @@ class FrontendStack(Stack):
         }
         
         # API 프록시 설정 (API Gateway가 있는 경우에만)
-        if api_domain != "api.example.com":
+        if api_origin_for_behavior is not None:
             behaviors["/api/*"] = cloudfront.BehaviorOptions(
-                origin=origins.HttpOrigin(
-                    api_domain,
-                    origin_path=origin_path,
-                    protocol_policy=cloudfront.OriginProtocolPolicy.HTTPS_ONLY
-                ),
+                origin=api_origin_for_behavior,
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
                 allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,

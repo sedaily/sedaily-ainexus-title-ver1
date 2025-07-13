@@ -10,6 +10,7 @@ from aws_cdk import (
     CfnOutput,
     RemovalPolicy,
     Duration,
+    Size,
     Fn
 )
 from constructs import Construct
@@ -141,7 +142,7 @@ class FrontendStack(Stack):
                 distribution_paths=["/*"],
                 retain_on_delete=False,
                 memory_limit=512,
-                ephemeral_storage_size=512,
+                ephemeral_storage_size=Size.mebibytes(512),
                 prune=True  # 이전 파일 정리
             )
         

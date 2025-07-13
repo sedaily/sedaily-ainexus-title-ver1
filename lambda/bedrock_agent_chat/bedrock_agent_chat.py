@@ -32,7 +32,13 @@ def handler(event, context):
         http_method = event.get("httpMethod", "POST")
         path = event.get("path", "")
         
-        if http_method == "POST" and "/agent-chat" in path and "/sessions" not in path:
+        if http_method == "OPTIONS":
+            return {
+                "statusCode": 200,
+                "headers": get_cors_headers(),
+                "body": ""
+            }
+        elif http_method == "POST" and "/agent-chat" in path and "/sessions" not in path:
             return handle_agent_chat_message(event)
         elif http_method == "GET" and "/sessions" in path:
             if event.get("pathParameters", {}).get("sessionId"):

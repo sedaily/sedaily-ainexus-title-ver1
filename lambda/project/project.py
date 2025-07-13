@@ -22,9 +22,10 @@ except ImportError:
     
     def get_cors_headers():
         return {
+            'Content-Type': 'application/json',
             'Access-Control-Allow-Origin': '*',
             'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-            'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
+            'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
         }
 
 # 로깅 설정
@@ -76,9 +77,9 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         
         # 경로별 라우팅
         if 'upload-url' in event.get('resource', ''):
-            return generate_upload_url(event)
+            return get_upload_url(event)
         elif path_parameters.get('projectId'):
-            return get_project_detail(event)
+            return get_project(event)
         elif http_method == 'POST':
             return create_project(event)
         elif http_method == 'GET':
@@ -369,8 +370,8 @@ def get_cors_headers() -> Dict[str, str]:
     return {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'
     }
 
 def create_error_response(status_code: int, message: str) -> Dict[str, Any]:

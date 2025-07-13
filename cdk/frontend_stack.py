@@ -15,6 +15,7 @@ from aws_cdk import (
 )
 from constructs import Construct
 import os
+import urllib.parse
 
 class FrontendStack(Stack):
     def __init__(self, scope: Construct, construct_id: str, api_gateway_url: str = None, **kwargs) -> None:
@@ -48,11 +49,11 @@ class FrontendStack(Stack):
         self.website_bucket.grant_read(origin_access_identity)
         
         # API Gateway URL 처리
+        origin_path = ""
         if api_gateway_url:
-            # URL에서 도메인 추출 (https:// 제거)
-            api_domain = api_gateway_url.replace("https://", "").replace("http://", "")
-            if api_domain.endswith("/"):
-                api_domain = api_domain[:-1]
+            parsed = urllib.parse.urlparse(api_gateway_url)
+            api_domain = parsed.netloc or parsed.path  # netloc 없을 때 대비
+            origin_path = parsed.path if parsed.path not in ("", "/") else ""
         else:
             # 백엔드 스택에서 가져오기 (Cross-stack reference)
             try:
@@ -88,6 +89,7 @@ class FrontendStack(Stack):
             behaviors["/api/*"] = cloudfront.BehaviorOptions(
                 origin=origins.HttpOrigin(
                     api_domain,
+                    origin_path=origin_path,
                     protocol_policy=cloudfront.OriginProtocolPolicy.HTTPS_ONLY
                 ),
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,

@@ -35,6 +35,13 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         http_method = event['httpMethod']
         path = event['path']
         
+        if http_method == 'OPTIONS':
+            return {
+                'statusCode': 200,
+                'headers': get_cors_headers(),
+                'body': ''
+            }
+        
         # 라우팅
         if http_method == 'POST' and path == '/auth/signup':
             return signup(event)
@@ -314,7 +321,8 @@ def confirm_password(event: Dict[str, Any]) -> Dict[str, Any]:
 def get_cors_headers() -> Dict[str, str]:
     """CORS 헤더 반환"""
     return {
+        'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
         'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-        'Access-Control-Allow-Methods': 'OPTIONS,POST,GET,PUT,DELETE'
+        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
     }

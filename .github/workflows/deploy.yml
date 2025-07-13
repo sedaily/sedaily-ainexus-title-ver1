@@ -10,6 +10,7 @@ env:
   AWS_REGION: us-east-1
   NODE_VERSION: 20
   PYTHON_VERSION: 3.11
+  CDK_VERSION: 2.204.0
 
 jobs:
   build:
@@ -65,7 +66,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install CDK CLI
-        run: npm install -g aws-cdk@2.204
+        run: npm install -g aws-cdk@${{ env.CDK_VERSION }}
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

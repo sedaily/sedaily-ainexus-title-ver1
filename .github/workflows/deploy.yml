@@ -10,7 +10,7 @@ env:
   AWS_REGION: us-east-1
   NODE_VERSION: 20
   PYTHON_VERSION: 3.11
-  CDK_VERSION: 2.204.0
+  CDK_VERSION: 2
 
 jobs:
   build:

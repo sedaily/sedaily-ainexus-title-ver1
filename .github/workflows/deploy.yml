@@ -65,7 +65,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install CDK CLI
-        run: npm install -g aws-cdk@2
+        run: npm install -g aws-cdk@2.204
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4

@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import aws_cdk as cdk
 from bedrock_stack import BedrockDiyStack
+from frontend_stack import FrontendStack
 # from performance_optimization_stack import PerformanceOptimizationStack
 # from cicd_stack import CICDStack
 
@@ -39,8 +40,10 @@ backend_stack = BedrockDiyStack(app, "BedrockDiyAuthStack",
 #     env=env
 # )
 
-# 스택 간 의존성 설정 - 임시 주석 처리
-# performance_stack.add_dependency(backend_stack)
-# cicd_stack.add_dependency(backend_stack)
+# 새로운 프론트엔드 스택 추가
+frontend_stack = FrontendStack(app, "FrontendStack", api_gateway_url=backend_stack.api.url, env=env)
+
+# 스택 간 의존성 설정
+frontend_stack.add_dependency(backend_stack)
 
 app.synth() 

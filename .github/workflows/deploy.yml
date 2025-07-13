@@ -129,6 +129,8 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Build and Deploy Frontend
+        env:
+          CI: false
         run: |
           cd frontend
           npm ci

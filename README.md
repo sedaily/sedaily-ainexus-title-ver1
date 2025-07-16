@@ -279,12 +279,12 @@ erDiagram
         json metadata
     }
 
-    USERS ||--o{ PROJECTS : "creates"
-    USERS ||--o{ PROMPTS : "owns"
-    PROJECTS ||--o{ CONVERSATIONS : "contains"
-    PROMPTS ||--o{ CONVERSATIONS : "uses"
-    CONVERSATIONS ||--o| S3_OBJECTS : "references"
-    PROMPTS ||--o| S3_OBJECTS : "stores_template"
+    USERS ||--o{ PROJECTS : creates
+    USERS ||--o{ PROMPTS : owns
+    PROJECTS ||--o{ CONVERSATIONS : contains
+    PROMPTS ||--o{ CONVERSATIONS : uses
+    CONVERSATIONS ||--o| S3_OBJECTS : references
+    PROMPTS ||--o| S3_OBJECTS : stores_template
 ```
 
 ---

@@ -226,57 +226,48 @@ sequenceDiagram
 ```mermaid
 erDiagram
     USERS {
-        string user_id PK
+        string userId PK
         string email
         string name
-        timestamp created_at
-        string subscription_tier
+        timestamp createdAt
+        string subscriptionTier
     }
 
     PROJECTS {
-        string user_id PK
-        string project_id SK
+        string userId PK
+        string projectId SK
         string name
         string description
         json tags
-        timestamp created_at
-        timestamp updated_at
-        number conversation_count
+        timestamp createdAt
+        timestamp updatedAt
+        number conversationCount
     }
 
     PROMPTS {
-        string prompt_id PK
-        string user_id
+        string promptId PK
+        string userId
         string title
         string description
         text template
         json variables
         string category
-        boolean is_public
-        timestamp created_at
-        string s3_reference
+        boolean isPublic
+        timestamp createdAt
+        string s3Reference
     }
 
     CONVERSATIONS {
-        string project_id PK
+        string projectId PK
         string timestamp SK
-        string user_id
-        text user_input
-        text ai_response
-        string prompt_id
-        number tokens_used
-        number processing_time
+        string userId
+        text userInput
+        text aiResponse
+        string promptId
+        number tokensUsed
+        number processingTime
         json metadata
         number ttl
-    }
-
-    S3_OBJECTS {
-        string object_key PK
-        string bucket_name
-        string content_type
-        number size_bytes
-        timestamp created_at
-        json metadata
     }
 
     USERS ||--o{ PROJECTS : creates

@@ -39,10 +39,14 @@ backend_stack = BedrockDiyStack(app, "BedrockDiyAuthStack",
 #     env=env
 # )
 
-# 4. 프론트엔드 스택 (필요시 활성화)
-# frontend_stack = FrontendStack(app, "FrontendStack", rest_api=backend_stack.api, env=env)
+# 4. 프론트엔드 스택 활성화 - S3 + CloudFront 정적 호스팅
+frontend_stack = FrontendStack(app, "FrontendStack", 
+    api_gateway_url=backend_stack.api.url,
+    rest_api=backend_stack.api, 
+    env=env
+)
 
 # 스택 간 의존성 설정
-# frontend_stack.add_dependency(backend_stack)
+frontend_stack.add_dependency(backend_stack)
 
 app.synth() 

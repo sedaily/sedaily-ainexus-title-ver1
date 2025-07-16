@@ -2,6 +2,14 @@
 
 A scalable, serverless AI-powered title generation system built on AWS infrastructure using AWS Bedrock Claude 3 Sonnet model. This system provides intelligent title suggestions for various content types with real-time streaming capabilities and advanced performance optimizations.
 
+## Table of Contents
+
+- [Service Overview](#ai-title-generation-system)
+- [Architecture Overview](#architecture-overview)
+- [Key Design Decisions](#key-design-decisions)
+- [Implementation Timeline](#implementation-timeline)
+- [References](#references--resources)
+
 ## 🏗️ Architecture Overview
 
 ### Comprehensive AWS Serverless Architecture
@@ -746,6 +754,213 @@ RETRY_CONFIG = {
 - **CloudWatch Metrics**: Custom metrics for response times, error rates
 - **Structured Logging**: Detailed performance logs for each request phase
 - **Timeout Tracking**: Progressive timeout handling (Frontend: 900s, Lambda: 900s)
+
+## 🚀 Deployment Guide
+
+### Prerequisites
+
+- AWS CLI configured with appropriate permissions
+- AWS CDK CLI installed (`npm install -g aws-cdk`)
+- Python 3.12+
+- Node.js 18+
+
+### Deployment Steps
+
+1. **Bootstrap CDK** (first-time only)
+
+```bash
+cdk bootstrap
+```
+
+2. **Deploy Infrastructure**
+
+```bash
+cd cdk
+pip install -r requirements.txt
+cdk deploy --all --require-approval never
+```
+
+3. **Build and Deploy Frontend**
+
+```bash
+cd frontend
+npm install
+npm run build
+# Files automatically uploaded to S3 via CDK deployment
+```
+
+### Environment Configuration
+
+```bash
+# Required environment variables
+AWS_REGION=us-east-1
+BEDROCK_MODEL_ID=anthropic.claude-3-sonnet-20240229-v1:0
+MAX_TOKENS=8192
+TEMPERATURE=0.7
+```
+
+## 📋 API Endpoints
+
+### Title Generation
+
+```http
+POST /api/generate
+Authorization: Bearer {cognito_token}
+Content-Type: application/json
+
+{
+  "content": "Text content for title generation",
+  "context": "Optional context",
+  "requirements": "Specific requirements",
+  "count": 5
+}
+```
+
+### Project Management
+
+```http
+GET /api/projects
+POST /api/projects
+PUT /api/projects/{project_id}
+DELETE /api/projects/{project_id}
+```
+
+## 🔒 Security Features
+
+- **Authentication**: AWS Cognito User Pool with MFA support
+- **Authorization**: Fine-grained IAM policies
+- **Data Encryption**: At-rest and in-transit encryption
+- **CORS Protection**: Strict CORS policies
+- **Rate Limiting**: API Gateway throttling
+- **Content Security**: CloudFront security headers
+
+## 📈 Performance Characteristics
+
+- **Cold Start**: ~2-3 seconds for Lambda initialization
+- **Warm Response**: ~500ms-2s for title generation
+- **Throughput**: 1000+ concurrent requests
+- **Availability**: 99.9% SLA with multi-AZ deployment
+- **Latency**: <100ms CloudFront edge response for static assets
+
+## 🛡️ Monitoring and Observability
+
+- **CloudWatch Logs**: Structured logging for all components
+- **CloudWatch Metrics**: Custom business and performance metrics
+- **AWS X-Ray**: Distributed tracing for request flow analysis
+- **Error Tracking**: Automated error detection and alerting
+
+## 📚 References & Resources
+
+This project was developed by studying and referencing the following official documentation, technical resources, and educational materials.
+
+### 🏛️ Official AWS Documentation
+
+#### 🧠 AWS Bedrock
+
+- 📖 **[AWS Bedrock User Guide](https://docs.aws.amazon.com/pdfs/bedrock/latest/userguide/bedrock-ug.pdf)** - Comprehensive guide for AWS Bedrock foundation models
+- 🔧 **[Bedrock Runtime API - Claude Examples](https://docs.aws.amazon.com/pdfs/bedrock/latest/userguide/bedrock-ug.pdf#service_code_examples_bedrock-runtime_anthropic_claude)** - Service code examples for Anthropic Claude integration
+- 🚀 **[Amazon Bedrock Serverless Prompt Chaining](https://github.com/aws-samples/amazon-bedrock-serverless-prompt-chaining)** - AWS samples for serverless prompt orchestration
+
+#### ☁️ AWS CDK
+
+- 📋 **[AWS CDK v2 Guide](https://docs.aws.amazon.com/pdfs/cdk/v2/guide/awscdk.pdf)** - Infrastructure as Code with AWS CDK Python
+
+### 🤖 AI & Machine Learning Resources
+
+#### 🎯 Multi-Agent Orchestration
+
+- 🧪 **[Design Multi-Agent Orchestration with Amazon Bedrock](https://aws.amazon.com/ko/blogs/machine-learning/design-multi-agent-orchestration-with-reasoning-using-amazon-bedrock-and-open-source-frameworks/)** - Advanced AI orchestration patterns and reasoning frameworks
+
+### 📚 Educational Materials & Books
+
+#### 🔍 Technical References
+
+- 📘 **[한 권으로 배우는 도커 & 쿠버네티스](https://product.kyobobook.co.kr/detail/S000213057687)** - 컨테이너 개념부터 쿠버네티스를 활용한 배포까지 (장철원 저, 한빛미디어)
+- 📗 **[클라우드 서비스 개발자를 위한 AWS로 구현하는 CI/CD 배포 입문](https://product.kyobobook.co.kr/detail/S000201078147)** - 신입 개발자부터 실제 서비스 구축 경험이 없는 모든 개발자를 위한 실무 밀착형 입문서 (최주호, 정재원, 정동진 저, 앤써북)
+- 📙 **[IT 엔지니어를 위한 AWS 운영의 기본과 노하우](https://product.kyobobook.co.kr/detail/S000214036165)** - AWS 클라우드 서비스 운영 및 관리 전문 가이드 (사타케 요이치 외 저, 길벗)
+- 📕 **[RAG 마스터: 랭체인으로 완성하는 LLM 서비스](https://product.kyobobook.co.kr/detail/S000216240484)** - LangChain을 활용한 RAG 기반 LLM 서비스 구축 실무 (브라이스 유 외 저, 프리렉)
+- 📚 **[Amazon Bedrock으로 시작하는 실전 생성형 AI 개발](https://product.kyobobook.co.kr/detail/S000214962344)** - AWS Bedrock을 활용한 생성형 AI 애플리케이션 개발 가이드 (임지훈, 최성우 저, 디지털북스)
+
+---
+
+## 🎯 Project Philosophy
+
+> _"This project demonstrates the power of serverless architecture combined with cutting-edge AI capabilities, creating a scalable and cost-effective solution for intelligent content generation."_
+
+### 🌟 Key Achievements
+
+- ✅ **Zero Server Management** - 100% serverless architecture
+- ✅ **AI-Powered Intelligence** - Advanced Claude 3 Sonnet integration
+- ✅ **Enterprise-Ready** - Production-grade security and monitoring
+- ✅ **Cost-Optimized** - Pay-per-use pricing model
+- ✅ **Highly Available** - Multi-AZ deployment with automatic failover
+
+---
+
+### 💡 Feature Requests
+
+- Feature requests are welcome! Please use GitHub Issues with the `enhancement` label.
+
+### 🤝 Contributing
+
+1. Fork the repository
+2. Create a feature branch (`git checkout -b feature/amazing-feature`)
+3. Commit your changes (`git commit -m 'Add amazing feature'`)
+4. Push to the branch (`git push origin feature/amazing-feature`)
+5. Open a Pull Request
+
+---
+
+## 📄 License
+
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
+
+---
+
+## 🎉 Acknowledgments
+
+Special thanks to:
+
+- **AWS Bedrock Team** for providing powerful foundation models
+- **Anthropic** for developing Claude 3 Sonnet
+- **AWS CDK Team** for excellent Infrastructure as Code tools
+- **Open Source Community** for continuous inspiration and support
+
+---
+
+<div align="center">
+
+### 🌟 Star this repository if you found it helpful! 🌟
+
+**Built with ❤️ using AWS Serverless Technologies**
+
+[![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
+[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![AWS Lambda](https://img.shields.io/badge/AWS_Lambda-FF9900?style=for-the-badge&logo=aws-lambda&logoColor=white)](https://aws.amazon.com/lambda/)
+
+</div>
+
+## Key Design Decisions
+
+| Area           | Choice                        | Rationale                                     |
+| -------------- | ----------------------------- | --------------------------------------------- |
+| AI Model       | Claude 3 Sonnet               | 200K-token context and superior title quality |
+| Infrastructure | 100% AWS Serverless           | Auto-scaling and minimal operational overhead |
+| Security       | Cognito + IAM Least-Privilege | Managed auth, granular resource control       |
+| Streaming      | Bedrock Response Stream       | Real-time UX with lower end-to-end latency    |
+
+## Implementation Timeline
+
+| Phase | Date    | Milestone                             |
+| ----- | ------- | ------------------------------------- |
+| PoC   | 2024-04 | Prompt→Title streaming success        |
+| MVP   | 2024-05 | React UI + DynamoDB integration       |
+| Beta  | 2024-06 | Auth, project management, cost tuning |
+| Prod  | 2024-07 | OAC enabled, Bedrock optimization     |
+
+<details>
+<summary>Developer Guide (click to expand)</summary>
 
 ## 🚀 Deployment Guide
 

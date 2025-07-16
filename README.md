@@ -4,23 +4,311 @@ A scalable, serverless AI-powered title generation system built on AWS infrastru
 
 ## 🏗️ Architecture Overview
 
+### Comprehensive AWS Serverless Architecture
+
+```mermaid
+graph TB
+    subgraph "Frontend Layer"
+        Browser[User Browser]
+        ReactApp[React SPA Application]
+        LocalStorage[Browser Local Storage]
+    end
+
+    subgraph "CDN and Static Hosting"
+        CloudFront[CloudFront Distribution]
+        S3Static[S3 Static Bucket]
+    end
+
+    subgraph "API Gateway Layer"
+        APIGateway[API Gateway REST API]
+        Authorizer[Cognito Authorizer]
+        RequestValidator[Request Validation]
+    end
+
+    subgraph "Authentication Service"
+        CognitoPool[Cognito User Pool]
+        CognitoClient[Cognito App Client]
+    end
+
+    subgraph "Lambda Functions"
+        GenerateLambda[Generate Function<br/>Python 3.12, 3008MB, 900s]
+        ProjectLambda[Project Management Function<br/>Python 3.12, 512MB, 30s]
+        AuthLambda[Authentication Function<br/>Python 3.12, 256MB, 10s]
+        PromptLambda[Prompt Management Function<br/>Python 3.12, 512MB, 30s]
+    end
+
+    subgraph "AI Processing Service"
+        BedrockRuntime[AWS Bedrock Runtime]
+        ClaudeModel[Claude 3 Sonnet Model]
+    end
+
+    subgraph "Data Storage Layer"
+        ProjectsTable[(Projects Table<br/>user_id, project_id)]
+        ConversationsTable[(Conversations Table<br/>project_id, timestamp)]
+        PromptsTable[(Prompts Table<br/>prompt_id, user_id)]
+        S3DataBucket[S3 Data Storage]
+    end
+
+    subgraph "Monitoring and Logging"
+        CloudWatchLogs[CloudWatch Logs]
+        XRayTracing[X-Ray Distributed Tracing]
+        CloudWatchMetrics[CloudWatch Custom Metrics]
+    end
+
+    Browser --> ReactApp
+    ReactApp --> CloudFront
+    CloudFront --> S3Static
+    ReactApp --> APIGateway
+
+    APIGateway --> Authorizer
+    Authorizer --> CognitoPool
+
+    APIGateway --> GenerateLambda
+    APIGateway --> ProjectLambda
+    APIGateway --> AuthLambda
+    APIGateway --> PromptLambda
+
+    GenerateLambda --> BedrockRuntime
+    BedrockRuntime --> ClaudeModel
+
+    ProjectLambda --> ProjectsTable
+    GenerateLambda --> ConversationsTable
+    PromptLambda --> PromptsTable
+    GenerateLambda --> S3DataBucket
+
+    GenerateLambda --> CloudWatchLogs
+    GenerateLambda --> XRayTracing
+    GenerateLambda --> CloudWatchMetrics
 ```
-┌─────────────────┐    ┌──────────────┐    ┌─────────────────┐
-│   React SPA     │◄──►│  CloudFront  │◄──►│   S3 Bucket     │
-│  (Frontend)     │    │     CDN      │    │ (Static Assets) │
-└─────────────────┘    └──────────────┘    └─────────────────┘
-         │                       │
-         ▼                       ▼
-┌─────────────────┐    ┌──────────────┐
-│  API Gateway    │◄──►│    Lambda    │
-│   (REST API)    │    │  Functions   │
-└─────────────────┘    └──────────────┘
-         │                       │
-         ▼                       ▼
-┌─────────────────┐    ┌──────────────┐    ┌─────────────────┐
-│   DynamoDB      │    │ AWS Bedrock  │    │  Cognito User   │
-│   (Database)    │    │ Claude 3     │    │     Pool        │
-└─────────────────┘    └──────────────┘    └─────────────────┘
+
+### User Workflow: Prompt Creation and Storage Process
+
+```mermaid
+sequenceDiagram
+    participant User as User
+    participant React as React Frontend
+    participant API as API Gateway
+    participant Auth as Auth Lambda
+    participant Prompt as Prompt Lambda
+    participant DDB as DynamoDB Prompts
+    participant S3 as S3 Storage
+
+    Note over User,S3: Prompt Template Creation Workflow
+
+    User->>React: 1. Navigate to Prompt Management
+    React->>API: 2. GET /api/prompts (with JWT)
+    API->>Auth: 3. Validate JWT token
+    Auth->>API: 4. Return user_id and permissions
+    API->>Prompt: 5. Invoke with user context
+
+    Prompt->>DDB: 6. Query user prompts
+    Note over DDB: SELECT * FROM prompts WHERE user_id = ?
+    DDB->>Prompt: 7. Return existing prompts
+    Prompt->>API: 8. Return prompt list
+    API->>React: 9. JSON response with prompts
+    React->>User: 10. Display prompt library
+
+    User->>React: 11. Create new prompt template
+    Note over React: Form data: title, description, template, variables
+
+    React->>API: 12. POST /api/prompts (payload + JWT)
+    API->>Auth: 13. Validate token and permissions
+    API->>Prompt: 14. Invoke with prompt data
+
+    Prompt->>DDB: 15. Store prompt template
+    Note over DDB: INSERT INTO prompts VALUES (prompt_id, user_id, title, template, variables, created_at)
+
+    alt Large template content
+        Prompt->>S3: 16. Store full template in S3
+        Note over S3: Key: prompts/user_id/prompt_id/template.json
+        S3->>Prompt: 17. Return S3 object URL
+    end
+
+    Prompt->>API: 18. Return success with prompt_id
+    API->>React: 19. HTTP 201 Created
+    React->>User: 20. Show success notification
+```
+
+### Title Generation Process with Prompt Usage
+
+```mermaid
+sequenceDiagram
+    participant User as User
+    participant React as React Frontend
+    participant API as API Gateway
+    participant Gen as Generate Lambda
+    participant DDB_P as Prompts Table
+    participant DDB_C as Conversations Table
+    participant Bedrock as AWS Bedrock
+    participant Claude as Claude 3 Sonnet
+    participant S3 as S3 Storage
+
+    Note over User,S3: Title Generation Request Flow
+
+    User->>React: 1. Input content and select prompt template
+    React->>API: 2. GET /api/prompts/{prompt_id}
+    API->>Gen: 3. Retrieve prompt template
+    Gen->>DDB_P: 4. Query prompt by ID
+    DDB_P->>Gen: 5. Return prompt template and variables
+
+    React->>API: 6. POST /api/generate with content and prompt_id
+    Note over API: Payload: {content, prompt_id, context, requirements}
+
+    API->>Gen: 7. Invoke Generate Lambda
+
+    Note over Gen: Template Processing
+    Gen->>Gen: 8. Load prompt template
+    Gen->>Gen: 9. Substitute variables with user input
+    Gen->>Gen: 10. Calculate dynamic token allocation
+    Gen->>Gen: 11. Optimize context window usage
+
+    Gen->>Bedrock: 12. invoke_model_with_response_stream
+    Note over Bedrock: Request: {modelId: claude-3-sonnet, messages: [...], max_tokens: dynamic, temperature: 0.7}
+
+    Bedrock->>Claude: 13. Process with 200K context
+    Note over Claude: Analyze content, apply prompt template, generate titles
+
+    Claude-->>Bedrock: 14. Streaming response chunks
+    Bedrock-->>Gen: 15. Stream title suggestions
+    Gen-->>API: 16. Proxy streaming response
+    API-->>React: 17. Server-sent events stream
+    React-->>User: 18. Real-time title updates
+
+    Note over Gen: Post-processing and Storage
+    Gen->>DDB_C: 19. Store conversation
+    Note over DDB_C: INSERT: {project_id, timestamp, user_input, ai_response, prompt_id, tokens_used}
+
+    Gen->>S3: 20. Store detailed logs
+    Note over S3: Key: conversations/project_id/timestamp/session.json
+
+    alt Error Handling
+        Bedrock->>Gen: Error response
+        Note over Gen: Exponential backoff retry
+        Gen->>Gen: Reduce max_tokens by 30%
+        Gen->>Bedrock: Retry request (max 3 attempts)
+    end
+
+    alt Streaming Failure
+        Note over Gen: Fallback to standard API
+        Gen->>Bedrock: invoke_model (non-streaming)
+        Bedrock->>Gen: Complete response
+    end
+```
+
+### Data Storage Architecture and Access Patterns
+
+```mermaid
+erDiagram
+    USERS {
+        string user_id PK
+        string email
+        string name
+        timestamp created_at
+        string subscription_tier
+    }
+
+    PROJECTS {
+        string user_id PK
+        string project_id SK
+        string name
+        string description
+        json tags
+        timestamp created_at
+        timestamp updated_at
+        number conversation_count
+    }
+
+    PROMPTS {
+        string prompt_id PK
+        string user_id
+        string title
+        string description
+        text template
+        json variables
+        string category
+        boolean is_public
+        timestamp created_at
+        string s3_reference
+    }
+
+    CONVERSATIONS {
+        string project_id PK
+        string timestamp SK
+        string user_id GSI1-PK
+        string conversation_id
+        text user_input
+        text ai_response
+        string prompt_id
+        number tokens_used
+        number processing_time
+        json metadata
+        number ttl
+    }
+
+    S3_OBJECTS {
+        string object_key PK
+        string bucket_name
+        string content_type
+        number size_bytes
+        timestamp created_at
+        json metadata
+    }
+
+    USERS ||--o{ PROJECTS : creates
+    USERS ||--o{ PROMPTS : owns
+    PROJECTS ||--o{ CONVERSATIONS : contains
+    PROMPTS ||--o{ CONVERSATIONS : uses
+    CONVERSATIONS ||--o| S3_OBJECTS : references
+    PROMPTS ||--o| S3_OBJECTS : stores_template
+```
+
+### System Integration and Communication Flow
+
+```mermaid
+graph TD
+    subgraph "User Interface Layer"
+        A[User Input Form] --> B[Prompt Template Selector]
+        B --> C[Content Text Area]
+        C --> D[Generation Settings]
+    end
+
+    subgraph "Frontend State Management"
+        D --> E[React Context API]
+        E --> F[Local State Cache]
+        F --> G[API Service Layer]
+    end
+
+    subgraph "API Communication"
+        G --> H[HTTP Client with Interceptors]
+        H --> I[JWT Token Management]
+        I --> J[Request/Response Transformation]
+    end
+
+    subgraph "Backend Processing Pipeline"
+        J --> K[API Gateway Request Routing]
+        K --> L[Request Validation Schema]
+        L --> M[Lambda Function Invocation]
+        M --> N[Business Logic Processing]
+    end
+
+    subgraph "AI Processing Workflow"
+        N --> O[Prompt Template Loading]
+        O --> P[Dynamic Token Calculation]
+        P --> Q[Context Window Optimization]
+        Q --> R[Bedrock API Call]
+        R --> S[Response Stream Processing]
+    end
+
+    subgraph "Data Persistence Flow"
+        S --> T[Conversation Logging]
+        T --> U[Performance Metrics Collection]
+        U --> V[Error Tracking and Alerting]
+        V --> W[Data Archival to S3]
+    end
+
+    W --> X[Response Transformation]
+    X --> Y[Client Response Delivery]
+    Y --> Z[UI State Update]
 ```
 
 ## 🚀 Core Features

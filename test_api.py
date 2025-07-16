@@ -1,94 +1,109 @@
 #!/usr/bin/env python3
-"""
-TITLE-NOMICS API 테스트 스크립트
-CORS 오류 해결 후 API 엔드포인트 테스트
-"""
-
 import requests
 import json
-import sys
 
 # API 기본 URL
-API_BASE_URL = "https://vph0fu827a.execute-api.us-east-1.amazonaws.com/prod"
+API_URL = "https://gcm3qzoy04.execute-api.us-east-1.amazonaws.com/prod"
 
-def test_cors_preflight():
-    """CORS preflight 요청 테스트"""
-    print("=== CORS Preflight 테스트 ===")
-    
-    endpoints = [
-        "/projects",
-        "/categories", 
-        "/auth/signup"
-    ]
-    
-    for endpoint in endpoints:
-        url = f"{API_BASE_URL}{endpoint}"
-        print(f"\n테스트 중: OPTIONS {endpoint}")
-        
-        try:
-            response = requests.options(url, headers={
-                'Origin': 'http://localhost:3000',
-                'Access-Control-Request-Method': 'GET',
-                'Access-Control-Request-Headers': 'Content-Type'
-            })
-            
-            print(f"Status: {response.status_code}")
-            print(f"CORS Headers:")
-            for header, value in response.headers.items():
-                if 'access-control' in header.lower():
-                    print(f"  {header}: {value}")
-                    
-        except Exception as e:
-            print(f"오류: {str(e)}")
-
-def test_api_endpoints():
-    """실제 API 엔드포인트 테스트 (인증 없이)"""
-    print("\n=== API 엔드포인트 테스트 ===")
-    
-    # 1. 카테고리 조회 (인증 불필요한 엔드포인트가 있다면)
-    print(f"\n테스트 중: GET /categories")
+def test_categories():
+    """카테고리 목록 조회 테스트"""
+    print("=== 카테고리 목록 조회 테스트 ===")
     try:
-        url = f"{API_BASE_URL}/categories"
-        response = requests.get(url)
-        print(f"Status: {response.status_code}")
-        print(f"Response: {response.text[:200]}...")
-        
-    except Exception as e:
-        print(f"오류: {str(e)}")
-
-def test_signup():
-    """회원가입 테스트"""
-    print(f"\n테스트 중: POST /auth/signup")
-    
-    test_data = {
-        "email": "test@example.com",
-        "password": "TestPassword123!",
-        "fullname": "테스트 사용자"
-    }
-    
-    try:
-        url = f"{API_BASE_URL}/auth/signup"
-        response = requests.post(url, 
-                               json=test_data,
-                               headers={'Content-Type': 'application/json'})
-        
+        response = requests.get(f"{API_URL}/categories")
         print(f"Status: {response.status_code}")
         print(f"Response: {response.text}")
-        
+        print()
     except Exception as e:
-        print(f"오류: {str(e)}")
+        print(f"Error: {e}")
+        print()
+
+def test_projects():
+    """프로젝트 목록 조회 테스트"""
+    print("=== 프로젝트 목록 조회 테스트 ===")
+    try:
+        response = requests.get(f"{API_URL}/projects")
+        print(f"Status: {response.status_code}")
+        print(f"Response: {response.text}")
+        print()
+    except Exception as e:
+        print(f"Error: {e}")
+        print()
+
+def test_create_project():
+    """프로젝트 생성 테스트"""
+    print("=== 프로젝트 생성 테스트 ===")
+    try:
+        data = {
+            "name": "테스트 프로젝트",
+            "description": "API 테스트용 프로젝트",
+            "category": "general"
+        }
+        response = requests.post(f"{API_URL}/projects", json=data)
+        print(f"Status: {response.status_code}")
+        print(f"Response: {response.text}")
+        print()
+        
+        if response.status_code == 201:
+            project_data = response.json()
+            return project_data.get('projectId')
+    except Exception as e:
+        print(f"Error: {e}")
+        print()
+    return None
+
+def test_create_prompt(project_id):
+    """프롬프트 카드 생성 테스트"""
+    if not project_id:
+        print("프로젝트 ID가 없어 프롬프트 카드 테스트를 건너뜁니다.")
+        return
+    
+    print("=== 프롬프트 카드 생성 테스트 ===")
+    try:
+        data = {
+            "title": "테스트 프롬프트",
+            "content": "이것은 테스트용 프롬프트 내용입니다. 최소 10자 이상이어야 합니다.",
+            "stepOrder": 1
+        }
+        response = requests.post(f"{API_URL}/prompts/{project_id}", json=data)
+        print(f"Status: {response.status_code}")
+        print(f"Response: {response.text}")
+        print()
+    except Exception as e:
+        print(f"Error: {e}")
+        print()
+
+def test_get_prompts(project_id):
+    """프롬프트 카드 목록 조회 테스트"""
+    if not project_id:
+        print("프로젝트 ID가 없어 프롬프트 목록 테스트를 건너뜁니다.")
+        return
+    
+    print("=== 프롬프트 카드 목록 조회 테스트 ===")
+    try:
+        response = requests.get(f"{API_URL}/prompts/{project_id}")
+        print(f"Status: {response.status_code}")
+        print(f"Response: {response.text}")
+        print()
+    except Exception as e:
+        print(f"Error: {e}")
+        print()
 
 if __name__ == "__main__":
-    print("TITLE-NOMICS API 테스트 시작\n")
+    print("🧪 API 테스트 시작\n")
     
-    # CORS preflight 테스트
-    test_cors_preflight()
+    # 1. 카테고리 조회 테스트
+    test_categories()
     
-    # API 엔드포인트 테스트
-    test_api_endpoints()
+    # 2. 프로젝트 목록 조회 테스트
+    test_projects()
     
-    # 회원가입 테스트 (옵션)
-    if len(sys.argv) > 1 and sys.argv[1] == "--signup":
-        test_signup()
+    # 3. 프로젝트 생성 테스트
+    project_id = test_create_project()
     
-    print("\n테스트 완료!")
+    # 4. 프롬프트 카드 생성 테스트
+    test_create_prompt(project_id)
+    
+    # 5. 프롬프트 카드 목록 조회 테스트
+    test_get_prompts(project_id)
+    
+    print("🏁 API 테스트 완료") 

@@ -14,12 +14,9 @@ const ProjectDetail = () => {
   const navigate = useNavigate();
   const [project, setProject] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [promptCards, setPromptCards] = useState([]);
-  const [showProjectMenu, setShowProjectMenu] = useState(false);
 
   useEffect(() => {
     loadProject();
-    loadPromptCards();
   }, [projectId]);
 
   const loadProject = async () => {
@@ -29,39 +26,11 @@ const ProjectDetail = () => {
       setProject(data);
     } catch (error) {
       console.error("프로젝트 로드 실패:", error);
-      handleAPIError(error, "프로젝트를 불러오는데 실패했습니다.");
+      const errorInfo = handleAPIError(error);
+      toast.error(errorInfo.message);
       navigate("/");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadPromptCards = async () => {
-    try {
-      const cards = await promptCardAPI.getPromptCards(projectId);
-      setPromptCards(cards);
-    } catch (error) {
-      console.error("프롬프트 카드 로드 실패:", error);
-      handleAPIError(error, "프롬프트 카드를 불러오는데 실패했습니다.");
-    }
-  };
-
-  const handleDeleteProject = async () => {
-    if (
-      !window.confirm(
-        "정말로 이 프로젝트를 삭제하시겠습니까? 이 작업은 되돌릴 수 없습니다."
-      )
-    ) {
-      return;
-    }
-
-    try {
-      await projectAPI.deleteProject(projectId);
-      toast.success("프로젝트가 삭제되었습니다.");
-      navigate("/");
-    } catch (error) {
-      console.error("프로젝트 삭제 실패:", error);
-      handleAPIError(error, "프로젝트 삭제에 실패했습니다.");
     }
   };
 
@@ -89,15 +58,11 @@ const ProjectDetail = () => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-
-      {/* 메인 콘텐츠 - 새로운 PromptCardManager 사용 */}
+      {/* 메인 콘텐츠 - PromptCardManager 사용 (채팅 + 프롬프트 카드 사이드바) */}
       <PromptCardManager
         projectId={projectId}
-        projectName={project.title}
-        promptCards={promptCards}
-        onCardsChanged={loadPromptCards}
+        projectName={project.name}
       />
-
     </div>
   );
 };

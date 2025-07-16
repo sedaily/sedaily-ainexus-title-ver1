@@ -1,731 +1,382 @@
+"""
+AI 대화 생성 Lambda 함수 (LangChain 적용 버전)
+- Runnable과 Memory를 사용하여 대화 기억 기능 구현
+- 확장성과 유지보수성이 높은 구조
+"""
 import json
-import boto3
 import os
-import sys
 import logging
+import time
 from datetime import datetime
 from typing import Dict, Any, List
-import urllib.parse
 
-# Lambda Layer에서 FAISS 가져오기
-sys.path.append('/opt/python')
+import boto3
 
-# FAISS 유틸리티 임포트
-try:
-    from faiss_utils import FAISSManager
-except ImportError:
-    # 로컬 개발용 폴백
-    import sys
-    sys.path.append('../utils')
-    from faiss_utils import FAISSManager
-
-# 로깅 설정
+# --- 기본 설정 ---
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
-# AWS 클라이언트 초기화
-stepfunctions_client = boto3.client('stepfunctions', region_name=os.environ['REGION'])
-bedrock_runtime = boto3.client('bedrock-runtime', region_name=os.environ['REGION'])
-dynamodb = boto3.resource('dynamodb', region_name=os.environ['REGION'])
-s3_client = boto3.client('s3', region_name=os.environ['REGION'])
-
-# 환경 변수
-STATE_MACHINE_ARN = os.environ.get('STATE_MACHINE_ARN', '')
-EXECUTION_TABLE = os.environ['EXECUTION_TABLE']
-PROMPT_META_TABLE = os.environ.get('PROMPT_META_TABLE', '')
-PROMPT_BUCKET = os.environ.get('PROMPT_BUCKET', '')
-FAISS_BUCKET = os.environ.get('FAISS_BUCKET', '')
-BEDROCK_MODEL_ID = os.environ.get('BEDROCK_MODEL_ID', 'us.anthropic.claude-3-5-sonnet-20241022-v2:0')
-BEDROCK_EMBED_MODEL_ID = os.environ.get('BEDROCK_EMBED_MODEL_ID', 'amazon.titan-embed-text-v1')
 REGION = os.environ['REGION']
 
-def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
-    """
-    Step Functions 실행 및 상태 조회 메인 핸들러
+# 온디맨드 및 스트리밍 지원 모델 정의
+SUPPORTED_MODELS = {
+    "anthropic.claude-3-sonnet-20240229-v1:0": {
+        "name": "Claude 3 Sonnet",
+        "supports_streaming": True,
+        "supports_ondemand": True,
+        "max_tokens": 4096,
+        "context_window": 200000
+    },
+    "anthropic.claude-3-haiku-20240307-v1:0": {
+        "name": "Claude 3 Haiku",
+        "supports_streaming": True,
+        "supports_ondemand": True,
+        "max_tokens": 4096,
+        "context_window": 200000
+    },
+    "anthropic.claude-3-opus-20240229-v1:0": {
+        "name": "Claude 3 Opus",
+        "supports_streaming": True,
+        "supports_ondemand": True,
+        "max_tokens": 4096,
+        "context_window": 200000
+    }
+}
+
+# 기본 모델을 온디맨드와 스트리밍을 모두 지원하는 Claude 3 Sonnet으로 설정
+DEFAULT_MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0"
+
+def get_model_info(model_id):
+    """모델 정보를 반환합니다."""
+    return SUPPORTED_MODELS.get(model_id, {
+        "name": "Unknown Model",
+        "supports_streaming": False,
+        "supports_ondemand": False,
+        "max_tokens": 4096,
+        "context_window": 100000
+    })
+
+# --- Bedrock 클라이언트 초기화 ---
+bedrock_client = boto3.client("bedrock-runtime", region_name=REGION)
+
+ANTHROPIC_VERSION = "bedrock-2023-05-31"
+
+# 스트리밍 응답 처리 함수
+def process_streaming_response(streaming_response):
+    """스트리밍 응답을 처리하여 완전한 텍스트를 반환합니다."""
+    complete_response = ""
     
-    - POST /projects/{id}/generate: Step Functions 실행
-    - GET /executions/{arn}: 실행 상태 조회
-    """
     try:
-        logger.info(f"요청 수신: {json.dumps(event, indent=2)}")
-        
-        http_method = event.get('httpMethod', 'POST')
-        
-        if http_method == 'OPTIONS':
-            return {
-                'statusCode': 200,
-                'headers': get_cors_headers(),
-                'body': ''
-            }
-        elif http_method == 'POST':
-            return start_step_functions_execution(event)
-        elif http_method == 'GET':
-            return get_execution_status(event)
-        else:
-            return create_error_response(405, "지원하지 않는 메소드입니다")
+        for event in streaming_response["body"]:
+            chunk = json.loads(event["chunk"]["bytes"])
             
+            if chunk["type"] == "content_block_delta":
+                text_delta = chunk["delta"].get("text", "")
+                complete_response += text_delta
+                
+            elif chunk["type"] == "message_stop":
+                logger.info("스트리밍 응답 완료")
+                break
+                
     except Exception as e:
-        logger.error(f"요청 처리 중 오류 발생: {str(e)}")
-        return create_error_response(500, f"내부 서버 오류: {str(e)}")
+        logger.error(f"스트리밍 처리 오류: {str(e)}")
+        # 스트리밍 실패 시 기본 방식으로 폴백
+        return None
+        
+    return complete_response
 
-def start_step_functions_execution(event: Dict[str, Any]) -> Dict[str, Any]:
-    """Step Functions 실행 시작 (또는 Step Functions가 비활성화된 경우 직접 Bedrock 호출)"""
+# --- 유틸리티 함수 ---
+def get_cors_headers():
+    return {
+        'Content-Type': 'application/json',
+        'Access-Control-Allow-Origin': '*',
+        'Access-Control-Allow-Methods': 'POST, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization'
+    }
+
+def calculate_dynamic_max_tokens(user_input: str, system_prompt: str = "", model_id: str = DEFAULT_MODEL_ID) -> int:
+    """긴 텍스트 처리를 위해 토큰 수를 동적으로 계산하되, 모델 한계를 고려합니다."""
+    input_length = len(user_input)
+    system_length = len(system_prompt)
+    
+    # 모델 정보 가져오기
+    model_info = get_model_info(model_id)
+    model_max_tokens = model_info["max_tokens"]
+    
+    # 기본 최소값
+    base_tokens = 2048
+    
+    # 입력 길이에 따른 동적 조정 - 더 관대하게
+    if input_length < 1000:
+        dynamic_tokens = base_tokens
+    elif input_length < 3000:
+        dynamic_tokens = base_tokens * 2  # 4096
+    elif input_length < 8000:
+        dynamic_tokens = base_tokens * 3  # 6144
+    elif input_length < 15000:
+        dynamic_tokens = base_tokens * 4  # 8192
+    else:
+        dynamic_tokens = base_tokens * 5  # 10240
+    
+    # 시스템 프롬프트 길이 고려 - 더 관대하게
+    if system_length > 5000:
+        dynamic_tokens = max(dynamic_tokens, base_tokens * 2)  # 최소 4096 보장
+    
+    # 모델의 최대 토큰 제한 적용
+    max_tokens = min(dynamic_tokens, model_max_tokens)
+    
+    logger.info(f"토큰 계산 - 모델: {model_info['name']}, 입력길이: {input_length}, 시스템길이: {system_length}, 할당토큰: {max_tokens}")
+    return max_tokens
+
+def log_performance_metrics(operation: str, start_time: float, **kwargs):
+    """성능 메트릭을 로깅합니다."""
+    execution_time = time.time() - start_time
+    
+    metrics = {
+        "operation": operation,
+        "execution_time_seconds": round(execution_time, 3),
+        "timestamp": datetime.utcnow().isoformat(),
+        **kwargs
+    }
+    
+    logger.info(f"성능 메트릭: {json.dumps(metrics, ensure_ascii=False)}")
+    return execution_time
+
+# --- 메인 핸들러 ---
+def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
+    request_start_time = time.time()
+    
+    if event.get('httpMethod') == 'OPTIONS':
+        return {'statusCode': 200, 'headers': get_cors_headers(), 'body': ''}
+
     try:
-        # 요청 데이터 파싱
-        project_id = event['pathParameters']['projectId']
-        body = json.loads(event['body']) if event.get('body') else {}
-        article_text = body.get('article', '').strip()
+        logger.info(f"요청 시작 - RequestId: {context.aws_request_id}")
         
-        if not article_text:
-            return create_error_response(400, "기사 내용이 필요합니다")
+        body = json.loads(event.get('body', '{}'))
+        path_params = event.get('pathParameters', {}) or {}
         
-        if len(article_text) < 100:
-            return create_error_response(400, "기사 내용이 너무 짧습니다 (최소 100자)")
-        
-        # Step Functions가 비활성화된 경우 직접 Bedrock 호출
-        if not STATE_MACHINE_ARN:
-            logger.info("Step Functions가 비활성화되어 직접 Bedrock 호출을 사용합니다")
-            return generate_title_direct(project_id, article_text)
-        
-        # Step Functions 실행
-        execution_input = {
-            'projectId': project_id,
-            'article': article_text
-        }
-        
-        execution_name = f"title-gen-{project_id}-{int(datetime.utcnow().timestamp())}"
-        
-        response = stepfunctions_client.start_execution(
-            stateMachineArn=STATE_MACHINE_ARN,
-            name=execution_name,
-            input=json.dumps(execution_input)
+        project_id = path_params.get('projectId')
+        user_input = body.get('userInput', '').strip()
+        chat_history = body.get('chat_history', []) # 프론트에서 이전 대화 기록을 받아옴
+
+        if not project_id or not user_input:
+            logger.warning(f"잘못된 요청 - project_id: {project_id}, user_input 길이: {len(user_input) if user_input else 0}")
+            return {'statusCode': 400, 'headers': get_cors_headers(), 'body': json.dumps({'message': '프로젝트 ID와 사용자 입력은 필수입니다.'})}
+
+        logger.info(f"요청 상세 - 프로젝트: {project_id}, 입력길이: {len(user_input)}, 히스토리: {len(chat_history)}개")
+
+        # --- 동적 시스템 프롬프트 로드 ---
+        prompt_load_start = time.time()
+        from prompt_manager import SimplePromptManager
+        prompt_manager = SimplePromptManager(
+            prompt_bucket=os.environ.get('PROMPT_BUCKET', ''),
+            prompt_meta_table=os.environ.get('PROMPT_META_TABLE', ''),
+            region=REGION
         )
+        prompts = prompt_manager.load_project_prompts(project_id)
+        system_prompt = prompt_manager.combine_prompts(prompts, mode="system")
         
-        execution_arn = response['executionArn']
-        
-        logger.info(f"Step Functions 실행 시작: {execution_arn}")
-        
-        return {
-            'statusCode': 202,  # Accepted
-            'headers': get_cors_headers(),
-            'body': json.dumps({
-                'message': '제목 생성이 시작되었습니다',
-                'executionArn': execution_arn,
-                'executionName': execution_name,
-                'projectId': project_id,
-                'pollUrl': f"/executions/{urllib.parse.quote(execution_arn, safe='')}",
-                'startTime': datetime.utcnow().isoformat()
-            }, ensure_ascii=False)
-        }
-        
-    except Exception as e:
-        logger.error(f"Step Functions 실행 실패: {str(e)}")
-        return create_error_response(500, f"Step Functions 실행 실패: {str(e)}")
+        log_performance_metrics("prompt_loading", prompt_load_start, 
+                               prompt_count=len(prompts), 
+                               system_prompt_length=len(system_prompt))
 
-def generate_title_direct(project_id: str, article_text: str) -> Dict[str, Any]:
-    """RAG 기반 단계별 제목 생성"""
-    try:
-        start_time = datetime.utcnow()
-        
-        # RAG 기반 제목 생성 시도
-        if FAISS_BUCKET:
-            try:
-                result = generate_title_with_rag(project_id, article_text)
-                if result:
-                    execution_id = f"rag-{project_id}-{int(start_time.timestamp())}"
-                    save_execution_result(project_id, execution_id, result['titles'], article_text)
-                    
-                    processing_time = (datetime.utcnow() - start_time).total_seconds()
-                    
-                    return {
-                        'statusCode': 200,
-                        'headers': get_cors_headers(),
-                        'body': json.dumps({
-                            'message': 'RAG 기반 제목 생성 완료',
-                            'executionId': execution_id,
-                            'projectId': project_id,
-                            'result': result['titles'],
-                            'mode': 'rag',
-                            'timestamp': datetime.utcnow().isoformat(),
-                            'performance': {
-                                'processing_time': processing_time,
-                                'prompts_used': result.get('prompts_used', 0),
-                                'steps_executed': len(result.get('step_results', {}))
-                            },
-                            'step_results': result.get('step_results', {})
-                        }, ensure_ascii=False)
-                    }
-            except Exception as e:
-                logger.warning(f"RAG 기반 생성 실패, 기본 모드로 전환: {str(e)}")
-        
-        # 기본 모드로 폴백
-        return generate_title_fallback(project_id, article_text, start_time)
-        
-    except Exception as e:
-        logger.error(f"제목 생성 실패: {str(e)}")
-        return create_error_response(500, f"제목 생성 실패: {str(e)}")
+        # --- 동적 토큰 계산 ---
+        max_tokens = calculate_dynamic_max_tokens(user_input, system_prompt, DEFAULT_MODEL_ID)
 
-def generate_title_with_rag(project_id: str, article_text: str) -> Dict[str, Any]:
-    """RAG 기반 단계별 제목 생성"""
-    try:
-        # 1. FAISSManager 초기화
-        faiss_manager = FAISSManager(FAISS_BUCKET, REGION)
+        # 모델 정보 가져오기
+        model_info = get_model_info(DEFAULT_MODEL_ID)
+        supports_streaming = model_info["supports_streaming"]
+        supports_ondemand = model_info["supports_ondemand"]
         
-        # 2. 단계별 프롬프트 검색 및 실행
-        step_results = {}
-        previous_results = {}
-        prompts_used = 0
+        if not supports_ondemand:
+            logger.error(f"모델 {DEFAULT_MODEL_ID}는 온디맨드 호출을 지원하지 않습니다")
+            return {
+                'statusCode': 500,
+                'headers': get_cors_headers(),
+                'body': json.dumps({
+                    'message': f'현재 모델({model_info["name"]})은 온디맨드 호출을 지원하지 않습니다. 관리자에게 문의하세요.',
+                    'error_type': 'ModelNotSupported'
+                }, ensure_ascii=False)
+            }
+
+        # --- Bedrock 메시지 포맷 구성 (InvokeModel API 공식 사양 준수) ---
+        message_processing_start = time.time()
         
-        # 6단계 워크플로우 실행
-        for step in range(1, 7):  # 6단계 워크플로우
-            relevant_prompts = search_prompts_by_step(
-                faiss_manager, project_id, article_text, step
-            )
-            
-            if relevant_prompts:
-                prompts_used += len(relevant_prompts)
-                step_result = execute_step_with_prompts(
-                    step, relevant_prompts, article_text, previous_results
-                )
-                step_results[f'step_{step}'] = step_result
-                previous_results[f'step_{step}'] = step_result.get('output', '')
+        # 1. 모든 메시지를 하나로 합치고, 역할이 같은 연속 메시지를 병합합니다.
+        all_inputs = chat_history + [{"role": "user", "content": user_input}]
+        
+        merged_messages = []
+        for msg in all_inputs:
+            role = msg.get("role")
+            content = msg.get("content", "").strip()
+
+            if not content or role not in ["user", "assistant"]:
+                continue
+
+            if merged_messages and merged_messages[-1]["role"] == role:
+                merged_messages[-1]["content"] += "\\n\\n" + content
             else:
-                logger.warning(f"단계 {step}에 관련 프롬프트가 없습니다.")
+                merged_messages.append({"role": role, "content": content})
+
+        # 2. 대화가 assistant로 시작하는 경우를 방지합니다.
+        if merged_messages and merged_messages[0]["role"] == "assistant":
+            merged_messages.pop(0)
+
+        # 3. 긴 대화 히스토리 최적화 - 최근 20개 메시지만 유지하되 중요한 컨텍스트 보존
+        if len(merged_messages) > 20:
+            # 첫 번째 메시지(중요한 컨텍스트)와 최근 19개 메시지 유지
+            first_message = merged_messages[0]
+            recent_messages = merged_messages[-19:]
+            merged_messages = [first_message] + recent_messages
+            logger.info(f"긴 대화 히스토리 최적화: {len(all_inputs)} -> {len(merged_messages)} 메시지")
+
+        # 4. 최종적으로 API 형식에 맞게 content를 객체 배열로 변환합니다.
+        final_api_messages = []
+        for msg in merged_messages:
+            final_api_messages.append({
+                "role": msg["role"],
+                "content": [{"type": "text", "text": msg["content"]}]
+            })
         
-        # 3. 최종 제목들 생성
-        final_titles = generate_final_titles_from_steps(step_results, article_text)
+        messages = final_api_messages
         
-        # 순수 데이터 반환 (HTTP 응답 구조 아님)
-        return {
-            'titles': final_titles,
-            'method': 'RAG',
-            'step_results': step_results,
-            'prompts_used': prompts_used,
+        log_performance_metrics("message_processing", message_processing_start, 
+                               original_messages=len(all_inputs), 
+                               merged_messages=len(merged_messages))
+
+        # --- Bedrock 호출 ---
+        bedrock_start_time = time.time()
+        logger.info(f"Bedrock 호출 시작 - 프로젝트: {project_id}, 모델: {model_info['name']} ({DEFAULT_MODEL_ID}), 최대토큰: {max_tokens}")
+        
+        body = {
+            "anthropic_version": ANTHROPIC_VERSION,
+            "max_tokens": max_tokens,  # 동적으로 계산된 토큰 수 사용
+            "temperature": 0.7,
+            "messages": messages,
+        }
+        if system_prompt:
+            body["system"] = system_prompt
+        
+        # --- 진단용 로그: Bedrock에 전달할 최종 body를 출력합니다 ---
+        logger.info(f"Bedrock 요청 상세: 메시지수={len(messages)}, 시스템프롬프트길이={len(system_prompt)}, 최대토큰={max_tokens}, 스트리밍지원={supports_streaming}")
+
+        # 재시도 로직 추가
+        max_retries = 3
+        response_content = None
+        
+        for attempt in range(max_retries):
+            try:
+                # 스트리밍 지원 여부 확인 후 시도
+                if attempt == 0 and supports_streaming:
+                    logger.info("스트리밍 방식으로 Bedrock 호출 시도")
+                    try:
+                        streaming_response = bedrock_client.invoke_model_with_response_stream(
+                            modelId=DEFAULT_MODEL_ID,
+                            contentType="application/json",
+                            accept="application/json",
+                            body=json.dumps(body).encode("utf-8"),
+                        )
+                        
+                        response_content = process_streaming_response(streaming_response)
+                        
+                        if response_content:
+                            logger.info("스트리밍 방식 성공")
+                            break
+                        else:
+                            logger.warning("스트리밍 처리 실패, 일반 방식으로 폴백")
+                            
+                    except Exception as streaming_error:
+                        logger.warning(f"스트리밍 호출 실패: {str(streaming_error)}, 일반 방식으로 폴백")
+                
+                # 일반 방식으로 호출
+                logger.info("일반 방식으로 Bedrock 호출")
+                response = bedrock_client.invoke_model(
+                    modelId=DEFAULT_MODEL_ID,
+                    contentType="application/json",
+                    accept="application/json",
+                    body=json.dumps(body).encode("utf-8"),
+                )
+                
+                response_json = json.loads(response["body"].read())
+                response_content = response_json["content"][0]["text"]
+                break  # 성공하면 루프 탈출
+                
+            except Exception as e:
+                logger.warning(f"Bedrock 호출 시도 {attempt + 1}/{max_retries} 실패: {str(e)}")
+                
+                if attempt == max_retries - 1:  # 마지막 시도
+                    raise e
+                    
+                # 토큰 제한 오류인 경우 토큰 수를 줄여서 재시도
+                if "token" in str(e).lower() or "length" in str(e).lower():
+                    max_tokens = int(max_tokens * 0.7)  # 30% 줄임
+                    body["max_tokens"] = max_tokens
+                    logger.info(f"토큰 수를 {max_tokens}로 줄여서 재시도")
+                
+                time.sleep(2 ** attempt)  # 지수 백오프
+
+        bedrock_execution_time = log_performance_metrics("bedrock_invoke", bedrock_start_time)
+        
+        if not response_content:
+            raise Exception("Bedrock에서 응답을 받지 못했습니다")
+        
+        response_length = len(response_content)
+        
+        logger.info(f"Bedrock 응답 완료 - 응답길이: {response_length}자, 실행시간: {bedrock_execution_time:.2f}초")
+
+        # 전체 요청 처리 시간 로그
+        total_execution_time = log_performance_metrics("total_request", request_start_time,
+                                                     project_id=project_id,
+                                                     input_length=len(user_input),
+                                                     response_length=response_length,
+                                                     max_tokens_used=max_tokens,
+                                                     model_id=DEFAULT_MODEL_ID)
+
+        # 성공 응답 반환
+        response_body = {
+            'message': '응답이 생성되었습니다.',
+            'result': response_content,
+            'projectId': project_id,
+            'mode': 'prompt_based' if prompts else 'direct_conversation',
+            'model_info': {
+                'model_used': DEFAULT_MODEL_ID,
+                'model_name': model_info['name'],
+                'max_tokens': max_tokens,
+                'supports_streaming': supports_streaming,
+                'supports_ondemand': supports_ondemand,
+                'execution_time': round(total_execution_time, 2)
+            },
+            'performance_metrics': {
+                'total_time': round(total_execution_time, 2),
+                'bedrock_time': round(bedrock_execution_time, 2),
+                'input_length': len(user_input),
+                'output_length': response_length
+            },
             'timestamp': datetime.utcnow().isoformat()
         }
-        
-    except Exception as e:
-        logger.error(f"RAG 기반 제목 생성 실패: {str(e)}")
-        return None
-
-def generate_title_fallback(project_id: str, article_text: str, start_time: datetime) -> Dict[str, Any]:
-    """기본 모드 제목 생성 (기존 로직)"""
-    prompts = get_project_prompts(project_id)
-    
-    if not prompts:
-        combined_prompts = get_default_guidelines()
-    else:
-        combined_prompts = combine_prompts_for_direct_call(prompts)
-    
-    payload = create_bedrock_payload_direct(combined_prompts, article_text)
-    
-    response = bedrock_runtime.invoke_model(
-        modelId=BEDROCK_MODEL_ID,
-        body=json.dumps(payload)
-    )
-    
-    response_body = json.loads(response['body'].read())
-    generated_titles = response_body['content'][0]['text']
-    
-    execution_id = f"fallback-{project_id}-{int(start_time.timestamp())}"
-    save_execution_result(project_id, execution_id, generated_titles, article_text)
-    
-    processing_time = (datetime.utcnow() - start_time).total_seconds()
-    
-    return {
-        'statusCode': 200,
-        'headers': get_cors_headers(),
-        'body': json.dumps({
-            'message': '기본 모드 제목 생성 완료',
-            'executionId': execution_id,
-            'projectId': project_id,
-            'result': generated_titles,
-            'mode': 'fallback',
-            'timestamp': datetime.utcnow().isoformat(),
-            'performance': {
-                'processing_time': processing_time,
-                'prompts_used': len(prompts)
-            }
-        }, ensure_ascii=False)
-    }
-
-def get_project_prompts(project_id: str) -> List[Dict[str, Any]]:
-    """프로젝트의 프롬프트 카드 조회"""
-    if not PROMPT_META_TABLE:
-        logger.warning("PROMPT_META_TABLE 환경변수가 설정되지 않았습니다")
-        return []
-    
-    try:
-        table = dynamodb.Table(PROMPT_META_TABLE)
-        logger.info(f"DynamoDB 테이블 '{PROMPT_META_TABLE}'에서 프로젝트 {project_id}의 프롬프트 조회 시작")
-        
-        # GSI를 사용하여 stepOrder 순으로 조회
-        try:
-            logger.info("GSI 'projectId-stepOrder-index'를 사용하여 쿼리 실행")
-            response = table.query(
-                IndexName='projectId-stepOrder-index',
-                KeyConditionExpression='projectId = :projectId',
-                FilterExpression='enabled = :enabled',
-                ExpressionAttributeValues={
-                    ':projectId': project_id,
-                    ':enabled': True
-                },
-                ScanIndexForward=True
-            )
-            prompts = response.get('Items', [])
-            logger.info(f"GSI 쿼리 결과: {len(prompts)}개의 활성화된 프롬프트 발견")
-            return prompts
-        except Exception as gsi_error:
-            logger.warning(f"GSI 쿼리 실패, 기본 테이블 쿼리로 전환: {str(gsi_error)}")
-            # GSI 실패 시 기본 테이블 조회
-            response = table.query(
-                KeyConditionExpression='projectId = :projectId',
-                ExpressionAttributeValues={':projectId': project_id}
-            )
-            all_prompts = response.get('Items', [])
-            # enabled 필터링을 코드에서 수행
-            enabled_prompts = [p for p in all_prompts if p.get('enabled', True)]
-            logger.info(f"기본 테이블 쿼리 결과: 전체 {len(all_prompts)}개 중 {len(enabled_prompts)}개 활성화됨")
-            return enabled_prompts
-            
-    except Exception as e:
-        logger.error(f"프롬프트 조회 실패: {str(e)}")
-        return []
-
-def combine_prompts_for_direct_call(prompts: List[Dict[str, Any]]) -> str:
-    """프롬프트 카드들을 결합"""
-    combined_text = ""
-    
-    logger.info(f"프롬프트 결합 시작: {len(prompts)}개 카드 처리")
-    
-    for prompt in prompts:
-        title = prompt.get('title', '')
-        category = prompt.get('category', 'Unknown')
-        step_order = prompt.get('stepOrder', 0)
-        s3_key = prompt.get('s3Key', '')
-        
-        logger.info(f"처리 중: STEP {step_order} - {title} (s3Key: {s3_key})")
-        
-        # S3에서 프롬프트 텍스트 로드
-        prompt_text = ""
-        if PROMPT_BUCKET and s3_key:
-            try:
-                logger.info(f"S3에서 프롬프트 로드 시도: {PROMPT_BUCKET}/{s3_key}")
-                s3_response = s3_client.get_object(
-                    Bucket=PROMPT_BUCKET,
-                    Key=s3_key
-                )
-                prompt_text = s3_response['Body'].read().decode('utf-8')
-                logger.info(f"S3에서 프롬프트 로드 성공: {len(prompt_text)} 문자")
-            except Exception as e:
-                logger.warning(f"S3에서 프롬프트 로드 실패: {s3_key}, 오류: {str(e)}")
-                prompt_text = f"[프롬프트 로드 실패: {category}]"
-        else:
-            logger.warning(f"S3 정보 누락: PROMPT_BUCKET={PROMPT_BUCKET}, s3Key={s3_key}")
-        
-        if prompt_text:
-            combined_text += f"\n\n=== STEP {step_order}: {title or category.upper()} ===\n{prompt_text}"
-            logger.info(f"프롬프트 추가됨: STEP {step_order}")
-        else:
-            logger.warning(f"프롬프트 텍스트가 비어있음: STEP {step_order}")
-    
-    logger.info(f"프롬프트 결합 완료: 총 {len(combined_text)} 문자")
-    return combined_text.strip()
-
-def search_prompts_by_step(faiss_manager: FAISSManager, project_id: str, article_text: str, step_order: int) -> List[Dict]:
-    """단계별 관련 프롬프트 검색"""
-    try:
-        # FAISS를 사용한 유사도 검색
-        search_results = faiss_manager.search_similar(
-            project_id=project_id,
-            query_text=article_text,
-            top_k=10  # 더 많은 결과를 가져와서 필터링
-        )
-        
-        # 특정 단계의 프롬프트만 필터링
-        step_prompts = []
-        for result in search_results:
-            if result.get('step_order') == step_order and result.get('similarity_score', 0) > 0.5:
-                # S3에서 전체 프롬프트 텍스트 로드
-                prompt_text = load_prompt_from_s3_fast(result.get('s3_key', ''))
-                
-                if prompt_text:
-                    step_prompts.append({
-                        'promptId': result['prompt_id'],
-                        'category': result['category'],
-                        'title': result.get('title', ''),
-                        'text': prompt_text,
-                        'similarity_score': result['similarity_score'],
-                        'step_order': result['step_order']
-                    })
-        
-        # 유사도 점수 기준으로 정렬
-        step_prompts.sort(key=lambda x: x['similarity_score'], reverse=True)
-        
-        # 상위 3개만 반환
-        return step_prompts[:3]
-        
-    except Exception as e:
-        logger.error(f"단계별 프롬프트 검색 실패: {str(e)}")
-        return []
-
-def load_prompt_from_s3_fast(s3_key: str) -> str:
-    """S3에서 프롬프트 빠르게 로드 (캐싱)"""
-    if not s3_key:
-        return ""
-    
-    # 글로벌 캐시 사용 (Lambda 컨테이너 재사용)
-    if not hasattr(load_prompt_from_s3_fast, '_cache'):
-        load_prompt_from_s3_fast._cache = {}
-    
-    if s3_key in load_prompt_from_s3_fast._cache:
-        return load_prompt_from_s3_fast._cache[s3_key]
-    
-    try:
-        response = s3_client.get_object(
-            Bucket=PROMPT_BUCKET,
-            Key=s3_key
-        )
-        text = response['Body'].read().decode('utf-8')
-        
-        # 캐시에 저장 (최대 50개)
-        if len(load_prompt_from_s3_fast._cache) < 50:
-            load_prompt_from_s3_fast._cache[s3_key] = text
-        
-        return text
-        
-    except Exception as e:
-        logger.error(f"S3 로드 실패: {s3_key} - {str(e)}")
-        return ""
-
-def execute_step_with_prompts(step_number: int, prompts: List[Dict], article_text: str, previous_results: Dict) -> Dict:
-    """단계별 프롬프트 실행"""
-    step_configs = {
-        1: "역할 및 목표 설정",
-        2: "지식 베이스 적용",
-        3: "사고 과정 분석",
-        4: "스타일 가이드 적용",
-        5: "추론 및 검증",
-        6: "품질 평가"
-    }
-    
-    # 프롬프트 결합
-    combined_prompt = "\n\n".join([p['text'] for p in prompts])
-    
-    # 컨텍스트 구성
-    context_parts = [f"=== {step_configs[step_number]} ==="]
-    if previous_results:
-        context_parts.append("이전 단계 결과:")
-        for key, result in previous_results.items():
-            context_parts.append(f"{key}: {result.get('analysis', '')[:200]}...")
-    
-    context_parts.extend(["\n기사 내용:", article_text[:1000], "\n분석 지침:", combined_prompt])
-    
-    # Bedrock 호출
-    try:
-        response = bedrock_runtime.invoke_model(
-            modelId=BEDROCK_MODEL_ID,
-            body=json.dumps({
-                "anthropic_version": "bedrock-2023-05-31",
-                "max_tokens": 500,
-                "temperature": 0.6,
-                "messages": [{
-                    "role": "user",
-                    "content": "\n".join(context_parts)
-                }]
-            })
-        )
-        
-        response_body = json.loads(response['body'].read())
-        analysis = response_body['content'][0]['text']
-        
-        return {
-            'step_name': step_configs[step_number],
-            'analysis': analysis,
-            'output': analysis,  # 다음 단계로 전달될 출력
-            'prompts_used': [p['promptId'] for p in prompts]
-        }
-        
-    except Exception as e:
-        logger.error(f"단계 {step_number} 실행 실패: {str(e)}")
-        return {
-            'step_name': step_configs[step_number],
-            'analysis': f"단계 실행 중 오류 발생: {str(e)}",
-            'output': "",  # 오류 시 빈 출력
-            'prompts_used': []
-        }
-
-def generate_final_titles_from_steps(step_results: Dict, article_text: str) -> str:
-    """단계 결과를 바탕으로 최종 제목 생성"""
-    # 단계별 분석 요약
-    analysis_summary = []
-    for step_key, result in step_results.items():
-        analysis_summary.append(f"{result['step_name']}: {result['analysis'][:150]}...")
-    
-    final_prompt = f"""
-단계별 분석 결과:
-{"".join(analysis_summary)}
-
-원본 기사:
-{article_text[:1500]}
-
-위 분석을 바탕으로 다음 형식으로 제목을 생성하세요:
-
-# 유형별 제목 추천
-
-## 1. 저널리즘 충실형
-1. [제목]
-2. [제목]
-3. [제목]
-
-## 2. 균형잡힌 후킹형
-1. [제목]
-2. [제목]
-3. [제목]
-
-## 3. 클릭유도형
-1. [제목]
-2. [제목]
-3. [제목]
-
-각 제목은 15-30자 내외로 작성하세요.
-"""
-    
-    try:
-        response = bedrock_runtime.invoke_model(
-            modelId=BEDROCK_MODEL_ID,
-            body=json.dumps({
-                "anthropic_version": "bedrock-2023-05-31",
-                "max_tokens": 1500,
-                "temperature": 0.7,
-                "messages": [{"role": "user", "content": final_prompt}]
-            })
-        )
-        
-        return json.loads(response['body'].read())['content'][0]['text']
-        
-    except Exception as e:
-        logger.error(f"최종 제목 생성 실패: {str(e)}")
-        return "제목 생성 중 오류가 발생했습니다."
-
-def get_default_guidelines() -> str:
-    """기본 제목 생성 가이드라인"""
-    return """
-=== 서울경제신문 제목 작성 가이드라인 ===
-
-• 핵심 내용을 명확하고 정확하게 전달
-• 15-30자 내외로 간결하게 작성
-• 핵심 키워드를 앞쪽에 배치
-• 숫자나 구체적 데이터 활용
-• 과장된 표현 지양, 사실 중심
-"""
-
-def create_bedrock_payload_direct(combined_prompts: str, article_text: str) -> Dict[str, Any]:
-    """기본 모드용 Bedrock 페이로드 생성"""
-    
-    if combined_prompts.strip():
-        system_prompt = f"""당신은 서울경제신문의 전문 제목 작가입니다. 다음 가이드라인을 참고하여 뉴스 제목을 작성해주세요:
-
-{combined_prompts}
-
-반드시 지정된 형식을 정확히 따라 출력하세요."""
-    else:
-        system_prompt = """당신은 서울경제신문의 전문 제목 작가입니다. 뉴스 기사의 핵심을 정확하고 임팩트 있게 전달하는 제목을 작성해주세요."""
-
-    user_prompt = f"""다음 기사에 대해 유형별 제목을 생성하세요:
-
-{article_text}
-
-# 유형별 제목 추천
-
-## 1. 저널리즘 충실형
-1. [제목]
-2. [제목]
-3. [제목]
-
-## 2. 균형잡힌 후킹형
-1. [제목]
-2. [제목]
-3. [제목]
-
-## 3. 클릭유도형
-1. [제목]
-2. [제목]
-3. [제목]
-
-각 제목은 15-30자 내외로 작성하세요."""
-
-    return {
-        "anthropic_version": "bedrock-2023-05-31",
-        "max_tokens": 1000,
-        "temperature": 0.6,
-        "system": system_prompt,
-        "messages": [{"role": "user", "content": user_prompt}]
-    }
-
-def save_execution_result(project_id: str, execution_id: str, result: str, article: str) -> None:
-    """실행 결과를 DynamoDB에 저장"""
-    try:
-        table = dynamodb.Table(EXECUTION_TABLE)
-        table.put_item(
-            Item={
-                'projectId': project_id,
-                'executionId': execution_id,
-                'result': result,
-                'article': article,
-                'timestamp': datetime.utcnow().isoformat(),
-                'status': 'completed',
-                'mode': 'direct'
-            }
-        )
-    except Exception as e:
-        logger.warning(f"실행 결과 저장 실패: {str(e)}")
-
-def get_execution_status(event: Dict[str, Any]) -> Dict[str, Any]:
-    """Step Functions 실행 상태 조회"""
-    try:
-        # URL에서 execution ARN 파싱
-        execution_arn = urllib.parse.unquote(event['pathParameters']['executionArn'])
-        
-        # Step Functions 실행 상태 조회
-        response = stepfunctions_client.describe_execution(
-            executionArn=execution_arn
-        )
-        
-        status = response['status']
-        
-        result = {
-            'executionArn': execution_arn,
-            'status': status,
-            'startDate': response.get('startDate', '').isoformat() if response.get('startDate') else '',
-            'stopDate': response.get('stopDate', '').isoformat() if response.get('stopDate') else '',
-        }
-        
-        # 실행 완료된 경우 결과 조회
-        if status == 'SUCCEEDED':
-            result.update(get_execution_result(execution_arn))
-        elif status == 'FAILED':
-            result.update(get_execution_error(execution_arn))
-        elif status == 'TIMED_OUT':
-            result['error'] = '실행 시간이 초과되었습니다'
-        elif status == 'ABORTED':
-            result['error'] = '실행이 중단되었습니다'
         
         return {
             'statusCode': 200,
             'headers': get_cors_headers(),
-            'body': json.dumps(result, ensure_ascii=False)
+            'body': json.dumps(response_body, ensure_ascii=False)
         }
-        
+
     except Exception as e:
-        logger.error(f"실행 상태 조회 실패: {str(e)}")
-        return create_error_response(500, f"실행 상태 조회 실패: {str(e)}")
-
-def get_execution_result(execution_arn: str) -> Dict[str, Any]:
-    """실행 완료 결과 조회"""
-    try:
-        table = dynamodb.Table(EXECUTION_TABLE)
+        error_time = log_performance_metrics("error_handling", request_start_time, 
+                                           error_type=type(e).__name__, 
+                                           error_message=str(e))
         
-        response = table.get_item(
-            Key={'executionArn': execution_arn}
-        )
-        
-        if 'Item' in response:
-            item = response['Item']
-            return {
-                'conversationId': item.get('conversationId', ''),
-                'projectId': item.get('projectId', ''),
-                'result': item.get('result', {}),
-                'usage': item.get('usage', {}),
-                'completedAt': item.get('completedAt', '')
-            }
-        else:
-            # DynamoDB에서 찾을 수 없는 경우 Step Functions에서 직접 조회
-            return get_result_from_step_functions(execution_arn)
-            
-    except Exception as e:
-        logger.error(f"실행 결과 조회 실패: {str(e)}")
-        return {'error': f'결과 조회 실패: {str(e)}'}
-
-def get_execution_error(execution_arn: str) -> Dict[str, Any]:
-    """실행 실패 오류 조회"""
-    try:
-        table = dynamodb.Table(EXECUTION_TABLE)
-        
-        response = table.get_item(
-            Key={'executionArn': execution_arn}
-        )
-        
-        if 'Item' in response:
-            item = response['Item']
-            return {
-                'error': item.get('error', {}),
-                'failedAt': item.get('failedAt', '')
-            }
-        else:
-            # DynamoDB에서 찾을 수 없는 경우 Step Functions에서 직접 조회
-            return get_error_from_step_functions(execution_arn)
-            
-    except Exception as e:
-        logger.error(f"실행 오류 조회 실패: {str(e)}")
-        return {'error': f'오류 조회 실패: {str(e)}'}
-
-def get_result_from_step_functions(execution_arn: str) -> Dict[str, Any]:
-    """Step Functions에서 직접 결과 조회"""
-    try:
-        response = stepfunctions_client.describe_execution(
-            executionArn=execution_arn
-        )
-        
-        if 'output' in response:
-            output = json.loads(response['output'])
-            return {
-                'result': output.get('result', {}),
-                'usage': output.get('usage', {}),
-                'completedAt': response.get('stopDate', '').isoformat() if response.get('stopDate') else ''
-            }
-        
-        return {'error': '결과를 찾을 수 없습니다'}
-        
-    except Exception as e:
-        logger.error(f"Step Functions 결과 조회 실패: {str(e)}")
-        return {'error': f'Step Functions 결과 조회 실패: {str(e)}'}
-
-def get_error_from_step_functions(execution_arn: str) -> Dict[str, Any]:
-    """Step Functions에서 직접 오류 조회"""
-    try:
-        response = stepfunctions_client.describe_execution(
-            executionArn=execution_arn
-        )
-        
-        error_info = {
-            'type': 'EXECUTION_FAILED',
-            'message': '실행이 실패했습니다',
-            'failedAt': response.get('stopDate', '').isoformat() if response.get('stopDate') else ''
-        }
-        
-        return {'error': error_info}
-        
-    except Exception as e:
-        logger.error(f"Step Functions 오류 조회 실패: {str(e)}")
-        return {'error': f'Step Functions 오류 조회 실패: {str(e)}'}
-
-def get_cors_headers() -> Dict[str, str]:
-    """CORS 헤더 반환"""
-    return {
-        'Content-Type': 'application/json',
-        'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'
-    }
-
-def create_error_response(status_code: int, message: str) -> Dict[str, Any]:
-    """에러 응답 생성"""
-    return {
-        'statusCode': status_code,
-        'headers': get_cors_headers(),
-        'body': json.dumps({
-            'error': message,
-            'timestamp': datetime.utcnow().isoformat()
-        }, ensure_ascii=False)
-    } 
+        logger.error(f"핸들러 오류 (실행시간: {error_time:.2f}초): {str(e)}", exc_info=True)
+        return {
+            'statusCode': 500,
+            'headers': get_cors_headers(),
+            'body': json.dumps({
+                'message': f'서버 오류: {str(e)}',
+                'error_type': type(e).__name__,
+                'execution_time': round(error_time, 2),
+                'model_info': {
+                    'model_used': DEFAULT_MODEL_ID,
+                    'model_name': get_model_info(DEFAULT_MODEL_ID)['name']
+                }
+            }, ensure_ascii=False)
+        } 

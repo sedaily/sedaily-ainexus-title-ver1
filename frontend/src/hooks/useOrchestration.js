@@ -1,11 +1,11 @@
 import { useState, useCallback } from "react";
 import { toast } from "react-hot-toast";
-import { orchestrationAPI } from "../services/api";
+import { generateAPI } from "../services/api";
 
 /**
- * 오케스트레이션 실행 및 결과 폴링을 위한 커스텀 훅
+ * 제목 생성 실행 및 결과 폴링을 위한 커스텀 훅
  * @param {string} projectId - 프로젝트 ID
- * @returns {Object} - 오케스트레이션 관련 상태와 함수들
+ * @returns {Object} - 제목 생성 관련 상태와 함수들
  */
 export const useOrchestration = (projectId) => {
   const [isExecuting, setIsExecuting] = useState(false);
@@ -13,15 +13,15 @@ export const useOrchestration = (projectId) => {
   const [executionStatus, setExecutionStatus] = useState(null);
 
   /**
-   * 오케스트레이션 실행
-   * @param {string} content - 입력 내용
-   * @param {Object} config - 오케스트레이션 설정
-   * @returns {Promise<string>} - 실행 ID
+   * 제목 생성 실행
+   * @param {string} userInput - 사용자 입력
+   * @param {Object} options - 추가 옵션 (예: chat_history)
+   * @returns {Promise<Object>} - 생성 결과
    */
   const executeOrchestration = useCallback(
-    async (content, config = {}) => {
-      if (!content.trim()) {
-        toast.error("내용을 입력해주세요");
+    async (userInput, options = {}) => {
+      if (!userInput.trim()) {
+        toast.error("메시지를 입력해주세요.");
         return null;
       }
 
@@ -29,28 +29,53 @@ export const useOrchestration = (projectId) => {
         setIsExecuting(true);
         setExecutionStatus("STARTING");
 
-        const defaultConfig = {
-          useAllSteps: true,
-          enabledSteps: [],
-          maxRetries: 3,
-          temperature: 0.7,
-          ...config,
+        // chat_history와 userInput을 포함하는 data 객체 생성
+        const data = {
+          userInput: userInput,
+          chat_history: options.chat_history || [],
         };
 
-        const response = await orchestrationAPI.executeOrchestration(
+        console.log("🚀 대화 생성 요청 시작:", {
           projectId,
-          content,
-          defaultConfig
-        );
+          inputLength: userInput.length,
+          historyLength: data.chat_history.length,
+          timestamp: new Date().toISOString(),
+        });
 
-        setCurrentExecution(response.executionId);
-        setExecutionStatus("RUNNING");
+        const response = await generateAPI.generateTitle(projectId, data);
 
-        return response.executionId;
+        console.log("✅ 대화 생성 완료:", {
+          mode: response.mode,
+          message: response.message,
+          timestamp: new Date().toISOString(),
+        });
+
+        setIsExecuting(false);
+        setExecutionStatus("COMPLETED");
+
+        return response;
       } catch (error) {
-        console.error("오케스트레이션 실행 실패:", error);
+        console.error("❌ 제목 생성 실패:", {
+          error: error.message,
+          code: error.code,
+          status: error.response?.status,
+          timestamp: new Date().toISOString(),
+        });
         setIsExecuting(false);
         setExecutionStatus("FAILED");
+
+        // 프롬프트 카드 관련 에러 처리
+        if (
+          error.response?.status === 400 &&
+          error.response?.data?.setup_required
+        ) {
+          toast.error("프롬프트 카드를 먼저 설정해주세요!");
+        } else if (error.code === "ECONNABORTED") {
+          toast.error("요청 시간이 초과되었습니다. 다시 시도해주세요.");
+        } else {
+          toast.error("처리 중 오류가 발생했습니다.");
+        }
+
         throw error;
       }
     },
@@ -58,47 +83,39 @@ export const useOrchestration = (projectId) => {
   );
 
   /**
-   * 오케스트레이션 결과 폴링
-   * @param {string} executionId - 실행 ID
+   * 실행 상태 조회 (Step Functions 사용 시)
+   * @param {string} executionArn - 실행 ARN
    * @param {Function} onComplete - 완료 시 콜백
    * @param {Function} onError - 에러 시 콜백
    */
   const pollOrchestrationResult = useCallback(
-    async (executionId, onComplete, onError) => {
+    async (executionArn, onComplete, onError) => {
       const poll = async () => {
         try {
-          const status = await orchestrationAPI.getOrchestrationStatus(
-            projectId,
-            executionId
-          );
+          const result = await generateAPI.getExecutionStatus(executionArn);
 
-          setExecutionStatus(status.status);
+          setExecutionStatus(result.status);
 
-          if (status.status === "COMPLETED") {
-            const result = await orchestrationAPI.getOrchestrationResult(
-              projectId,
-              executionId
-            );
-
+          if (result.status === "SUCCEEDED") {
             setIsExecuting(false);
             setExecutionStatus("COMPLETED");
 
             if (onComplete) {
               onComplete(result);
             }
-          } else if (status.status === "FAILED") {
+          } else if (result.status === "FAILED") {
             setIsExecuting(false);
             setExecutionStatus("FAILED");
 
             if (onError) {
-              onError(new Error("오케스트레이션 실패"));
+              onError(new Error("처리 실패"));
             }
-          } else if (status.status === "RUNNING") {
+          } else if (result.status === "RUNNING") {
             // 3초 후 다시 폴링
             setTimeout(poll, 3000);
           }
         } catch (error) {
-          console.error("결과 조회 실패:", error);
+          console.error("실행 상태 조회 실패:", error);
           setIsExecuting(false);
           setExecutionStatus("FAILED");
 

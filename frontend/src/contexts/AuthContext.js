@@ -12,28 +12,23 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
-  // 컴포넌트 마운트 시 인증 상태 확인
   useEffect(() => {
     checkAuthStatus();
   }, []);
 
   const checkAuthStatus = () => {
     try {
-      const authenticated = authAPI.isAuthenticated();
-      setIsAuthenticated(authenticated);
-      
-      if (authenticated) {
-        const currentUser = authAPI.getCurrentUser();
-        setUser(currentUser);
-      } else {
-        setUser(null);
-      }
+      const isAuth = authAPI.isAuthenticated();
+      const currentUser = authAPI.getCurrentUser();
+
+      setIsAuthenticated(isAuth);
+      setUser(currentUser);
     } catch (error) {
-      console.error("인증 상태 확인 오류:", error);
+      console.error("Auth status check failed:", error);
       setIsAuthenticated(false);
       setUser(null);
     } finally {
@@ -43,16 +38,23 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (credentials) => {
     try {
-      const response = await authAPI.signin(credentials);
-      const currentUser = authAPI.getCurrentUser();
-      
-      setUser(currentUser);
+      const result = await authAPI.signin(credentials);
+      const user = authAPI.getCurrentUser();
+
       setIsAuthenticated(true);
-      
-      return response;
+      setUser(user);
+
+      return result;
     } catch (error) {
-      setUser(null);
-      setIsAuthenticated(false);
+      throw error;
+    }
+  };
+
+  const signup = async (userData) => {
+    try {
+      const result = await authAPI.signup(userData);
+      return result;
+    } catch (error) {
       throw error;
     }
   };
@@ -60,50 +62,51 @@ export const AuthProvider = ({ children }) => {
   const logout = async () => {
     try {
       await authAPI.signout();
-    } catch (error) {
-      console.error("로그아웃 오류:", error);
     } finally {
-      setUser(null);
       setIsAuthenticated(false);
+      setUser(null);
     }
   };
 
-  const signup = async (userData) => {
-    return await authAPI.signup(userData);
-  };
-
   const verifyEmail = async (verificationData) => {
-    return await authAPI.verifyEmail(verificationData);
+    try {
+      const result = await authAPI.verifyEmail(verificationData);
+      return result;
+    } catch (error) {
+      throw error;
+    }
   };
 
-  const refreshToken = async () => {
+  const forgotPassword = async (email) => {
     try {
-      await authAPI.refreshToken();
-      const currentUser = authAPI.getCurrentUser();
-      setUser(currentUser);
-      setIsAuthenticated(true);
+      const result = await authAPI.forgotPassword(email);
+      return result;
     } catch (error) {
-      setUser(null);
-      setIsAuthenticated(false);
+      throw error;
+    }
+  };
+
+  const confirmPassword = async (resetData) => {
+    try {
+      const result = await authAPI.confirmPassword(resetData);
+      return result;
+    } catch (error) {
       throw error;
     }
   };
 
   const value = {
+    isAuthenticated,
     user,
     loading,
-    isAuthenticated,
     login,
-    logout,
     signup,
+    logout,
     verifyEmail,
-    refreshToken,
+    forgotPassword,
+    confirmPassword,
     checkAuthStatus,
   };
 
-  return (
-    <AuthContext.Provider value={value}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };

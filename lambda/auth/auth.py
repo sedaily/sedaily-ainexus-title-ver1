@@ -13,7 +13,7 @@ cognito_client = boto3.client('cognito-idp', region_name=os.environ['REGION'])
 
 # 환경 변수
 USER_POOL_ID = os.environ['USER_POOL_ID']
-CLIENT_ID = os.environ['CLIENT_ID']
+CLIENT_ID = os.environ['USER_POOL_CLIENT_ID']
 REGION = os.environ['REGION']
 
 def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
@@ -323,6 +323,6 @@ def get_cors_headers() -> Dict[str, str]:
     return {
         'Content-Type': 'application/json',
         'Access-Control-Allow-Origin': '*',
-        'Access-Control-Allow-Headers': 'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token',
-        'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS'
+        'Access-Control-Allow-Methods': 'GET, POST, PUT, DELETE, OPTIONS',
+        'Access-Control-Allow-Headers': 'Content-Type, Authorization, X-Requested-With'
     }

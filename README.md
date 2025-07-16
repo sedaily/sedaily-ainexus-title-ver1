@@ -418,13 +418,13 @@ graph LR
 ```mermaid
 graph TD
     A[User Input] --> B{Content Length Check}
-    B -->|> 10,000 chars| C[Max: 8192 tokens]
-    B -->|5,000-10,000 chars| D[Max: 4096 tokens]
-    B -->|< 5,000 chars| E[Max: 1024 tokens]
+    B -->|> 10,000 chars| C[Max 8192 tokens]
+    B -->|5,000-10,000 chars| D[Max 4096 tokens]
+    B -->|< 5,000 chars| E[Max 1024 tokens]
 
-    C --> F[Calculate: base + (length/100)]
-    D --> G[Calculate: base + (length/200)]
-    E --> H[Use base tokens: 1024]
+    C --> F[Calculate base plus length div 100]
+    D --> G[Calculate base plus length div 200]
+    E --> H[Use base tokens 1024]
 
     F --> I[Optimized Token Usage]
     G --> I

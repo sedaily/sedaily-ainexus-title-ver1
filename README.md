@@ -10,9 +10,15 @@ A scalable, serverless AI-powered title generation system built on AWS infrastru
 - [Implementation Timeline](#implementation-timeline)
 - [References](#references--resources)
 
-## 🏗️ Architecture Overview
+## Architecture Overview
 
-### Comprehensive AWS Serverless Architecture
+> **이 섹션에서는 시스템의 전체 구조와 주요 워크플로우를 시각적으로 설명합니다.**
+
+---
+
+### System Architecture Overview
+
+**전체 AWS 서비스 구조와 컴포넌트 간의 관계를 보여주는 고수준 아키텍처 다이어그램**
 
 ```mermaid
 graph TB
@@ -89,7 +95,13 @@ graph TB
     GenerateLambda --> CloudWatchMetrics
 ```
 
-### User Workflow: Prompt Creation and Storage Process
+---
+
+### User Workflow Diagrams
+
+#### 1. Prompt Template Creation & Management Process
+
+**사용자가 프롬프트 템플릿을 생성하고 저장하는 전체 플로우**
 
 ```mermaid
 sequenceDiagram
@@ -137,7 +149,9 @@ sequenceDiagram
     React->>User: 20. Show success notification
 ```
 
-### Title Generation Process with Prompt Usage
+#### 2. AI Title Generation Process
+
+**프롬프트 템플릿을 사용한 실시간 제목 생성 워크플로우**
 
 ```mermaid
 sequenceDiagram
@@ -203,7 +217,11 @@ sequenceDiagram
     end
 ```
 
-### Data Storage Architecture and Access Patterns
+---
+
+### Database Schema & Data Relationships
+
+**DynamoDB 테이블 구조와 S3 객체 간의 관계를 나타내는 ER 다이어그램**
 
 ```mermaid
 erDiagram
@@ -261,159 +279,271 @@ erDiagram
         json metadata
     }
 
-    USERS ||--o{ PROJECTS : creates
-    USERS ||--o{ PROMPTS : owns
-    PROJECTS ||--o{ CONVERSATIONS : contains
-    PROMPTS ||--o{ CONVERSATIONS : uses
-    CONVERSATIONS ||--o| S3_OBJECTS : references
-    PROMPTS ||--o| S3_OBJECTS : stores_template
+    USERS ||--o{ PROJECTS : "creates"
+    USERS ||--o{ PROMPTS : "owns"
+    PROJECTS ||--o{ CONVERSATIONS : "contains"
+    PROMPTS ||--o{ CONVERSATIONS : "uses"
+    CONVERSATIONS ||--o| S3_OBJECTS : "references"
+    PROMPTS ||--o| S3_OBJECTS : "stores_template"
 ```
 
-### System Integration and Communication Flow
+---
+
+## Core Features
+
+### Key Capabilities
+
+| Feature                         | Description                                                   | Technology          |
+| ------------------------------- | ------------------------------------------------------------- | ------------------- |
+| **AI-Powered Title Generation** | Claude 3 Sonnet을 활용한 지능형 콘텐츠 분석 및 제목 생성      | AWS Bedrock         |
+| **Real-time Streaming**         | 향상된 사용자 경험을 위한 스트리밍 응답 구현                  | Server-Sent Events  |
+| **Dynamic Prompt Management**   | 템플릿 변수와 버전 관리가 포함된 커스터마이징 가능한 프롬프트 | DynamoDB + S3       |
+| **Performance Optimization**    | 고급 타임아웃 처리, 재시도 로직, 토큰 관리                    | Lambda + CloudWatch |
+| **Scalable Infrastructure**     | 자동 스케일링 기능을 갖춘 서버리스 아키텍처                   | AWS Serverless      |
+| **User Authentication**         | AWS Cognito 통합을 통한 보안 액세스                           | Cognito + IAM       |
+| **Project Management**          | 여러 제목 생성 프로젝트 관리를 위한 체계적인 작업공간         | DynamoDB            |
+
+---
+
+## Technology Stack
+
+### Frontend Technologies
 
 ```mermaid
-graph TD
-    subgraph "User Interface Layer"
-        A[User Input Form] --> B[Prompt Template Selector]
-        B --> C[Content Text Area]
-        C --> D[Generation Settings]
-    end
+graph LR
+    A[React 18] --> B[Tailwind CSS]
+    B --> C[React Router]
+    C --> D[React Hot Toast]
+    D --> E[Heroicons]
 
-    subgraph "Frontend State Management"
-        D --> E[React Context API]
-        E --> F[Local State Cache]
-        F --> G[API Service Layer]
-    end
-
-    subgraph "API Communication"
-        G --> H[HTTP Client with Interceptors]
-        H --> I[JWT Token Management]
-        I --> J[Request/Response Transformation]
-    end
-
-    subgraph "Backend Processing Pipeline"
-        J --> K[API Gateway Request Routing]
-        K --> L[Request Validation Schema]
-        L --> M[Lambda Function Invocation]
-        M --> N[Business Logic Processing]
-    end
-
-    subgraph "AI Processing Workflow"
-        N --> O[Prompt Template Loading]
-        O --> P[Dynamic Token Calculation]
-        P --> Q[Context Window Optimization]
-        Q --> R[Bedrock API Call]
-        R --> S[Response Stream Processing]
-    end
-
-    subgraph "Data Persistence Flow"
-        S --> T[Conversation Logging]
-        T --> U[Performance Metrics Collection]
-        U --> V[Error Tracking and Alerting]
-        V --> W[Data Archival to S3]
-    end
-
-    W --> X[Response Transformation]
-    X --> Y[Client Response Delivery]
-    Y --> Z[UI State Update]
+    A --> F[Hooks & Context API]
+    F --> G[Responsive Design]
+    G --> H[Modern UI/UX]
 ```
 
-## 🚀 Core Features
+**주요 구성 요소:**
 
-- **AI-Powered Title Generation**: Leverages AWS Bedrock Claude 3 Sonnet for intelligent content analysis
-- **Real-time Streaming**: Implements streaming responses for improved user experience
-- **Dynamic Prompt Management**: Customizable prompts with template variables and versioning
-- **Performance Optimization**: Advanced timeout handling, retry logic, and token management
-- **Scalable Infrastructure**: Serverless architecture with auto-scaling capabilities
-- **User Authentication**: Secure access with AWS Cognito integration
-- **Project Management**: Organized workspace for managing multiple title generation projects
-
-## 🛠️ Technology Stack
-
-### Frontend
-
-- **React 18** with Hooks and Context API
-- **Tailwind CSS** for responsive UI design
-- **React Router** for client-side navigation
-- **React Hot Toast** for notifications
-- **Heroicons** for consistent iconography
+- **React 18** - Hooks와 Context API를 활용한 현대적 프론트엔드
+- **Tailwind CSS** - 반응형 UI 디자인 프레임워크
+- **React Router** - 클라이언트 사이드 네비게이션
+- **React Hot Toast** - 사용자 알림 시스템
+- **Heroicons** - 일관된 아이콘 시스템
 
 ### Backend Infrastructure
 
-- **AWS CDK (Python)** for Infrastructure as Code
-- **AWS Lambda** (Python 3.12) for serverless compute
-- **AWS API Gateway** for REST API management
-- **AWS DynamoDB** for NoSQL data storage
-- **AWS Cognito** for authentication and user management
-- **AWS S3** for static asset hosting
-- **AWS CloudFront** with OAC for global content delivery
+```mermaid
+graph TB
+    subgraph "Infrastructure as Code"
+        CDK[AWS CDK Python]
+    end
+
+    subgraph "Compute Layer"
+        Lambda[AWS Lambda Python 3.12]
+    end
+
+    subgraph "API Management"
+        Gateway[API Gateway REST]
+    end
+
+    subgraph "Data Layer"
+        DynamoDB[DynamoDB NoSQL]
+        S3[S3 Object Storage]
+    end
+
+    subgraph "Security & Auth"
+        Cognito[AWS Cognito]
+        CloudFront[CloudFront + OAC]
+    end
+
+    CDK --> Lambda
+    CDK --> Gateway
+    CDK --> DynamoDB
+    CDK --> S3
+    CDK --> Cognito
+    CDK --> CloudFront
+```
+
+**핵심 AWS 서비스:**
+
+- **AWS CDK (Python)** - Infrastructure as Code
+- **AWS Lambda (Python 3.12)** - 서버리스 컴퓨팅
+- **AWS API Gateway** - REST API 관리
+- **AWS DynamoDB** - NoSQL 데이터베이스
+- **AWS Cognito** - 인증 및 사용자 관리
+- **AWS S3** - 정적 자산 호스팅
+- **AWS CloudFront** - OAC를 통한 글로벌 콘텐츠 전송
 
 ### AI/ML Stack
 
-- **AWS Bedrock** for foundation model access
-- **Claude 3 Sonnet** as the primary language model
-- **Streaming API** for real-time response generation
+```mermaid
+graph LR
+    A[AWS Bedrock] --> B[Claude 3 Sonnet]
+    B --> C[Streaming API]
+    C --> D[Real-time Response]
 
-## 🧠 AWS Bedrock Configuration
+    A --> E[200K Context Window]
+    E --> F[Dynamic Token Management]
+    F --> G[Performance Optimization]
+```
 
-### Model Selection
+**AI 기술 스택:**
 
-- **Primary Model**: `anthropic.claude-3-sonnet-20240229-v1:0`
-- **Context Window**: 200K tokens
-- **Max Output Tokens**: Dynamically adjusted (1024-8192 tokens)
-- **Temperature**: 0.7 (balanced creativity and consistency)
+- **AWS Bedrock** - 파운데이션 모델 액세스 플랫폼
+- **Claude 3 Sonnet** - 주요 언어 모델 (200K 컨텍스트)
+- **Streaming API** - 실시간 응답 생성
+- **Dynamic Optimization** - 지능형 토큰 관리 및 성능 최적화
+
+---
+
+## AWS Bedrock Configuration
+
+### Model Selection & Specifications
+
+| Setting               | Value                                     | Description                                  |
+| --------------------- | ----------------------------------------- | -------------------------------------------- |
+| **Primary Model**     | `anthropic.claude-3-sonnet-20240229-v1:0` | Latest Claude 3 Sonnet model                 |
+| **Context Window**    | 200,000 tokens                            | Large context processing available           |
+| **Max Output Tokens** | 1024-8192 (dynamic adjustment)            | Automatic optimization based on input length |
+| **Temperature**       | 0.7                                       | Balance between creativity and consistency   |
+| **Stream Support**    | ✅ Enabled                                | Real-time response streaming                 |
+
+---
 
 ### Performance Optimizations
 
 #### 1. Dynamic Token Management
 
+**Intelligent token allocation based on input length**
+
+```mermaid
+graph TD
+    A[User Input] --> B{Content Length Check}
+    B -->|> 10,000 chars| C[Max: 8192 tokens]
+    B -->|5,000-10,000 chars| D[Max: 4096 tokens]
+    B -->|< 5,000 chars| E[Max: 1024 tokens]
+
+    C --> F[Calculate: base + (length/100)]
+    D --> G[Calculate: base + (length/200)]
+    E --> H[Use base tokens: 1024]
+
+    F --> I[Optimized Token Usage]
+    G --> I
+    H --> I
+```
+
 ```python
 def calculate_dynamic_max_tokens(input_length):
+    """입력 길이에 따른 동적 토큰 계산"""
     base_tokens = 1024
+
     if input_length > 10000:
         return min(8192, base_tokens + (input_length // 100))
     elif input_length > 5000:
         return min(4096, base_tokens + (input_length // 200))
+
     return base_tokens
 ```
 
-#### 2. Streaming Implementation
+#### 2. Streaming Implementation Strategy
 
-- **Primary**: `invoke_model_with_response_stream` for real-time responses
-- **Fallback**: Standard `invoke_model` for compatibility
-- **Error Handling**: Automatic fallback on streaming failures
+```mermaid
+graph LR
+    A[API Request] --> B{Streaming Available?}
+    B -->|Yes| C[invoke_model_with_response_stream]
+    B -->|No| D[invoke_model]
+
+    C --> E[Real-time Response]
+    D --> F[Complete Response]
+
+    E --> G{Stream Error?}
+    G -->|Success| H[Streaming Complete]
+    G -->|Error| I[Fallback to Standard]
+    I --> D
+
+    F --> J[Standard Complete]
+    H --> K[Return Results]
+    J --> K
+```
+
+**Key Implementation Features:**
+
+- **Primary**: `invoke_model_with_response_stream` - Real-time response
+- **Fallback**: `invoke_model` - Compatibility guarantee
+- **Error Handling**: Automatic fallback on streaming failure
 
 #### 3. Advanced Retry Logic
 
-- **Max Retries**: 3 attempts with exponential backoff
-- **Token Reduction**: 30% reduction on token limit errors
+```mermaid
+graph TD
+    A[API Call] --> B{Error Occurred?}
+    B -->|Success| C[Return Response]
+    B -->|Error| D{Error Type Check}
+
+    D -->|Token Limit| E[Reduce Tokens by 30%]
+    D -->|Timeout| F[Exponential Backoff]
+    D -->|Network| G[Network Retry]
+    D -->|Other| H[Standard Retry]
+
+    E --> I{Retry Count < 3?}
+    F --> I
+    G --> I
+    H --> I
+
+    I -->|Yes| J[Wait & Retry]
+    I -->|No| K[Final Error]
+
+    J --> A
+```
+
+**Retry Strategy:**
+
+- **Max Retries**: 3 attempts (exponential backoff)
+- **Token Reduction**: Reduce tokens by 30% on token limit errors
 - **Intelligent Retry**: Different strategies for different error types
+
+---
 
 ### Prompt Engineering
 
 #### Template Structure
 
+**Structured prompt templates for high-quality title generation**
+
 ```python
 TITLE_GENERATION_PROMPT = """
-역할: 당신은 전문적인 제목 작성 전문가입니다.
+Role: You are a professional title generation expert.
 
-컨텍스트: {context}
-요구사항: {requirements}
-스타일: {style}
+Context: {context}
+Requirements: {requirements}
+Style: {style}
 
-내용: {content}
+Content: {content}
 
-다음 조건을 만족하는 제목들을 생성해주세요:
-1. 핵심 메시지가 명확하게 전달되어야 함
-2. 독자의 관심을 끌 수 있어야 함
-3. SEO 최적화를 고려해야 함
-4. {additional_instructions}
+Generate titles that meet the following conditions:
+1. Core message must be clearly conveyed
+2. It must be able to capture reader interest
+3. Consider SEO optimization
+4. It must be easily readable on mobile screens
+5. {additional_instructions}
 
-{count}개의 다양한 제목을 생성해주세요.
+Generate {count} diverse titles.
 """
 ```
 
-## 📊 AWS Infrastructure Details
+#### Template Variables System
+
+| Variable                    | Description                  | Example                                     |
+| --------------------------- | ---------------------------- | ------------------------------------------- |
+| `{context}`                 | Content background info      | "News article", "Blog post"                 |
+| `{requirements}`            | Special requirements         | "30 characters or less", "Keyword included" |
+| `{style}`                   | Title style                  | "Formal", "Friendly", "Emotional"           |
+| `{content}`                 | Actual content               | User input text                             |
+| `{additional_instructions}` | Additional instructions      | Client-specific special requests            |
+| `{count}`                   | Number of titles to generate | 3, 5, 10 etc.                               |
+
+---
+
+## AWS Infrastructure Details
 
 ### Serverless Architecture Overview
 
@@ -725,7 +855,7 @@ This system is built on a **100% serverless architecture** with no traditional s
 - Total Estimated: ~$50-90/month
 ```
 
-## 🔧 Model Tuning and Optimization
+## Model Tuning and Optimization
 
 ### Token Management Strategy
 
@@ -755,7 +885,7 @@ RETRY_CONFIG = {
 - **Structured Logging**: Detailed performance logs for each request phase
 - **Timeout Tracking**: Progressive timeout handling (Frontend: 900s, Lambda: 900s)
 
-## 🚀 Deployment Guide
+## Deployment Guide
 
 ### Prerequisites
 
@@ -799,7 +929,7 @@ MAX_TOKENS=8192
 TEMPERATURE=0.7
 ```
 
-## 📋 API Endpoints
+## API Endpoints
 
 ### Title Generation
 
@@ -825,7 +955,7 @@ PUT /api/projects/{project_id}
 DELETE /api/projects/{project_id}
 ```
 
-## 🔒 Security Features
+## Security Features
 
 - **Authentication**: AWS Cognito User Pool with MFA support
 - **Authorization**: Fine-grained IAM policies
@@ -834,7 +964,7 @@ DELETE /api/projects/{project_id}
 - **Rate Limiting**: API Gateway throttling
 - **Content Security**: CloudFront security headers
 
-## 📈 Performance Characteristics
+## Performance Characteristics
 
 - **Cold Start**: ~2-3 seconds for Lambda initialization
 - **Warm Response**: ~500ms-2s for title generation
@@ -842,66 +972,66 @@ DELETE /api/projects/{project_id}
 - **Availability**: 99.9% SLA with multi-AZ deployment
 - **Latency**: <100ms CloudFront edge response for static assets
 
-## 🛡️ Monitoring and Observability
+## Monitoring and Observability
 
 - **CloudWatch Logs**: Structured logging for all components
 - **CloudWatch Metrics**: Custom business and performance metrics
 - **AWS X-Ray**: Distributed tracing for request flow analysis
 - **Error Tracking**: Automated error detection and alerting
 
-## 📚 References & Resources
+## References & Resources
 
 This project was developed by studying and referencing the following official documentation, technical resources, and educational materials.
 
-### 🏛️ Official AWS Documentation
+### Official AWS Documentation
 
-#### 🧠 AWS Bedrock
+#### AWS Bedrock
 
-- 📖 **[AWS Bedrock User Guide](https://docs.aws.amazon.com/pdfs/bedrock/latest/userguide/bedrock-ug.pdf)** - Comprehensive guide for AWS Bedrock foundation models
-- 🔧 **[Bedrock Runtime API - Claude Examples](https://docs.aws.amazon.com/pdfs/bedrock/latest/userguide/bedrock-ug.pdf#service_code_examples_bedrock-runtime_anthropic_claude)** - Service code examples for Anthropic Claude integration
-- 🚀 **[Amazon Bedrock Serverless Prompt Chaining](https://github.com/aws-samples/amazon-bedrock-serverless-prompt-chaining)** - AWS samples for serverless prompt orchestration
+- **[AWS Bedrock User Guide](https://docs.aws.amazon.com/pdfs/bedrock/latest/userguide/bedrock-ug.pdf)** - Comprehensive guide for AWS Bedrock foundation models
+- **[Bedrock Runtime API - Claude Examples](https://docs.aws.amazon.com/pdfs/bedrock/latest/userguide/bedrock-ug.pdf#service_code_examples_bedrock-runtime_anthropic_claude)** - Service code examples for Anthropic Claude integration
+- **[Amazon Bedrock Serverless Prompt Chaining](https://github.com/aws-samples/amazon-bedrock-serverless-prompt-chaining)** - AWS samples for serverless prompt orchestration
 
-#### ☁️ AWS CDK
+#### AWS CDK
 
-- 📋 **[AWS CDK v2 Guide](https://docs.aws.amazon.com/pdfs/cdk/v2/guide/awscdk.pdf)** - Infrastructure as Code with AWS CDK Python
+- **[AWS CDK v2 Guide](https://docs.aws.amazon.com/pdfs/cdk/v2/guide/awscdk.pdf)** - Infrastructure as Code with AWS CDK Python
 
-### 🤖 AI & Machine Learning Resources
+### AI & Machine Learning Resources
 
-#### 🎯 Multi-Agent Orchestration
+#### Multi-Agent Orchestration
 
-- 🧪 **[Design Multi-Agent Orchestration with Amazon Bedrock](https://aws.amazon.com/ko/blogs/machine-learning/design-multi-agent-orchestration-with-reasoning-using-amazon-bedrock-and-open-source-frameworks/)** - Advanced AI orchestration patterns and reasoning frameworks
+- **[Design Multi-Agent Orchestration with Amazon Bedrock](https://aws.amazon.com/ko/blogs/machine-learning/design-multi-agent-orchestration-with-reasoning-using-amazon-bedrock-and-open-source-frameworks/)** - Advanced AI orchestration patterns and reasoning frameworks
 
-### 📚 Educational Materials & Books
+### Educational Materials & Books
 
-#### 🔍 Technical References
+#### Technical References
 
-- 📘 **[한 권으로 배우는 도커 & 쿠버네티스](https://product.kyobobook.co.kr/detail/S000213057687)** - 컨테이너 개념부터 쿠버네티스를 활용한 배포까지 (장철원 저, 한빛미디어)
-- 📗 **[클라우드 서비스 개발자를 위한 AWS로 구현하는 CI/CD 배포 입문](https://product.kyobobook.co.kr/detail/S000201078147)** - 신입 개발자부터 실제 서비스 구축 경험이 없는 모든 개발자를 위한 실무 밀착형 입문서 (최주호, 정재원, 정동진 저, 앤써북)
-- 📙 **[IT 엔지니어를 위한 AWS 운영의 기본과 노하우](https://product.kyobobook.co.kr/detail/S000214036165)** - AWS 클라우드 서비스 운영 및 관리 전문 가이드 (사타케 요이치 외 저, 길벗)
-- 📕 **[RAG 마스터: 랭체인으로 완성하는 LLM 서비스](https://product.kyobobook.co.kr/detail/S000216240484)** - LangChain을 활용한 RAG 기반 LLM 서비스 구축 실무 (브라이스 유 외 저, 프리렉)
-- 📚 **[Amazon Bedrock으로 시작하는 실전 생성형 AI 개발](https://product.kyobobook.co.kr/detail/S000214962344)** - AWS Bedrock을 활용한 생성형 AI 애플리케이션 개발 가이드 (임지훈, 최성우 저, 디지털북스)
+- **[한 권으로 배우는 도커 & 쿠버네티스](https://product.kyobobook.co.kr/detail/S000213057687)** - 컨테이너 개념부터 쿠버네티스를 활용한 배포까지 (장철원 저, 한빛미디어)
+- **[클라우드 서비스 개발자를 위한 AWS로 구현하는 CI/CD 배포 입문](https://product.kyobobook.co.kr/detail/S000201078147)** - 신입 개발자부터 실제 서비스 구축 경험이 없는 모든 개발자를 위한 실무 밀착형 입문서 (최주호, 정재원, 정동진 저, 앤써북)
+- **[IT 엔지니어를 위한 AWS 운영의 기본과 노하우](https://product.kyobobook.co.kr/detail/S000214036165)** - AWS 클라우드 서비스 운영 및 관리 전문 가이드 (사타케 요이치 외 저, 길벗)
+- **[RAG 마스터: 랭체인으로 완성하는 LLM 서비스](https://product.kyobobook.co.kr/detail/S000216240484)** - LangChain을 활용한 RAG 기반 LLM 서비스 구축 실무 (브라이스 유 외 저, 프리렉)
+- **[Amazon Bedrock으로 시작하는 실전 생성형 AI 개발](https://product.kyobobook.co.kr/detail/S000214962344)** - AWS Bedrock을 활용한 생성형 AI 애플리케이션 개발 가이드 (임지훈, 최성우 저, 디지털북스)
 
 ---
 
-## 🎯 Project Philosophy
+## Project Philosophy
 
 > _"This project demonstrates the power of serverless architecture combined with cutting-edge AI capabilities, creating a scalable and cost-effective solution for intelligent content generation."_
 
-### 🌟 Key Achievements
+### Key Achievements
 
-- ✅ **Zero Server Management** - 100% serverless architecture
-- ✅ **AI-Powered Intelligence** - Advanced Claude 3 Sonnet integration
-- ✅ **Enterprise-Ready** - Production-grade security and monitoring
-- ✅ **Cost-Optimized** - Pay-per-use pricing model
-- ✅ **Highly Available** - Multi-AZ deployment with automatic failover
+- **Zero Server Management** - 100% serverless architecture
+- **AI-Powered Intelligence** - Advanced Claude 3 Sonnet integration
+- **Enterprise-Ready** - Production-grade security and monitoring
+- **Cost-Optimized** - Pay-per-use pricing model
+- **Highly Available** - Multi-AZ deployment with automatic failover
 
 ---
 
-### 💡 Feature Requests
+### Feature Requests
 
 - Feature requests are welcome! Please use GitHub Issues with the `enhancement` label.
 
-### 🤝 Contributing
+### Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -911,13 +1041,13 @@ This project was developed by studying and referencing the following official do
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
-## 🎉 Acknowledgments
+## Acknowledgments
 
 Special thanks to:
 
@@ -930,7 +1060,7 @@ Special thanks to:
 
 <div align="center">
 
-### 🌟 Star this repository if you found it helpful! 🌟
+### Star this repository if you found it helpful!
 
 **Built with ❤️ using AWS Serverless Technologies**
 
@@ -952,198 +1082,21 @@ Special thanks to:
 
 ## Implementation Timeline
 
-| Phase | Date    | Milestone                             |
-| ----- | ------- | ------------------------------------- |
-| PoC   | 2024-04 | Prompt→Title streaming success        |
-| MVP   | 2024-05 | React UI + DynamoDB integration       |
-| Beta  | 2024-06 | Auth, project management, cost tuning |
-| Prod  | 2024-07 | OAC enabled, Bedrock optimization     |
-
-<details>
-<summary>Developer Guide (click to expand)</summary>
-
-## 🚀 Deployment Guide
-
-### Prerequisites
-
-- AWS CLI configured with appropriate permissions
-- AWS CDK CLI installed (`npm install -g aws-cdk`)
-- Python 3.12+
-- Node.js 18+
-
-### Deployment Steps
-
-1. **Bootstrap CDK** (first-time only)
-
-```bash
-cdk bootstrap
-```
-
-2. **Deploy Infrastructure**
-
-```bash
-cd cdk
-pip install -r requirements.txt
-cdk deploy --all --require-approval never
-```
-
-3. **Build and Deploy Frontend**
-
-```bash
-cd frontend
-npm install
-npm run build
-# Files automatically uploaded to S3 via CDK deployment
-```
-
-### Environment Configuration
-
-```bash
-# Required environment variables
-AWS_REGION=us-east-1
-BEDROCK_MODEL_ID=anthropic.claude-3-sonnet-20240229-v1:0
-MAX_TOKENS=8192
-TEMPERATURE=0.7
-```
-
-## 📋 API Endpoints
-
-### Title Generation
-
-```http
-POST /api/generate
-Authorization: Bearer {cognito_token}
-Content-Type: application/json
-
-{
-  "content": "Text content for title generation",
-  "context": "Optional context",
-  "requirements": "Specific requirements",
-  "count": 5
-}
-```
-
-### Project Management
-
-```http
-GET /api/projects
-POST /api/projects
-PUT /api/projects/{project_id}
-DELETE /api/projects/{project_id}
-```
-
-## 🔒 Security Features
-
-- **Authentication**: AWS Cognito User Pool with MFA support
-- **Authorization**: Fine-grained IAM policies
-- **Data Encryption**: At-rest and in-transit encryption
-- **CORS Protection**: Strict CORS policies
-- **Rate Limiting**: API Gateway throttling
-- **Content Security**: CloudFront security headers
-
-## 📈 Performance Characteristics
-
-- **Cold Start**: ~2-3 seconds for Lambda initialization
-- **Warm Response**: ~500ms-2s for title generation
-- **Throughput**: 1000+ concurrent requests
-- **Availability**: 99.9% SLA with multi-AZ deployment
-- **Latency**: <100ms CloudFront edge response for static assets
-
-## 🛡️ Monitoring and Observability
-
-- **CloudWatch Logs**: Structured logging for all components
-- **CloudWatch Metrics**: Custom business and performance metrics
-- **AWS X-Ray**: Distributed tracing for request flow analysis
-- **Error Tracking**: Automated error detection and alerting
-
-## 📚 References & Resources
-
-This project was developed by studying and referencing the following official documentation, technical resources, and educational materials.
-
-### 🏛️ Official AWS Documentation
-
-#### 🧠 AWS Bedrock
-
-- 📖 **[AWS Bedrock User Guide](https://docs.aws.amazon.com/pdfs/bedrock/latest/userguide/bedrock-ug.pdf)** - Comprehensive guide for AWS Bedrock foundation models
-- 🔧 **[Bedrock Runtime API - Claude Examples](https://docs.aws.amazon.com/pdfs/bedrock/latest/userguide/bedrock-ug.pdf#service_code_examples_bedrock-runtime_anthropic_claude)** - Service code examples for Anthropic Claude integration
-- 🚀 **[Amazon Bedrock Serverless Prompt Chaining](https://github.com/aws-samples/amazon-bedrock-serverless-prompt-chaining)** - AWS samples for serverless prompt orchestration
-
-#### ☁️ AWS CDK
-
-- 📋 **[AWS CDK v2 Guide](https://docs.aws.amazon.com/pdfs/cdk/v2/guide/awscdk.pdf)** - Infrastructure as Code with AWS CDK Python
-
-### 🤖 AI & Machine Learning Resources
-
-#### 🎯 Multi-Agent Orchestration
-
-- 🧪 **[Design Multi-Agent Orchestration with Amazon Bedrock](https://aws.amazon.com/ko/blogs/machine-learning/design-multi-agent-orchestration-with-reasoning-using-amazon-bedrock-and-open-source-frameworks/)** - Advanced AI orchestration patterns and reasoning frameworks
-
-### 📚 Educational Materials & Books
-
-#### 🔍 Technical References
-
-- 📘 **[한 권으로 배우는 도커 & 쿠버네티스](https://product.kyobobook.co.kr/detail/S000213057687)** - 컨테이너 개념부터 쿠버네티스를 활용한 배포까지 (장철원 저, 한빛미디어)
-- 📗 **[클라우드 서비스 개발자를 위한 AWS로 구현하는 CI/CD 배포 입문](https://product.kyobobook.co.kr/detail/S000201078147)** - 신입 개발자부터 실제 서비스 구축 경험이 없는 모든 개발자를 위한 실무 밀착형 입문서 (최주호, 정재원, 정동진 저, 앤써북)
-- 📙 **[IT 엔지니어를 위한 AWS 운영의 기본과 노하우](https://product.kyobobook.co.kr/detail/S000214036165)** - AWS 클라우드 서비스 운영 및 관리 전문 가이드 (사타케 요이치 외 저, 길벗)
-- 📕 **[RAG 마스터: 랭체인으로 완성하는 LLM 서비스](https://product.kyobobook.co.kr/detail/S000216240484)** - LangChain을 활용한 RAG 기반 LLM 서비스 구축 실무 (브라이스 유 외 저, 프리렉)
-- 📚 **[Amazon Bedrock으로 시작하는 실전 생성형 AI 개발](https://product.kyobobook.co.kr/detail/S000214962344)** - AWS Bedrock을 활용한 생성형 AI 애플리케이션 개발 가이드 (임지훈, 최성우 저, 디지털북스)
-
----
-
-## 🎯 Project Philosophy
-
-> _"This project demonstrates the power of serverless architecture combined with cutting-edge AI capabilities, creating a scalable and cost-effective solution for intelligent content generation."_
-
-### 🌟 Key Achievements
-
-- ✅ **Zero Server Management** - 100% serverless architecture
-- ✅ **AI-Powered Intelligence** - Advanced Claude 3 Sonnet integration
-- ✅ **Enterprise-Ready** - Production-grade security and monitoring
-- ✅ **Cost-Optimized** - Pay-per-use pricing model
-- ✅ **Highly Available** - Multi-AZ deployment with automatic failover
-
----
-
-### 💡 Feature Requests
-
-- Feature requests are welcome! Please use GitHub Issues with the `enhancement` label.
-
-### 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
-5. Open a Pull Request
-
----
-
-## 📄 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
----
-
-## 🎉 Acknowledgments
-
-Special thanks to:
-
-- **AWS Bedrock Team** for providing powerful foundation models
-- **Anthropic** for developing Claude 3 Sonnet
-- **AWS CDK Team** for excellent Infrastructure as Code tools
-- **Open Source Community** for continuous inspiration and support
-
----
-
-<div align="center">
-
-### 🌟 Star this repository if you found it helpful! 🌟
-
-**Built with ❤️ using AWS Serverless Technologies**
-
-[![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
-[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
-[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
-[![AWS Lambda](https://img.shields.io/badge/AWS_Lambda-FF9900?style=for-the-badge&logo=aws-lambda&logoColor=white)](https://aws.amazon.com/lambda/)
-
-</div>
+| Phase                     | Date / Period     | Milestone & Key Outcome                                                                    |
+| ------------------------- | ----------------- | ------------------------------------------------------------------------------------------ |
+| Discovery                 | 2025-05 ~ 2025-06 | Identified high cloud-cost drivers for large-scale title generation                        |
+| User Research             | 2025-06-15        | Conducted user interviews and captured detailed needs                                      |
+| Planning                  | 2025-06-20        | Finalised development roadmap and backlog                                                  |
+| Cloud Exploration         | 2025-06-23        | Evaluated multiple providers, confirmed AWS Bedrock as core AI platform                    |
+| Architecture Design       | 2025-06-26        | Completed high-level and component diagrams                                                |
+| AWS Console Deep-Dive     | 2025-07-01        | Studied console workflows, IAM and Bedrock runtime configuration                           |
+| CDK & Requirements Review | 2025-07-04        | Set up AWS CDK environment, locked client requirements                                     |
+| Database Design           | 2025-07-07        | Finalised DynamoDB schema and S3 storage strategy                                          |
+| Model Research            | 2025-07-09        | Bench-tested Claude, Titan, Llama — selected Claude 3 Sonnet                               |
+| Vector DB Evaluation      | 2025-07-10        | Reviewed Faiss & alternatives; raw data pipeline chosen (service scale small)              |
+| Orchestration POC         | 2025-07-11        | Attempted multi-model orchestration; postponed due to regional & API differences           |
+| Backend Data Layer        | 2025-07-12        | Implemented DynamoDB + S3 integration                                                      |
+| API + LLM Integration     | 2025-07-13        | Connected prompt card UI to Generate Lambda and Bedrock                                    |
+| Chat History Feature      | 2025-07-14        | Implemented custom chat history (LangChain attempt replaced with native DynamoDB approach) |
+| Front-end UI/UX           | 2025-07-15        | Designed modern UI inspired by Claude; integrated prompt‐editing side panel                |
+| Version 1 Deployment      | 2025-07-16        | Deployed v1 via GitHub Actions & AWS serverless stack (CDK)                                |

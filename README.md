@@ -229,8 +229,7 @@ erDiagram
         string userId PK
         string email
         string name
-        timestamp createdAt
-        string subscriptionTier
+        string createdAt
     }
 
     PROJECTS {
@@ -238,44 +237,29 @@ erDiagram
         string projectId SK
         string name
         string description
-        json tags
-        timestamp createdAt
-        timestamp updatedAt
-        number conversationCount
+        string createdAt
     }
 
     PROMPTS {
         string promptId PK
         string userId
         string title
-        string description
-        text template
-        json variables
-        string category
-        boolean isPublic
-        timestamp createdAt
-        string s3Reference
+        string template
+        string createdAt
     }
 
     CONVERSATIONS {
         string projectId PK
         string timestamp SK
         string userId
-        text userInput
-        text aiResponse
+        string userInput
+        string aiResponse
         string promptId
-        number tokensUsed
-        number processingTime
-        json metadata
-        number ttl
     }
 
     USERS ||--o{ PROJECTS : creates
-    USERS ||--o{ PROMPTS : owns
     PROJECTS ||--o{ CONVERSATIONS : contains
-    PROMPTS ||--o{ CONVERSATIONS : uses
-    CONVERSATIONS ||--o| S3_OBJECTS : references
-    PROMPTS ||--o| S3_OBJECTS : stores_template
+    USERS ||--o{ PROMPTS : owns
 ```
 
 ---

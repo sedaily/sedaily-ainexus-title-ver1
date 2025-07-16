@@ -234,8 +234,7 @@ erDiagram
     CONVERSATIONS {
         string project_id PK
         string timestamp SK
-        string user_id GSI1-PK
-        string conversation_id
+        string user_id
         text user_input
         text ai_response
         string prompt_id

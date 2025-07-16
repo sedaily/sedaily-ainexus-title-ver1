@@ -25,7 +25,7 @@ class FrontendStack(Stack):
         # S3 버킷 생성 (정적 웹사이트 호스팅)
         self.website_bucket = s3.Bucket(
             self, "WebsiteBucket",
-            bucket_name=f"title-nomics-frontend-{self.account}-{self.region}",
+            bucket_name=f"dynamic-prompt-frontend-{self.account}-{self.region}",
             public_read_access=False,  # CloudFront OAI 사용
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             removal_policy=RemovalPolicy.DESTROY,
@@ -136,7 +136,7 @@ class FrontendStack(Stack):
             ],
             price_class=cloudfront.PriceClass.PRICE_CLASS_100,  # 비용 최적화
             enabled=True,
-            comment="TITLE-NOMICS Frontend Distribution",
+            comment="Dynamic Prompt System Frontend Distribution",
             minimum_protocol_version=cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021
         )
         

@@ -1,5 +1,5 @@
 {
- "Description": "AWS Bedrock DIY Claude 프로젝트 백엔드 스택",
+ "Description": "AWS Bedrock DIY 동적 프롬프트 시스템 - 완전한 빈깡통",
  "Resources": {
   "BedrockDiyUserPool9F10F9FA": {
    "Type": "AWS::Cognito::UserPool",
@@ -120,7 +120,16 @@
   "PromptBucket1668FD1C": {
    "Type": "AWS::S3::Bucket",
    "Properties": {
-    "BucketName": "bedrock-diy-prompts-auth-887078546492-us-east-1",
+    "BucketEncryption": {
+     "ServerSideEncryptionConfiguration": [
+      {
+       "ServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+       }
+      }
+     ]
+    },
+    "BucketName": "bedrock-diy-prompts-887078546492-us-east-1",
     "CorsConfiguration": {
      "CorsRules": [
       {
@@ -135,23 +144,16 @@
        "AllowedOrigins": [
         "*"
        ],
-       "MaxAge": 3000
+       "MaxAge": 3600
       }
      ]
     },
-    "LifecycleConfiguration": {
-     "Rules": [
-      {
-       "Status": "Enabled",
-       "Transitions": [
-        {
-         "StorageClass": "GLACIER",
-         "TransitionInDays": 90
-        }
-       ]
-      }
-     ]
-    },
+    "Tags": [
+     {
+      "Key": "aws-cdk:auto-delete-objects",
+      "Value": "true"
+     }
+    ],
     "VersioningConfiguration": {
      "Status": "Enabled"
     }
@@ -162,87 +164,186 @@
     "aws:cdk:path": "BedrockDiyAuthStack/PromptBucket/Resource"
    }
   },
-  "PromptBucketNotificationsCDF2ABF7": {
-   "Type": "Custom::S3BucketNotifications",
+  "PromptBucketPolicy2A2229F1": {
+   "Type": "AWS::S3::BucketPolicy",
+   "Properties": {
+    "Bucket": {
+     "Ref": "PromptBucket1668FD1C"
+    },
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:PutBucketPolicy",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:DeleteObject*"
+       ],
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": {
+         "Fn::GetAtt": [
+          "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+          "Arn"
+         ]
+        }
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "PromptBucket1668FD1C",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "PromptBucket1668FD1C",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/PromptBucket/Policy/Resource"
+   }
+  },
+  "PromptBucketAutoDeleteObjectsCustomResource55C8AD81": {
+   "Type": "Custom::S3AutoDeleteObjects",
    "Properties": {
     "ServiceToken": {
      "Fn::GetAtt": [
-      "BucketNotificationsHandler050a0587b7544547bf325f094a3db8347ECC3691",
+      "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
       "Arn"
      ]
     },
     "BucketName": {
      "Ref": "PromptBucket1668FD1C"
-    },
-    "NotificationConfiguration": {
-     "LambdaFunctionConfigurations": [
+    }
+   },
+   "DependsOn": [
+    "PromptBucketPolicy2A2229F1"
+   ],
+   "UpdateReplacePolicy": "Delete",
+   "DeletionPolicy": "Delete",
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/PromptBucket/AutoDeleteObjectsCustomResource/Default"
+   }
+  },
+  "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Version": "2012-10-17",
+     "Statement": [
       {
-       "Events": [
-        "s3:ObjectCreated:*"
-       ],
-       "Filter": {
-        "Key": {
-         "FilterRules": [
-          {
-           "Name": "prefix",
-           "Value": "prompts/"
-          }
-         ]
-        }
-       },
-       "LambdaFunctionArn": {
-        "Fn::GetAtt": [
-         "IndexPromptFunction6CE89F37",
-         "Arn"
-        ]
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
        }
       }
      ]
     },
-    "Managed": true,
-    "SkipDestinationValidation": false
+    "ManagedPolicyArns": [
+     {
+      "Fn::Sub": "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+     }
+    ]
    },
-   "DependsOn": [
-    "PromptBucketAllowBucketNotificationsToBedrockDiyAuthStackIndexPromptFunction34DB1E8B7C653B5C"
-   ],
    "Metadata": {
-    "aws:cdk:path": "BedrockDiyAuthStack/PromptBucket/Notifications/Resource"
+    "aws:cdk:path": "BedrockDiyAuthStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Role"
    }
   },
-  "PromptBucketAllowBucketNotificationsToBedrockDiyAuthStackIndexPromptFunction34DB1E8B7C653B5C": {
-   "Type": "AWS::Lambda::Permission",
+  "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F": {
+   "Type": "AWS::Lambda::Function",
    "Properties": {
-    "Action": "lambda:InvokeFunction",
-    "FunctionName": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
+     "S3Key": "faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6.zip"
+    },
+    "Timeout": 900,
+    "MemorySize": 128,
+    "Handler": "index.handler",
+    "Role": {
      "Fn::GetAtt": [
-      "IndexPromptFunction6CE89F37",
+      "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
       "Arn"
      ]
     },
-    "Principal": "s3.amazonaws.com",
-    "SourceAccount": "887078546492",
-    "SourceArn": {
-     "Fn::GetAtt": [
-      "PromptBucket1668FD1C",
-      "Arn"
+    "Runtime": "nodejs22.x",
+    "Description": {
+     "Fn::Join": [
+      "",
+      [
+       "Lambda function for auto-deleting objects in ",
+       {
+        "Ref": "PromptBucket1668FD1C"
+       },
+       " S3 bucket."
+      ]
      ]
     }
    },
+   "DependsOn": [
+    "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092"
+   ],
    "Metadata": {
-    "aws:cdk:path": "BedrockDiyAuthStack/PromptBucket/AllowBucketNotificationsToBedrockDiyAuthStackIndexPromptFunction34DB1E8B"
+    "aws:cdk:path": "BedrockDiyAuthStack/Custom::S3AutoDeleteObjectsCustomResourceProvider/Handler",
+    "aws:asset:path": "asset.faa95a81ae7d7373f3e1f242268f904eb748d8d0fdd306e8a6fe515a1905a7d6",
+    "aws:asset:property": "Code"
    }
   },
   "ArticleBucket38F6CD07": {
    "Type": "AWS::S3::Bucket",
    "Properties": {
-    "BucketName": "bedrock-diy-articles-auth-887078546492-us-east-1",
-    "LifecycleConfiguration": {
-     "Rules": [
+    "BucketEncryption": {
+     "ServerSideEncryptionConfiguration": [
       {
-       "ExpirationInDays": 30,
-       "Status": "Enabled"
+       "ServerSideEncryptionByDefault": {
+        "SSEAlgorithm": "AES256"
+       }
       }
      ]
+    },
+    "BucketName": "bedrock-diy-articles-887078546492-us-east-1",
+    "CorsConfiguration": {
+     "CorsRules": [
+      {
+       "AllowedHeaders": [
+        "*"
+       ],
+       "AllowedMethods": [
+        "GET",
+        "PUT",
+        "POST"
+       ],
+       "AllowedOrigins": [
+        "*"
+       ],
+       "MaxAge": 3600
+      }
+     ]
+    },
+    "Tags": [
+     {
+      "Key": "aws-cdk:auto-delete-objects",
+      "Value": "true"
+     }
+    ],
+    "VersioningConfiguration": {
+     "Status": "Enabled"
     }
    },
    "UpdateReplacePolicy": "Delete",
@@ -251,28 +352,81 @@
     "aws:cdk:path": "BedrockDiyAuthStack/ArticleBucket/Resource"
    }
   },
-  "FaissBucket2FC8D023": {
-   "Type": "AWS::S3::Bucket",
+  "ArticleBucketPolicy8AA6B227": {
+   "Type": "AWS::S3::BucketPolicy",
    "Properties": {
-    "BucketName": "bedrock-diy-faiss-887078546492-us-east-1",
-    "LifecycleConfiguration": {
-     "Rules": [
-      {
-       "NoncurrentVersionExpiration": {
-        "NoncurrentDays": 7
-       },
-       "Status": "Enabled"
-      }
-     ]
+    "Bucket": {
+     "Ref": "ArticleBucket38F6CD07"
     },
-    "VersioningConfiguration": {
-     "Status": "Enabled"
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "s3:PutBucketPolicy",
+        "s3:GetBucket*",
+        "s3:List*",
+        "s3:DeleteObject*"
+       ],
+       "Effect": "Allow",
+       "Principal": {
+        "AWS": {
+         "Fn::GetAtt": [
+          "CustomS3AutoDeleteObjectsCustomResourceProviderRole3B1BD092",
+          "Arn"
+         ]
+        }
+       },
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "ArticleBucket38F6CD07",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "ArticleBucket38F6CD07",
+             "Arn"
+            ]
+           },
+           "/*"
+          ]
+         ]
+        }
+       ]
+      }
+     ],
+     "Version": "2012-10-17"
     }
    },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/ArticleBucket/Policy/Resource"
+   }
+  },
+  "ArticleBucketAutoDeleteObjectsCustomResourceB5684FF4": {
+   "Type": "Custom::S3AutoDeleteObjects",
+   "Properties": {
+    "ServiceToken": {
+     "Fn::GetAtt": [
+      "CustomS3AutoDeleteObjectsCustomResourceProviderHandler9D90184F",
+      "Arn"
+     ]
+    },
+    "BucketName": {
+     "Ref": "ArticleBucket38F6CD07"
+    }
+   },
+   "DependsOn": [
+    "ArticleBucketPolicy8AA6B227"
+   ],
    "UpdateReplacePolicy": "Delete",
    "DeletionPolicy": "Delete",
    "Metadata": {
-    "aws:cdk:path": "BedrockDiyAuthStack/FaissBucket/Resource"
+    "aws:cdk:path": "BedrockDiyAuthStack/ArticleBucket/AutoDeleteObjectsCustomResource/Default"
    }
   },
   "ProjectTableE109554C": {
@@ -393,14 +547,14 @@
    "Properties": {
     "AttributeDefinitions": [
      {
-      "AttributeName": "executionArn",
+      "AttributeName": "executionId",
       "AttributeType": "S"
      }
     ],
     "BillingMode": "PAY_PER_REQUEST",
     "KeySchema": [
      {
-      "AttributeName": "executionArn",
+      "AttributeName": "executionId",
       "KeyType": "HASH"
      }
     ],
@@ -468,71 +622,6 @@
     "aws:cdk:path": "BedrockDiyAuthStack/ErrorTopic/Resource"
    }
   },
-  "ProjectGuardrail": {
-   "Type": "AWS::Bedrock::Guardrail",
-   "Properties": {
-    "BlockedInputMessaging": "입력 내용이 가이드라인을 위반합니다.",
-    "BlockedOutputsMessaging": "생성된 콘텐츠가 가이드라인을 위반합니다.",
-    "ContentPolicyConfig": {
-     "FiltersConfig": [
-      {
-       "InputStrength": "HIGH",
-       "OutputStrength": "HIGH",
-       "Type": "HATE"
-      },
-      {
-       "InputStrength": "HIGH",
-       "OutputStrength": "HIGH",
-       "Type": "VIOLENCE"
-      },
-      {
-       "InputStrength": "MEDIUM",
-       "OutputStrength": "MEDIUM",
-       "Type": "SEXUAL"
-      },
-      {
-       "InputStrength": "HIGH",
-       "OutputStrength": "HIGH",
-       "Type": "MISCONDUCT"
-      }
-     ]
-    },
-    "Description": "TITLE-NOMICS 프로젝트 기본 가드레일",
-    "Name": "bedrock-diy-guardrail",
-    "SensitiveInformationPolicyConfig": {
-     "PiiEntitiesConfig": [
-      {
-       "Action": "BLOCK",
-       "Type": "EMAIL"
-      },
-      {
-       "Action": "BLOCK",
-       "Type": "PHONE"
-      },
-      {
-       "Action": "BLOCK",
-       "Type": "CREDIT_DEBIT_CARD_NUMBER"
-      }
-     ]
-    },
-    "WordPolicyConfig": {
-     "WordsConfig": [
-      {
-       "Text": "password"
-      },
-      {
-       "Text": "secret"
-      },
-      {
-       "Text": "token"
-      }
-     ]
-    }
-   },
-   "Metadata": {
-    "aws:cdk:path": "BedrockDiyAuthStack/ProjectGuardrail"
-   }
-  },
   "BedrockAgentRole7C982E0C": {
    "Type": "AWS::IAM::Role",
    "Properties": {
@@ -548,69 +637,23 @@
      ],
      "Version": "2012-10-17"
     },
-    "Description": "Bedrock Agent execution role"
-   },
-   "Metadata": {
-    "aws:cdk:path": "BedrockDiyAuthStack/BedrockAgentRole/Resource"
-   }
-  },
-  "BedrockAgentRoleDefaultPolicy1462CD5B": {
-   "Type": "AWS::IAM::Policy",
-   "Properties": {
-    "PolicyDocument": {
-     "Statement": [
-      {
-       "Action": [
-        "bedrock:InvokeModel",
-        "bedrock:InvokeModelWithResponseStream"
-       ],
-       "Effect": "Allow",
-       "Resource": [
-        "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0",
-        "arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-haiku-20240307-v1:0"
-       ]
-      },
-      {
-       "Action": [
-        "s3:GetObject",
-        "s3:ListBucket"
-       ],
-       "Effect": "Allow",
-       "Resource": [
-        {
-         "Fn::GetAtt": [
-          "PromptBucket1668FD1C",
-          "Arn"
-         ]
-        },
-        {
-         "Fn::Join": [
-          "",
-          [
-           {
-            "Fn::GetAtt": [
-             "PromptBucket1668FD1C",
-             "Arn"
-            ]
-           },
-           "/*"
-          ]
-         ]
-        }
-       ]
-      }
-     ],
-     "Version": "2012-10-17"
-    },
-    "PolicyName": "BedrockAgentRoleDefaultPolicy1462CD5B",
-    "Roles": [
+    "ManagedPolicyArns": [
      {
-      "Ref": "BedrockAgentRole7C982E0C"
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/AmazonBedrockFullAccess"
+       ]
+      ]
      }
     ]
    },
    "Metadata": {
-    "aws:cdk:path": "BedrockDiyAuthStack/BedrockAgentRole/DefaultPolicy/Resource"
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockAgentRole/Resource"
    }
   },
   "BedrockKnowledgeBaseRole24C5E17B": {
@@ -628,7 +671,20 @@
      ],
      "Version": "2012-10-17"
     },
-    "Description": "Knowledge Base execution role"
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/AmazonBedrockFullAccess"
+       ]
+      ]
+     }
+    ]
    },
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/BedrockKnowledgeBaseRole/Resource"
@@ -639,11 +695,6 @@
    "Properties": {
     "PolicyDocument": {
      "Statement": [
-      {
-       "Action": "bedrock:InvokeModel",
-       "Effect": "Allow",
-       "Resource": "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v1"
-      },
       {
        "Action": [
         "s3:GetObject",
@@ -687,48 +738,39 @@
     "aws:cdk:path": "BedrockDiyAuthStack/BedrockKnowledgeBaseRole/DefaultPolicy/Resource"
    }
   },
-  "TitleNomicsAgent": {
+  "DynamicPromptAgent": {
    "Type": "AWS::Bedrock::Agent",
    "Properties": {
-    "AgentName": "title-nomics-agent",
+    "AgentName": "dynamic-prompt-system-agent",
     "AgentResourceRoleArn": {
      "Fn::GetAtt": [
       "BedrockAgentRole7C982E0C",
       "Arn"
      ]
     },
-    "Description": "서울경제신문 제목 생성 AI 어시스턴트",
+    "Description": "동적 프롬프트 시스템 AI 어시스턴트",
     "FoundationModel": "anthropic.claude-3-sonnet-20240229-v1:0",
-    "GuardrailConfiguration": {
-     "GuardrailIdentifier": {
-      "Fn::GetAtt": [
-       "ProjectGuardrail",
-       "GuardrailId"
-      ]
-     },
-     "GuardrailVersion": "DRAFT"
-    },
     "IdleSessionTTLInSeconds": 1800,
-    "Instruction": "당신은 서울경제신문의 TITLE-NOMICS AI 어시스턴트입니다.\n\n주요 역할:\n1. 뉴스 기사의 제목을 생성하고 개선하는 것\n2. 편집부의 스타일 가이드를 준수하는 것\n3. 독자의 관심을 끌고 클릭률을 높이는 제목을 만드는 것\n\n기본 원칙:\n- 정확하고 객관적인 정보 전달\n- 서울경제신문의 브랜드 톤앤매너 유지\n- 독자층에 맞는 적절한 표현 사용\n- SEO 최적화를 고려한 키워드 활용\n\n프로젝트별 커스터마이징 정보는 대화 중에 제공될 예정입니다."
+    "Instruction": "당신은 동적 프롬프트 시스템의 AI 어시스턴트입니다. 사용자가 제공하는 프롬프트 카드의 내용에 따라 다양한 작업을 수행하며, 창의적이고 정확한 응답을 제공합니다. 항상 한국어로 응답하고, 사용자의 요청에 맞춰 유연하게 대응하세요."
    },
    "Metadata": {
-    "aws:cdk:path": "BedrockDiyAuthStack/TitleNomicsAgent"
+    "aws:cdk:path": "BedrockDiyAuthStack/DynamicPromptAgent"
    }
   },
-  "TitleNomicsAgentAlias": {
+  "DynamicPromptAgentAlias": {
    "Type": "AWS::Bedrock::AgentAlias",
    "Properties": {
     "AgentAliasName": "production",
     "AgentId": {
      "Fn::GetAtt": [
-      "TitleNomicsAgent",
+      "DynamicPromptAgent",
       "AgentId"
      ]
     },
-    "Description": "Production alias for Title-Nomics agent"
+    "Description": "Production alias for Dynamic Prompt System agent"
    },
    "Metadata": {
-    "aws:cdk:path": "BedrockDiyAuthStack/TitleNomicsAgentAlias"
+    "aws:cdk:path": "BedrockDiyAuthStack/DynamicPromptAgentAlias"
    }
   },
   "LambdaRole3A44B857": {
@@ -770,18 +812,6 @@
         ":iam::aws:policy/AmazonBedrockFullAccess"
        ]
       ]
-     },
-     {
-      "Fn::Join": [
-       "",
-       [
-        "arn:",
-        {
-         "Ref": "AWS::Partition"
-        },
-        ":iam::aws:policy/AWSStepFunctionsFullAccess"
-       ]
-      ]
      }
     ]
    },
@@ -808,10 +838,27 @@
         "sqs:SendMessage",
         "sqs:ReceiveMessage",
         "sns:Publish",
-        "bedrock:InvokeModel"
+        "bedrock:InvokeModel",
+        "cognito-idp:AdminCreateUser",
+        "cognito-idp:AdminSetUserPassword",
+        "cognito-idp:AdminGetUser",
+        "cognito-idp:AdminDeleteUser",
+        "cognito-idp:AdminConfirmSignUp",
+        "cognito-idp:AdminInitiateAuth",
+        "cognito-idp:AdminRespondToAuthChallenge",
+        "cognito-idp:ConfirmForgotPassword",
+        "cognito-idp:ForgotPassword",
+        "cognito-idp:ConfirmSignUp",
+        "cognito-idp:ResendConfirmationCode"
        ],
        "Effect": "Allow",
        "Resource": [
+        {
+         "Fn::GetAtt": [
+          "PromptBucket1668FD1C",
+          "Arn"
+         ]
+        },
         {
          "Fn::Join": [
           "",
@@ -827,17 +874,9 @@
          ]
         },
         {
-         "Fn::Join": [
-          "",
-          [
-           {
-            "Fn::GetAtt": [
-             "ArticleBucket38F6CD07",
-             "Arn"
-            ]
-           },
-           "/*"
-          ]
+         "Fn::GetAtt": [
+          "ArticleBucket38F6CD07",
+          "Arn"
          ]
         },
         {
@@ -846,7 +885,7 @@
           [
            {
             "Fn::GetAtt": [
-             "FaissBucket2FC8D023",
+             "ArticleBucket38F6CD07",
              "Arn"
             ]
            },
@@ -910,7 +949,23 @@
         {
          "Ref": "ErrorTopicA0904A23"
         },
-        "arn:aws:bedrock:us-east-1::foundation-model/amazon.titan-embed-text-v1"
+        {
+         "Fn::GetAtt": [
+          "BedrockDiyUserPool9F10F9FA",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           "arn:aws:cognito-idp:us-east-1:887078546492:userpool/",
+           {
+            "Ref": "BedrockDiyUserPool9F10F9FA"
+           }
+          ]
+         ]
+        }
        ]
       },
       {
@@ -937,61 +992,37 @@
     "aws:cdk:path": "BedrockDiyAuthStack/LambdaRole/DefaultPolicy/Resource"
    }
   },
-  "FAISSLayer17777532": {
-   "Type": "AWS::Lambda::LayerVersion",
-   "Properties": {
-    "CompatibleRuntimes": [
-     "python3.11"
-    ],
-    "Content": {
-     "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "73e409cc00daef4671a5eed37f1a1ae900f045abb81f3f1418a6ce5bc06ea536.zip"
-    },
-    "Description": "FAISS and utilities for vector search",
-    "LayerName": "bedrock-diy-faiss-layer"
-   },
-   "Metadata": {
-    "aws:cdk:path": "BedrockDiyAuthStack/FAISSLayer/Resource",
-    "aws:asset:path": "asset.73e409cc00daef4671a5eed37f1a1ae900f045abb81f3f1418a6ce5bc06ea536",
-    "aws:asset:is-bundled": false,
-    "aws:asset:property": "Content"
-   }
-  },
   "GenerateFunctionD11A7A28": {
    "Type": "AWS::Lambda::Function",
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "3b0ef8edf52606ac8a67cf02721f783adf01b9bd63706d3beef0171431af8261.zip"
+     "S3Key": "b4fed328e377e7ef8fce17c766cf31bd89f713f1be24590ef1134565fcde2634.zip"
+    },
+    "DeadLetterConfig": {
+     "TargetArn": {
+      "Fn::GetAtt": [
+       "IndexPromptDLQ5C143C72",
+       "Arn"
+      ]
+     }
     },
     "Environment": {
      "Variables": {
-      "STATE_MACHINE_ARN": "",
-      "EXECUTION_TABLE": {
-       "Ref": "ExecutionTable914EA6E7"
-      },
       "PROMPT_META_TABLE": {
        "Ref": "PromptMetaTable0A0B3876"
       },
       "PROMPT_BUCKET": {
        "Ref": "PromptBucket1668FD1C"
       },
-      "FAISS_BUCKET": {
-       "Ref": "FaissBucket2FC8D023"
+      "EXECUTION_TABLE": {
+       "Ref": "ExecutionTable914EA6E7"
       },
-      "BEDROCK_MODEL_ID": "us.anthropic.claude-3-5-sonnet-20241022-v2:0",
-      "BEDROCK_EMBED_MODEL_ID": "amazon.titan-embed-text-v1",
       "REGION": "us-east-1"
      }
     },
-    "FunctionName": "bedrock-diy-generate-auth",
     "Handler": "generate.handler",
-    "Layers": [
-     {
-      "Ref": "FAISSLayer17777532"
-     }
-    ],
-    "MemorySize": 1024,
+    "MemorySize": 3008,
     "Role": {
      "Fn::GetAtt": [
       "LambdaRole3A44B857",
@@ -999,7 +1030,7 @@
      ]
     },
     "Runtime": "python3.11",
-    "Timeout": 180
+    "Timeout": 900
    },
    "DependsOn": [
     "LambdaRoleDefaultPolicy75625A82",
@@ -1007,22 +1038,22 @@
    ],
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/GenerateFunction/Resource",
-    "aws:asset:path": "asset.3b0ef8edf52606ac8a67cf02721f783adf01b9bd63706d3beef0171431af8261",
+    "aws:asset:path": "asset.b4fed328e377e7ef8fce17c766cf31bd89f713f1be24590ef1134565fcde2634",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
   },
-  "ProjectFunction5497A4ED": {
+  "SavePromptFunction071F515F": {
    "Type": "AWS::Lambda::Function",
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "e893fb3511d3484caa2fc6aef4dcfb025d71141e1340ff54cd37a17da6a2cc10.zip"
+     "S3Key": "d8f3e80e1a9209e8877dff982a0448a20b2ccf16e6b65057dfd8a1c2e99baf38.zip"
     },
     "Environment": {
      "Variables": {
-      "PROJECT_TABLE": {
-       "Ref": "ProjectTableE109554C"
+      "PROMPT_META_TABLE": {
+       "Ref": "PromptMetaTable0A0B3876"
       },
       "PROMPT_BUCKET": {
        "Ref": "PromptBucket1668FD1C"
@@ -1030,8 +1061,7 @@
       "REGION": "us-east-1"
      }
     },
-    "FunctionName": "bedrock-diy-project-auth",
-    "Handler": "project.handler",
+    "Handler": "save_prompt.handler",
     "MemorySize": 512,
     "Role": {
      "Fn::GetAtt": [
@@ -1047,8 +1077,48 @@
     "LambdaRole3A44B857"
    ],
    "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/SavePromptFunction/Resource",
+    "aws:asset:path": "asset.d8f3e80e1a9209e8877dff982a0448a20b2ccf16e6b65057dfd8a1c2e99baf38",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "ProjectFunction5497A4ED": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
+     "S3Key": "4aaa55320d285a3b52cbfbca8717f35da36c6d717a6654aa1f6265a23d7d8e50.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "PROJECT_TABLE": {
+       "Ref": "ProjectTableE109554C"
+      },
+      "PROMPT_BUCKET": {
+       "Ref": "PromptBucket1668FD1C"
+      },
+      "REGION": "us-east-1"
+     }
+    },
+    "Handler": "project.handler",
+    "MemorySize": 256,
+    "Role": {
+     "Fn::GetAtt": [
+      "LambdaRole3A44B857",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.11",
+    "Timeout": 60
+   },
+   "DependsOn": [
+    "LambdaRoleDefaultPolicy75625A82",
+    "LambdaRole3A44B857"
+   ],
+   "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/ProjectFunction/Resource",
-    "aws:asset:path": "asset.e893fb3511d3484caa2fc6aef4dcfb025d71141e1340ff54cd37a17da6a2cc10",
+    "aws:asset:path": "asset.4aaa55320d285a3b52cbfbca8717f35da36c6d717a6654aa1f6265a23d7d8e50",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -1058,20 +1128,19 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "33e181320771f05ce60582abc566cd35a1b2f0bf8ed37adc418da0a2943310a5.zip"
+     "S3Key": "5e530ff83f9cf197dfb432b15d50268a3a31857ef82230699640a6d1b376b898.zip"
     },
     "Environment": {
      "Variables": {
       "USER_POOL_ID": {
        "Ref": "BedrockDiyUserPool9F10F9FA"
       },
-      "CLIENT_ID": {
+      "USER_POOL_CLIENT_ID": {
        "Ref": "BedrockDiyUserPoolBedrockDiyWebClient2F814CC5"
       },
       "REGION": "us-east-1"
      }
     },
-    "FunctionName": "bedrock-diy-auth-main",
     "Handler": "auth.handler",
     "MemorySize": 256,
     "Role": {
@@ -1089,273 +1158,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/AuthFunction/Resource",
-    "aws:asset:path": "asset.33e181320771f05ce60582abc566cd35a1b2f0bf8ed37adc418da0a2943310a5",
-    "aws:asset:is-bundled": false,
-    "aws:asset:property": "Code"
-   }
-  },
-  "SavePromptFunction071F515F": {
-   "Type": "AWS::Lambda::Function",
-   "Properties": {
-    "Code": {
-     "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "08436a170ee2fa309f10bd55b8c126c348a2de4f51ab7f00ca745fb4340d55f1.zip"
-    },
-    "Environment": {
-     "Variables": {
-      "PROMPT_META_TABLE": {
-       "Ref": "PromptMetaTable0A0B3876"
-      },
-      "PROMPT_BUCKET": {
-       "Ref": "PromptBucket1668FD1C"
-      },
-      "FAISS_BUCKET": {
-       "Ref": "FaissBucket2FC8D023"
-      },
-      "BEDROCK_EMBED_MODEL_ID": "amazon.titan-embed-text-v1",
-      "REGION": "us-east-1"
-     }
-    },
-    "FunctionName": "bedrock-diy-save-prompt-auth",
-    "Handler": "save_prompt.handler",
-    "Layers": [
-     {
-      "Ref": "FAISSLayer17777532"
-     }
-    ],
-    "MemorySize": 1024,
-    "Role": {
-     "Fn::GetAtt": [
-      "LambdaRole3A44B857",
-      "Arn"
-     ]
-    },
-    "Runtime": "python3.11",
-    "Timeout": 300
-   },
-   "DependsOn": [
-    "LambdaRoleDefaultPolicy75625A82",
-    "LambdaRole3A44B857"
-   ],
-   "Metadata": {
-    "aws:cdk:path": "BedrockDiyAuthStack/SavePromptFunction/Resource",
-    "aws:asset:path": "asset.08436a170ee2fa309f10bd55b8c126c348a2de4f51ab7f00ca745fb4340d55f1",
-    "aws:asset:is-bundled": false,
-    "aws:asset:property": "Code"
-   }
-  },
-  "IndexPromptFunction6CE89F37": {
-   "Type": "AWS::Lambda::Function",
-   "Properties": {
-    "Code": {
-     "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "b381e3672149df9d35a5b70f42d7f028275aee3141d66898718dc55436b113e8.zip"
-    },
-    "DeadLetterConfig": {
-     "TargetArn": {
-      "Fn::GetAtt": [
-       "IndexPromptDLQ5C143C72",
-       "Arn"
-      ]
-     }
-    },
-    "Environment": {
-     "Variables": {
-      "PROMPT_META_TABLE": {
-       "Ref": "PromptMetaTable0A0B3876"
-      },
-      "FAISS_BUCKET": {
-       "Ref": "FaissBucket2FC8D023"
-      },
-      "BEDROCK_EMBED_MODEL_ID": "amazon.titan-embed-text-v1",
-      "REGION": "us-east-1"
-     }
-    },
-    "FunctionName": "bedrock-diy-index-prompt-auth",
-    "Handler": "index_prompt.handler",
-    "Layers": [
-     {
-      "Ref": "FAISSLayer17777532"
-     }
-    ],
-    "MemorySize": 1024,
-    "Role": {
-     "Fn::GetAtt": [
-      "LambdaRole3A44B857",
-      "Arn"
-     ]
-    },
-    "Runtime": "python3.11",
-    "Timeout": 300
-   },
-   "DependsOn": [
-    "LambdaRoleDefaultPolicy75625A82",
-    "LambdaRole3A44B857"
-   ],
-   "Metadata": {
-    "aws:cdk:path": "BedrockDiyAuthStack/IndexPromptFunction/Resource",
-    "aws:asset:path": "asset.b381e3672149df9d35a5b70f42d7f028275aee3141d66898718dc55436b113e8",
-    "aws:asset:is-bundled": false,
-    "aws:asset:property": "Code"
-   }
-  },
-  "FetchPromptsFunction23F380BF": {
-   "Type": "AWS::Lambda::Function",
-   "Properties": {
-    "Code": {
-     "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "f2f0e05ecb2a7696bb10ad890befccef5444e219502dfa63caae153f4ad6402c.zip"
-    },
-    "Environment": {
-     "Variables": {
-      "PROMPT_META_TABLE": {
-       "Ref": "PromptMetaTable0A0B3876"
-      },
-      "PROMPT_BUCKET": {
-       "Ref": "PromptBucket1668FD1C"
-      },
-      "REGION": "us-east-1"
-     }
-    },
-    "FunctionName": "bedrock-diy-fetch-prompts-auth",
-    "Handler": "fetch_prompts.handler",
-    "MemorySize": 512,
-    "Role": {
-     "Fn::GetAtt": [
-      "LambdaRole3A44B857",
-      "Arn"
-     ]
-    },
-    "Runtime": "python3.11",
-    "Timeout": 120
-   },
-   "DependsOn": [
-    "LambdaRoleDefaultPolicy75625A82",
-    "LambdaRole3A44B857"
-   ],
-   "Metadata": {
-    "aws:cdk:path": "BedrockDiyAuthStack/FetchPromptsFunction/Resource",
-    "aws:asset:path": "asset.f2f0e05ecb2a7696bb10ad890befccef5444e219502dfa63caae153f4ad6402c",
-    "aws:asset:is-bundled": false,
-    "aws:asset:property": "Code"
-   }
-  },
-  "BuildPayloadFunction46C536B5": {
-   "Type": "AWS::Lambda::Function",
-   "Properties": {
-    "Code": {
-     "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "e93896b0affd56dac32c4e9649f846440c69e47c7a2e024e6c6bf80fda836bbe.zip"
-    },
-    "Environment": {
-     "Variables": {
-      "REGION": "us-east-1"
-     }
-    },
-    "FunctionName": "bedrock-diy-build-payload-auth",
-    "Handler": "build_payload.handler",
-    "MemorySize": 512,
-    "Role": {
-     "Fn::GetAtt": [
-      "LambdaRole3A44B857",
-      "Arn"
-     ]
-    },
-    "Runtime": "python3.11",
-    "Timeout": 120
-   },
-   "DependsOn": [
-    "LambdaRoleDefaultPolicy75625A82",
-    "LambdaRole3A44B857"
-   ],
-   "Metadata": {
-    "aws:cdk:path": "BedrockDiyAuthStack/BuildPayloadFunction/Resource",
-    "aws:asset:path": "asset.e93896b0affd56dac32c4e9649f846440c69e47c7a2e024e6c6bf80fda836bbe",
-    "aws:asset:is-bundled": false,
-    "aws:asset:property": "Code"
-   }
-  },
-  "SaveResultsFunctionC9B50291": {
-   "Type": "AWS::Lambda::Function",
-   "Properties": {
-    "Code": {
-     "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "4111f6e265cc57bdcc417869aaa3bac439a2c12e58550fcdfc9aadc54ab94706.zip"
-    },
-    "Environment": {
-     "Variables": {
-      "CONVERSATION_TABLE": {
-       "Ref": "ConversationTable75C14D21"
-      },
-      "ARTICLE_BUCKET": {
-       "Ref": "ArticleBucket38F6CD07"
-      },
-      "COMPLETION_TOPIC": {
-       "Ref": "CompletionTopic50E1DF26"
-      },
-      "REGION": "us-east-1"
-     }
-    },
-    "FunctionName": "bedrock-diy-save-results-auth",
-    "Handler": "save_results.handler",
-    "MemorySize": 512,
-    "Role": {
-     "Fn::GetAtt": [
-      "LambdaRole3A44B857",
-      "Arn"
-     ]
-    },
-    "Runtime": "python3.11",
-    "Timeout": 120
-   },
-   "DependsOn": [
-    "LambdaRoleDefaultPolicy75625A82",
-    "LambdaRole3A44B857"
-   ],
-   "Metadata": {
-    "aws:cdk:path": "BedrockDiyAuthStack/SaveResultsFunction/Resource",
-    "aws:asset:path": "asset.4111f6e265cc57bdcc417869aaa3bac439a2c12e58550fcdfc9aadc54ab94706",
-    "aws:asset:is-bundled": false,
-    "aws:asset:property": "Code"
-   }
-  },
-  "ErrorHandlerFunction246F95E6": {
-   "Type": "AWS::Lambda::Function",
-   "Properties": {
-    "Code": {
-     "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "79723fc779a81d35b218f450ab7169a8b41c6a59b9f1c65356e68ceca04ba10c.zip"
-    },
-    "Environment": {
-     "Variables": {
-      "EXECUTION_TABLE": {
-       "Ref": "ExecutionTable914EA6E7"
-      },
-      "ERROR_TOPIC": {
-       "Ref": "ErrorTopicA0904A23"
-      },
-      "REGION": "us-east-1"
-     }
-    },
-    "FunctionName": "bedrock-diy-error-handler-auth",
-    "Handler": "error_handler.handler",
-    "MemorySize": 256,
-    "Role": {
-     "Fn::GetAtt": [
-      "LambdaRole3A44B857",
-      "Arn"
-     ]
-    },
-    "Runtime": "python3.11",
-    "Timeout": 120
-   },
-   "DependsOn": [
-    "LambdaRoleDefaultPolicy75625A82",
-    "LambdaRole3A44B857"
-   ],
-   "Metadata": {
-    "aws:cdk:path": "BedrockDiyAuthStack/ErrorHandlerFunction/Resource",
-    "aws:asset:path": "asset.79723fc779a81d35b218f450ab7169a8b41c6a59b9f1c65356e68ceca04ba10c",
+    "aws:asset:path": "asset.5e530ff83f9cf197dfb432b15d50268a3a31857ef82230699640a6d1b376b898",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -1363,7 +1166,7 @@
   "BedrockDiyApi1AA2182A": {
    "Type": "AWS::ApiGateway::RestApi",
    "Properties": {
-    "Description": "서울경제신문 AI 제목 생성 시스템",
+    "Description": "동적 프롬프트 시스템 - 완전한 빈깡통 AI",
     "Name": "bedrock-diy-api"
    },
    "Metadata": {
@@ -1425,35 +1228,52 @@
     "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Account"
    }
   },
-  "BedrockDiyApiDeployment43E7B7E5ad08b2a098f289ee6a0de41ed8a2dd86": {
+  "BedrockDiyApiDeployment43E7B7E578ae42ea090dc42b38ae76aa99c904e4": {
    "Type": "AWS::ApiGateway::Deployment",
    "Properties": {
-    "Description": "서울경제신문 AI 제목 생성 시스템",
+    "Description": "동적 프롬프트 시스템 - 완전한 빈깡통 AI",
     "RestApiId": {
      "Ref": "BedrockDiyApi1AA2182A"
     }
    },
    "DependsOn": [
+    "BedrockDiyApiauthconfirmpasswordOPTIONS07023CE0",
     "BedrockDiyApiauthconfirmpasswordPOST654B5CED",
     "BedrockDiyApiauthconfirmpasswordA96AC876",
+    "BedrockDiyApiauthforgotpasswordOPTIONS63A970CB",
     "BedrockDiyApiauthforgotpasswordPOST6F44D25B",
     "BedrockDiyApiauthforgotpassword54291A48",
+    "BedrockDiyApiauthrefreshOPTIONSA51C9932",
     "BedrockDiyApiauthrefreshPOST1496DFB2",
     "BedrockDiyApiauthrefresh5C4E9EF5",
     "BedrockDiyApiauth176DDB1C",
+    "BedrockDiyApiauthsigninOPTIONS5D5D0AC7",
     "BedrockDiyApiauthsigninPOST420BD6E9",
     "BedrockDiyApiauthsignin895CA3E3",
+    "BedrockDiyApiauthsignoutOPTIONS54D8E6C5",
     "BedrockDiyApiauthsignoutPOST5713F2DA",
     "BedrockDiyApiauthsignoutC0E164EA",
+    "BedrockDiyApiauthsignupOPTIONSD70B2340",
     "BedrockDiyApiauthsignupPOST57234356",
     "BedrockDiyApiauthsignup9618154B",
+    "BedrockDiyApiauthverifyOPTIONS4AD32A8A",
     "BedrockDiyApiauthverifyPOST006F892A",
     "BedrockDiyApiauthverifyD9F9DEFD",
+    "BedrockDiyApicategoriescategoryIdDELETEE8E23396",
+    "BedrockDiyApicategoriescategoryIdOPTIONS20EC5FBE",
+    "BedrockDiyApicategoriescategoryIdPUT4493C60B",
+    "BedrockDiyApicategoriescategoryId5FEC4A50",
+    "BedrockDiyApicategoriesGET74B95112",
+    "BedrockDiyApicategoriesOPTIONSC192A522",
+    "BedrockDiyApicategoriesPOSTCE0ED08C",
+    "BedrockDiyApicategoriesA949A2F8",
+    "BedrockDiyApiprojectsprojectIdDELETE745A2FB7",
     "BedrockDiyApiprojectsprojectIdgenerateOPTIONS2AEECF38",
     "BedrockDiyApiprojectsprojectIdgeneratePOSTA83AFA7D",
     "BedrockDiyApiprojectsprojectIdgenerate5AA4FFFF",
     "BedrockDiyApiprojectsprojectIdGET8D729916",
     "BedrockDiyApiprojectsprojectIdOPTIONSCAF11C39",
+    "BedrockDiyApiprojectsprojectIdPUT29EE06E0",
     "BedrockDiyApiprojectsprojectIdE53CFE16",
     "BedrockDiyApiprojectsprojectIduploadurlGETD7522E98",
     "BedrockDiyApiprojectsprojectIduploadurlOPTIONS1935001D",
@@ -1462,6 +1282,9 @@
     "BedrockDiyApiprojectsOPTIONSADC378B0",
     "BedrockDiyApiprojectsPOST4F2D38A0",
     "BedrockDiyApiprojects9187E160",
+    "BedrockDiyApipromptsprojectIdpromptIdcontentGETF88645DD",
+    "BedrockDiyApipromptsprojectIdpromptIdcontentOPTIONS3485A890",
+    "BedrockDiyApipromptsprojectIdpromptIdcontentE31603E1",
     "BedrockDiyApipromptsprojectIdpromptIdDELETEF3254681",
     "BedrockDiyApipromptsprojectIdpromptIdOPTIONS43E7BB5D",
     "BedrockDiyApipromptsprojectIdpromptIdPUTAB6B08A0",
@@ -1472,6 +1295,8 @@
     "BedrockDiyApipromptsprojectId7D54EB40",
     "BedrockDiyApiprompts1E68E3C5"
    ],
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Deployment/Resource",
     "aws:cdk:do-not-refactor": true
@@ -1481,7 +1306,7 @@
    "Type": "AWS::ApiGateway::Stage",
    "Properties": {
     "DeploymentId": {
-     "Ref": "BedrockDiyApiDeployment43E7B7E5ad08b2a098f289ee6a0de41ed8a2dd86"
+     "Ref": "BedrockDiyApiDeployment43E7B7E578ae42ea090dc42b38ae76aa99c904e4"
     },
     "RestApiId": {
      "Ref": "BedrockDiyApi1AA2182A"
@@ -1635,6 +1460,48 @@
     "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signup/POST/Resource"
    }
   },
+  "BedrockDiyApiauthsignupOPTIONSD70B2340": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'POST,OPTIONS'"
+       },
+       "StatusCode": "200"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{\"statusCode\": 200}"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "200"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "BedrockDiyApiauthsignup9618154B"
+    },
+    "RestApiId": {
+     "Ref": "BedrockDiyApi1AA2182A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signup/OPTIONS/Resource"
+   }
+  },
   "BedrockDiyApiauthsignin895CA3E3": {
    "Type": "AWS::ApiGateway::Resource",
    "Properties": {
@@ -1755,6 +1622,48 @@
    },
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signin/POST/Resource"
+   }
+  },
+  "BedrockDiyApiauthsigninOPTIONS5D5D0AC7": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'POST,OPTIONS'"
+       },
+       "StatusCode": "200"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{\"statusCode\": 200}"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "200"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "BedrockDiyApiauthsignin895CA3E3"
+    },
+    "RestApiId": {
+     "Ref": "BedrockDiyApi1AA2182A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signin/OPTIONS/Resource"
    }
   },
   "BedrockDiyApiauthrefresh5C4E9EF5": {
@@ -1879,6 +1788,48 @@
     "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/auth/refresh/POST/Resource"
    }
   },
+  "BedrockDiyApiauthrefreshOPTIONSA51C9932": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'POST,OPTIONS'"
+       },
+       "StatusCode": "200"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{\"statusCode\": 200}"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "200"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "BedrockDiyApiauthrefresh5C4E9EF5"
+    },
+    "RestApiId": {
+     "Ref": "BedrockDiyApi1AA2182A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/auth/refresh/OPTIONS/Resource"
+   }
+  },
   "BedrockDiyApiauthsignoutC0E164EA": {
    "Type": "AWS::ApiGateway::Resource",
    "Properties": {
@@ -1999,6 +1950,48 @@
    },
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signout/POST/Resource"
+   }
+  },
+  "BedrockDiyApiauthsignoutOPTIONS54D8E6C5": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'POST,OPTIONS'"
+       },
+       "StatusCode": "200"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{\"statusCode\": 200}"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "200"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "BedrockDiyApiauthsignoutC0E164EA"
+    },
+    "RestApiId": {
+     "Ref": "BedrockDiyApi1AA2182A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/auth/signout/OPTIONS/Resource"
    }
   },
   "BedrockDiyApiauthverifyD9F9DEFD": {
@@ -2123,6 +2116,48 @@
     "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/auth/verify/POST/Resource"
    }
   },
+  "BedrockDiyApiauthverifyOPTIONS4AD32A8A": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'POST,OPTIONS'"
+       },
+       "StatusCode": "200"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{\"statusCode\": 200}"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "200"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "BedrockDiyApiauthverifyD9F9DEFD"
+    },
+    "RestApiId": {
+     "Ref": "BedrockDiyApi1AA2182A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/auth/verify/OPTIONS/Resource"
+   }
+  },
   "BedrockDiyApiauthforgotpassword54291A48": {
    "Type": "AWS::ApiGateway::Resource",
    "Properties": {
@@ -2243,6 +2278,48 @@
    },
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/auth/forgot-password/POST/Resource"
+   }
+  },
+  "BedrockDiyApiauthforgotpasswordOPTIONS63A970CB": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'POST,OPTIONS'"
+       },
+       "StatusCode": "200"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{\"statusCode\": 200}"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "200"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "BedrockDiyApiauthforgotpassword54291A48"
+    },
+    "RestApiId": {
+     "Ref": "BedrockDiyApi1AA2182A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/auth/forgot-password/OPTIONS/Resource"
    }
   },
   "BedrockDiyApiauthconfirmpasswordA96AC876": {
@@ -2367,6 +2444,48 @@
     "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/auth/confirm-password/POST/Resource"
    }
   },
+  "BedrockDiyApiauthconfirmpasswordOPTIONS07023CE0": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'POST,OPTIONS'"
+       },
+       "StatusCode": "200"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{\"statusCode\": 200}"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "200"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "BedrockDiyApiauthconfirmpasswordA96AC876"
+    },
+    "RestApiId": {
+     "Ref": "BedrockDiyApi1AA2182A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/auth/confirm-password/OPTIONS/Resource"
+   }
+  },
   "BedrockDiyApiprojects9187E160": {
    "Type": "AWS::ApiGateway::Resource",
    "Properties": {
@@ -2456,10 +2575,7 @@
   "BedrockDiyApiprojectsPOST4F2D38A0": {
    "Type": "AWS::ApiGateway::Method",
    "Properties": {
-    "AuthorizationType": "COGNITO_USER_POOLS",
-    "AuthorizerId": {
-     "Ref": "BedrockDiyApiAuthorizer2BB71853"
-    },
+    "AuthorizationType": "NONE",
     "HttpMethod": "POST",
     "Integration": {
      "IntegrationHttpMethod": "POST",
@@ -2566,10 +2682,7 @@
   "BedrockDiyApiprojectsGET28FFCCE0": {
    "Type": "AWS::ApiGateway::Method",
    "Properties": {
-    "AuthorizationType": "COGNITO_USER_POOLS",
-    "AuthorizerId": {
-     "Ref": "BedrockDiyApiAuthorizer2BB71853"
-    },
+    "AuthorizationType": "NONE",
     "HttpMethod": "GET",
     "Integration": {
      "IntegrationHttpMethod": "POST",
@@ -2733,10 +2846,7 @@
   "BedrockDiyApiprojectsprojectIdGET8D729916": {
    "Type": "AWS::ApiGateway::Method",
    "Properties": {
-    "AuthorizationType": "COGNITO_USER_POOLS",
-    "AuthorizerId": {
-     "Ref": "BedrockDiyApiAuthorizer2BB71853"
-    },
+    "AuthorizationType": "NONE",
     "HttpMethod": "GET",
     "Integration": {
      "IntegrationHttpMethod": "POST",
@@ -2770,6 +2880,220 @@
    },
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/GET/Resource"
+   }
+  },
+  "BedrockDiyApiprojectsprojectIdPUTApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FPUTprojectsprojectIdB83AB0DA": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProjectFunction5497A4ED",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:887078546492:",
+       {
+        "Ref": "BedrockDiyApi1AA2182A"
+       },
+       "/",
+       {
+        "Ref": "BedrockDiyApiDeploymentStageprod6FFD6E49"
+       },
+       "/PUT/projects/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/PUT/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.PUT..projects.{projectId}"
+   }
+  },
+  "BedrockDiyApiprojectsprojectIdPUTApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FPUTprojectsprojectId20C39783": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProjectFunction5497A4ED",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:887078546492:",
+       {
+        "Ref": "BedrockDiyApi1AA2182A"
+       },
+       "/test-invoke-stage/PUT/projects/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/PUT/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.PUT..projects.{projectId}"
+   }
+  },
+  "BedrockDiyApiprojectsprojectIdPUT29EE06E0": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "PUT",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "ProjectFunction5497A4ED",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "BedrockDiyApiprojectsprojectIdE53CFE16"
+    },
+    "RestApiId": {
+     "Ref": "BedrockDiyApi1AA2182A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/PUT/Resource"
+   }
+  },
+  "BedrockDiyApiprojectsprojectIdDELETEApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FDELETEprojectsprojectId14311F44": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProjectFunction5497A4ED",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:887078546492:",
+       {
+        "Ref": "BedrockDiyApi1AA2182A"
+       },
+       "/",
+       {
+        "Ref": "BedrockDiyApiDeploymentStageprod6FFD6E49"
+       },
+       "/DELETE/projects/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/DELETE/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.DELETE..projects.{projectId}"
+   }
+  },
+  "BedrockDiyApiprojectsprojectIdDELETEApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FDELETEprojectsprojectIdFA8C81BF": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProjectFunction5497A4ED",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:887078546492:",
+       {
+        "Ref": "BedrockDiyApi1AA2182A"
+       },
+       "/test-invoke-stage/DELETE/projects/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/DELETE/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.DELETE..projects.{projectId}"
+   }
+  },
+  "BedrockDiyApiprojectsprojectIdDELETE745A2FB7": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "DELETE",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "ProjectFunction5497A4ED",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "BedrockDiyApiprojectsprojectIdE53CFE16"
+    },
+    "RestApiId": {
+     "Ref": "BedrockDiyApi1AA2182A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/DELETE/Resource"
    }
   },
   "BedrockDiyApiprojectsprojectIdOPTIONSCAF11C39": {
@@ -2900,10 +3224,7 @@
   "BedrockDiyApiprojectsprojectIdgeneratePOSTA83AFA7D": {
    "Type": "AWS::ApiGateway::Method",
    "Properties": {
-    "AuthorizationType": "COGNITO_USER_POOLS",
-    "AuthorizerId": {
-     "Ref": "BedrockDiyApiAuthorizer2BB71853"
-    },
+    "AuthorizationType": "NONE",
     "HttpMethod": "POST",
     "Integration": {
      "IntegrationHttpMethod": "POST",
@@ -3117,7 +3438,7 @@
        "ResponseParameters": {
         "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
         "method.response.header.Access-Control-Allow-Origin": "'*'",
-        "method.response.header.Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'"
+        "method.response.header.Access-Control-Allow-Methods": "'GET,OPTIONS'"
        },
        "StatusCode": "200"
       }
@@ -3146,6 +3467,551 @@
    },
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/upload-url/OPTIONS/Resource"
+   }
+  },
+  "BedrockDiyApicategoriesA949A2F8": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Fn::GetAtt": [
+      "BedrockDiyApi1AA2182A",
+      "RootResourceId"
+     ]
+    },
+    "PathPart": "categories",
+    "RestApiId": {
+     "Ref": "BedrockDiyApi1AA2182A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/categories/Resource"
+   }
+  },
+  "BedrockDiyApicategoriesGETApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FGETcategories2CD20737": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProjectFunction5497A4ED",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:887078546492:",
+       {
+        "Ref": "BedrockDiyApi1AA2182A"
+       },
+       "/",
+       {
+        "Ref": "BedrockDiyApiDeploymentStageprod6FFD6E49"
+       },
+       "/GET/categories"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/categories/GET/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.GET..categories"
+   }
+  },
+  "BedrockDiyApicategoriesGETApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FGETcategories2996A5A5": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProjectFunction5497A4ED",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:887078546492:",
+       {
+        "Ref": "BedrockDiyApi1AA2182A"
+       },
+       "/test-invoke-stage/GET/categories"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/categories/GET/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.GET..categories"
+   }
+  },
+  "BedrockDiyApicategoriesGET74B95112": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "GET",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "ProjectFunction5497A4ED",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "BedrockDiyApicategoriesA949A2F8"
+    },
+    "RestApiId": {
+     "Ref": "BedrockDiyApi1AA2182A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/categories/GET/Resource"
+   }
+  },
+  "BedrockDiyApicategoriesPOSTApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTcategories44F6FD23": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProjectFunction5497A4ED",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:887078546492:",
+       {
+        "Ref": "BedrockDiyApi1AA2182A"
+       },
+       "/",
+       {
+        "Ref": "BedrockDiyApiDeploymentStageprod6FFD6E49"
+       },
+       "/POST/categories"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/categories/POST/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..categories"
+   }
+  },
+  "BedrockDiyApicategoriesPOSTApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTcategories89E4401B": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProjectFunction5497A4ED",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:887078546492:",
+       {
+        "Ref": "BedrockDiyApi1AA2182A"
+       },
+       "/test-invoke-stage/POST/categories"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/categories/POST/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..categories"
+   }
+  },
+  "BedrockDiyApicategoriesPOSTCE0ED08C": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "POST",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "ProjectFunction5497A4ED",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "BedrockDiyApicategoriesA949A2F8"
+    },
+    "RestApiId": {
+     "Ref": "BedrockDiyApi1AA2182A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/categories/POST/Resource"
+   }
+  },
+  "BedrockDiyApicategoriesOPTIONSC192A522": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'"
+       },
+       "StatusCode": "200"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{\"statusCode\": 200}"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "200"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "BedrockDiyApicategoriesA949A2F8"
+    },
+    "RestApiId": {
+     "Ref": "BedrockDiyApi1AA2182A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/categories/OPTIONS/Resource"
+   }
+  },
+  "BedrockDiyApicategoriescategoryId5FEC4A50": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "BedrockDiyApicategoriesA949A2F8"
+    },
+    "PathPart": "{categoryId}",
+    "RestApiId": {
+     "Ref": "BedrockDiyApi1AA2182A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/categories/{categoryId}/Resource"
+   }
+  },
+  "BedrockDiyApicategoriescategoryIdPUTApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FPUTcategoriescategoryIdF0D337E2": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProjectFunction5497A4ED",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:887078546492:",
+       {
+        "Ref": "BedrockDiyApi1AA2182A"
+       },
+       "/",
+       {
+        "Ref": "BedrockDiyApiDeploymentStageprod6FFD6E49"
+       },
+       "/PUT/categories/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/categories/{categoryId}/PUT/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.PUT..categories.{categoryId}"
+   }
+  },
+  "BedrockDiyApicategoriescategoryIdPUTApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FPUTcategoriescategoryIdEE409A6D": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProjectFunction5497A4ED",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:887078546492:",
+       {
+        "Ref": "BedrockDiyApi1AA2182A"
+       },
+       "/test-invoke-stage/PUT/categories/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/categories/{categoryId}/PUT/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.PUT..categories.{categoryId}"
+   }
+  },
+  "BedrockDiyApicategoriescategoryIdPUT4493C60B": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "PUT",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "ProjectFunction5497A4ED",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "BedrockDiyApicategoriescategoryId5FEC4A50"
+    },
+    "RestApiId": {
+     "Ref": "BedrockDiyApi1AA2182A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/categories/{categoryId}/PUT/Resource"
+   }
+  },
+  "BedrockDiyApicategoriescategoryIdDELETEApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FDELETEcategoriescategoryId19E7CB22": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProjectFunction5497A4ED",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:887078546492:",
+       {
+        "Ref": "BedrockDiyApi1AA2182A"
+       },
+       "/",
+       {
+        "Ref": "BedrockDiyApiDeploymentStageprod6FFD6E49"
+       },
+       "/DELETE/categories/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/categories/{categoryId}/DELETE/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.DELETE..categories.{categoryId}"
+   }
+  },
+  "BedrockDiyApicategoriescategoryIdDELETEApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FDELETEcategoriescategoryId60515887": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "ProjectFunction5497A4ED",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:887078546492:",
+       {
+        "Ref": "BedrockDiyApi1AA2182A"
+       },
+       "/test-invoke-stage/DELETE/categories/*"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/categories/{categoryId}/DELETE/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.DELETE..categories.{categoryId}"
+   }
+  },
+  "BedrockDiyApicategoriescategoryIdDELETEE8E23396": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "DELETE",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "ProjectFunction5497A4ED",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "BedrockDiyApicategoriescategoryId5FEC4A50"
+    },
+    "RestApiId": {
+     "Ref": "BedrockDiyApi1AA2182A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/categories/{categoryId}/DELETE/Resource"
+   }
+  },
+  "BedrockDiyApicategoriescategoryIdOPTIONS20EC5FBE": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'GET,POST,PUT,DELETE,OPTIONS'"
+       },
+       "StatusCode": "200"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{\"statusCode\": 200}"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "200"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "BedrockDiyApicategoriescategoryId5FEC4A50"
+    },
+    "RestApiId": {
+     "Ref": "BedrockDiyApi1AA2182A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/categories/{categoryId}/OPTIONS/Resource"
    }
   },
   "BedrockDiyApiprompts1E68E3C5": {
@@ -3252,10 +4118,7 @@
   "BedrockDiyApipromptsprojectIdPOST3DA6CFC0": {
    "Type": "AWS::ApiGateway::Method",
    "Properties": {
-    "AuthorizationType": "COGNITO_USER_POOLS",
-    "AuthorizerId": {
-     "Ref": "BedrockDiyApiAuthorizer2BB71853"
-    },
+    "AuthorizationType": "NONE",
     "HttpMethod": "POST",
     "Integration": {
      "IntegrationHttpMethod": "POST",
@@ -3362,10 +4225,7 @@
   "BedrockDiyApipromptsprojectIdGET355C3822": {
    "Type": "AWS::ApiGateway::Method",
    "Properties": {
-    "AuthorizationType": "COGNITO_USER_POOLS",
-    "AuthorizerId": {
-     "Ref": "BedrockDiyApiAuthorizer2BB71853"
-    },
+    "AuthorizationType": "NONE",
     "HttpMethod": "GET",
     "Integration": {
      "IntegrationHttpMethod": "POST",
@@ -3529,10 +4389,7 @@
   "BedrockDiyApipromptsprojectIdpromptIdPUTAB6B08A0": {
    "Type": "AWS::ApiGateway::Method",
    "Properties": {
-    "AuthorizationType": "COGNITO_USER_POOLS",
-    "AuthorizerId": {
-     "Ref": "BedrockDiyApiAuthorizer2BB71853"
-    },
+    "AuthorizationType": "NONE",
     "HttpMethod": "PUT",
     "Integration": {
      "IntegrationHttpMethod": "POST",
@@ -3639,10 +4496,7 @@
   "BedrockDiyApipromptsprojectIdpromptIdDELETEF3254681": {
    "Type": "AWS::ApiGateway::Method",
    "Properties": {
-    "AuthorizationType": "COGNITO_USER_POOLS",
-    "AuthorizerId": {
-     "Ref": "BedrockDiyApiAuthorizer2BB71853"
-    },
+    "AuthorizationType": "NONE",
     "HttpMethod": "DELETE",
     "Integration": {
      "IntegrationHttpMethod": "POST",
@@ -3720,6 +4574,173 @@
     "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/{promptId}/OPTIONS/Resource"
    }
   },
+  "BedrockDiyApipromptsprojectIdpromptIdcontentE31603E1": {
+   "Type": "AWS::ApiGateway::Resource",
+   "Properties": {
+    "ParentId": {
+     "Ref": "BedrockDiyApipromptsprojectIdpromptId9B0DE866"
+    },
+    "PathPart": "content",
+    "RestApiId": {
+     "Ref": "BedrockDiyApi1AA2182A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/{promptId}/content/Resource"
+   }
+  },
+  "BedrockDiyApipromptsprojectIdpromptIdcontentGETApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FGETpromptsprojectIdpromptIdcontent99A6291C": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "SavePromptFunction071F515F",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:887078546492:",
+       {
+        "Ref": "BedrockDiyApi1AA2182A"
+       },
+       "/",
+       {
+        "Ref": "BedrockDiyApiDeploymentStageprod6FFD6E49"
+       },
+       "/GET/prompts/*/*/content"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/{promptId}/content/GET/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.GET..prompts.{projectId}.{promptId}.content"
+   }
+  },
+  "BedrockDiyApipromptsprojectIdpromptIdcontentGETApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FGETpromptsprojectIdpromptIdcontent36B5EC34": {
+   "Type": "AWS::Lambda::Permission",
+   "Properties": {
+    "Action": "lambda:InvokeFunction",
+    "FunctionName": {
+     "Fn::GetAtt": [
+      "SavePromptFunction071F515F",
+      "Arn"
+     ]
+    },
+    "Principal": "apigateway.amazonaws.com",
+    "SourceArn": {
+     "Fn::Join": [
+      "",
+      [
+       "arn:",
+       {
+        "Ref": "AWS::Partition"
+       },
+       ":execute-api:us-east-1:887078546492:",
+       {
+        "Ref": "BedrockDiyApi1AA2182A"
+       },
+       "/test-invoke-stage/GET/prompts/*/*/content"
+      ]
+     ]
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/{promptId}/content/GET/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.GET..prompts.{projectId}.{promptId}.content"
+   }
+  },
+  "BedrockDiyApipromptsprojectIdpromptIdcontentGETF88645DD": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "COGNITO_USER_POOLS",
+    "AuthorizerId": {
+     "Ref": "BedrockDiyApiAuthorizer2BB71853"
+    },
+    "HttpMethod": "GET",
+    "Integration": {
+     "IntegrationHttpMethod": "POST",
+     "Type": "AWS_PROXY",
+     "Uri": {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":apigateway:us-east-1:lambda:path/2015-03-31/functions/",
+        {
+         "Fn::GetAtt": [
+          "SavePromptFunction071F515F",
+          "Arn"
+         ]
+        },
+        "/invocations"
+       ]
+      ]
+     }
+    },
+    "ResourceId": {
+     "Ref": "BedrockDiyApipromptsprojectIdpromptIdcontentE31603E1"
+    },
+    "RestApiId": {
+     "Ref": "BedrockDiyApi1AA2182A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/{promptId}/content/GET/Resource"
+   }
+  },
+  "BedrockDiyApipromptsprojectIdpromptIdcontentOPTIONS3485A890": {
+   "Type": "AWS::ApiGateway::Method",
+   "Properties": {
+    "AuthorizationType": "NONE",
+    "HttpMethod": "OPTIONS",
+    "Integration": {
+     "IntegrationResponses": [
+      {
+       "ResponseParameters": {
+        "method.response.header.Access-Control-Allow-Headers": "'Content-Type,X-Amz-Date,Authorization,X-Api-Key,X-Amz-Security-Token'",
+        "method.response.header.Access-Control-Allow-Origin": "'*'",
+        "method.response.header.Access-Control-Allow-Methods": "'GET,OPTIONS'"
+       },
+       "StatusCode": "200"
+      }
+     ],
+     "RequestTemplates": {
+      "application/json": "{\"statusCode\": 200}"
+     },
+     "Type": "MOCK"
+    },
+    "MethodResponses": [
+     {
+      "ResponseParameters": {
+       "method.response.header.Access-Control-Allow-Headers": true,
+       "method.response.header.Access-Control-Allow-Origin": true,
+       "method.response.header.Access-Control-Allow-Methods": true
+      },
+      "StatusCode": "200"
+     }
+    ],
+    "ResourceId": {
+     "Ref": "BedrockDiyApipromptsprojectIdpromptIdcontentE31603E1"
+    },
+    "RestApiId": {
+     "Ref": "BedrockDiyApi1AA2182A"
+    }
+   },
+   "Metadata": {
+    "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApi/Default/prompts/{projectId}/{promptId}/content/OPTIONS/Resource"
+   }
+  },
   "BedrockDiyApiAuthorizer2BB71853": {
    "Type": "AWS::ApiGateway::Authorizer",
    "Properties": {
@@ -3740,89 +4761,6 @@
    },
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/BedrockDiyApiAuthorizer/Resource"
-   }
-  },
-  "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC": {
-   "Type": "AWS::IAM::Role",
-   "Properties": {
-    "AssumeRolePolicyDocument": {
-     "Statement": [
-      {
-       "Action": "sts:AssumeRole",
-       "Effect": "Allow",
-       "Principal": {
-        "Service": "lambda.amazonaws.com"
-       }
-      }
-     ],
-     "Version": "2012-10-17"
-    },
-    "ManagedPolicyArns": [
-     {
-      "Fn::Join": [
-       "",
-       [
-        "arn:",
-        {
-         "Ref": "AWS::Partition"
-        },
-        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
-       ]
-      ]
-     }
-    ]
-   },
-   "Metadata": {
-    "aws:cdk:path": "BedrockDiyAuthStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Role/Resource"
-   }
-  },
-  "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleDefaultPolicy2CF63D36": {
-   "Type": "AWS::IAM::Policy",
-   "Properties": {
-    "PolicyDocument": {
-     "Statement": [
-      {
-       "Action": "s3:PutBucketNotification",
-       "Effect": "Allow",
-       "Resource": "*"
-      }
-     ],
-     "Version": "2012-10-17"
-    },
-    "PolicyName": "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleDefaultPolicy2CF63D36",
-    "Roles": [
-     {
-      "Ref": "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC"
-     }
-    ]
-   },
-   "Metadata": {
-    "aws:cdk:path": "BedrockDiyAuthStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Role/DefaultPolicy/Resource"
-   }
-  },
-  "BucketNotificationsHandler050a0587b7544547bf325f094a3db8347ECC3691": {
-   "Type": "AWS::Lambda::Function",
-   "Properties": {
-    "Description": "AWS CloudFormation handler for \"Custom::S3BucketNotifications\" resources (@aws-cdk/aws-s3)",
-    "Code": {
-     "ZipFile": "import boto3  # type: ignore\nimport json\nimport logging\nimport urllib.request\n\ns3 = boto3.client(\"s3\")\n\nEVENTBRIDGE_CONFIGURATION = 'EventBridgeConfiguration'\nCONFIGURATION_TYPES = [\"TopicConfigurations\", \"QueueConfigurations\", \"LambdaFunctionConfigurations\"]\n\ndef handler(event: dict, context):\n  response_status = \"SUCCESS\"\n  error_message = \"\"\n  try:\n    props = event[\"ResourceProperties\"]\n    notification_configuration = props[\"NotificationConfiguration\"]\n    managed = props.get('Managed', 'true').lower() == 'true'\n    skipDestinationValidation = props.get('SkipDestinationValidation', 'false').lower() == 'true'\n    stack_id = event['StackId']\n    old = event.get(\"OldResourceProperties\", {}).get(\"NotificationConfiguration\", {})\n    if managed:\n      config = handle_managed(event[\"RequestType\"], notification_configuration)\n    else:\n      config = handle_unmanaged(props[\"BucketName\"], stack_id, event[\"RequestType\"], notification_configuration, old)\n    s3.put_bucket_notification_configuration(Bucket=props[\"BucketName\"], NotificationConfiguration=config, SkipDestinationValidation=skipDestinationValidation)\n  except Exception as e:\n    logging.exception(\"Failed to put bucket notification configuration\")\n    response_status = \"FAILED\"\n    error_message = f\"Error: {str(e)}. \"\n  finally:\n    submit_response(event, context, response_status, error_message)\n\ndef handle_managed(request_type, notification_configuration):\n  if request_type == 'Delete':\n    return {}\n  return notification_configuration\n\ndef handle_unmanaged(bucket, stack_id, request_type, notification_configuration, old):\n  def get_id(n):\n    n['Id'] = ''\n    sorted_notifications = sort_filter_rules(n)\n    strToHash=json.dumps(sorted_notifications, sort_keys=True).replace('\"Name\": \"prefix\"', '\"Name\": \"Prefix\"').replace('\"Name\": \"suffix\"', '\"Name\": \"Suffix\"')\n    return f\"{stack_id}-{hash(strToHash)}\"\n  def with_id(n):\n    n['Id'] = get_id(n)\n    return n\n\n  external_notifications = {}\n  existing_notifications = s3.get_bucket_notification_configuration(Bucket=bucket)\n  for t in CONFIGURATION_TYPES:\n    if request_type == 'Update':\n        old_incoming_ids = [get_id(n) for n in old.get(t, [])]\n        external_notifications[t] = [n for n in existing_notifications.get(t, []) if not get_id(n) in old_incoming_ids]      \n    elif request_type == 'Delete':\n        external_notifications[t] = [n for n in existing_notifications.get(t, []) if not n['Id'].startswith(f\"{stack_id}-\")]\n    elif request_type == 'Create':\n        external_notifications[t] = [n for n in existing_notifications.get(t, [])]\n  if EVENTBRIDGE_CONFIGURATION in existing_notifications:\n    external_notifications[EVENTBRIDGE_CONFIGURATION] = existing_notifications[EVENTBRIDGE_CONFIGURATION]\n\n  if request_type == 'Delete':\n    return external_notifications\n\n  notifications = {}\n  for t in CONFIGURATION_TYPES:\n    external = external_notifications.get(t, [])\n    incoming = [with_id(n) for n in notification_configuration.get(t, [])]\n    notifications[t] = external + incoming\n\n  if EVENTBRIDGE_CONFIGURATION in notification_configuration:\n    notifications[EVENTBRIDGE_CONFIGURATION] = notification_configuration[EVENTBRIDGE_CONFIGURATION]\n  elif EVENTBRIDGE_CONFIGURATION in external_notifications:\n    notifications[EVENTBRIDGE_CONFIGURATION] = external_notifications[EVENTBRIDGE_CONFIGURATION]\n\n  return notifications\n\ndef submit_response(event: dict, context, response_status: str, error_message: str):\n  response_body = json.dumps(\n    {\n      \"Status\": response_status,\n      \"Reason\": f\"{error_message}See the details in CloudWatch Log Stream: {context.log_stream_name}\",\n      \"PhysicalResourceId\": event.get(\"PhysicalResourceId\") or event[\"LogicalResourceId\"],\n      \"StackId\": event[\"StackId\"],\n      \"RequestId\": event[\"RequestId\"],\n      \"LogicalResourceId\": event[\"LogicalResourceId\"],\n      \"NoEcho\": False,\n    }\n  ).encode(\"utf-8\")\n  headers = {\"content-type\": \"\", \"content-length\": str(len(response_body))}\n  try:\n    req = urllib.request.Request(url=event[\"ResponseURL\"], headers=headers, data=response_body, method=\"PUT\")\n    with urllib.request.urlopen(req) as response:\n      print(response.read().decode(\"utf-8\"))\n    print(\"Status code: \" + response.reason)\n  except Exception as e:\n      print(\"send(..) failed executing request.urlopen(..): \" + str(e))\n\ndef sort_filter_rules(json_obj):\n  if not isinstance(json_obj, dict):\n      return json_obj\n  for key, value in json_obj.items():\n      if isinstance(value, dict):\n          json_obj[key] = sort_filter_rules(value)\n      elif isinstance(value, list):\n          json_obj[key] = [sort_filter_rules(item) for item in value]\n  if \"Filter\" in json_obj and \"Key\" in json_obj[\"Filter\"] and \"FilterRules\" in json_obj[\"Filter\"][\"Key\"]:\n      filter_rules = json_obj[\"Filter\"][\"Key\"][\"FilterRules\"]\n      sorted_filter_rules = sorted(filter_rules, key=lambda x: x[\"Name\"])\n      json_obj[\"Filter\"][\"Key\"][\"FilterRules\"] = sorted_filter_rules\n  return json_obj"
-    },
-    "Handler": "index.handler",
-    "Role": {
-     "Fn::GetAtt": [
-      "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC",
-      "Arn"
-     ]
-    },
-    "Runtime": "python3.11",
-    "Timeout": 300
-   },
-   "DependsOn": [
-    "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleDefaultPolicy2CF63D36",
-    "BucketNotificationsHandler050a0587b7544547bf325f094a3db834RoleB6FB88EC"
-   ],
-   "Metadata": {
-    "aws:cdk:path": "BedrockDiyAuthStack/BucketNotificationsHandler050a0587b7544547bf325f094a3db834/Resource"
    }
   },
   "GenerateErrorAlarmE8D59242": {
@@ -3951,7 +4889,7 @@
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
-    "Analytics": "v2:deflate64:H4sIAAAAAAAA/1WRTW/bMAyGf0vvitalA3Z2U3SXDcvSbteClhmHiyx6ooTAE/TfB8l2lp74vCQlfm319v6Tvr+Di2xMd95YanV6CWDOCi7ylgz3jgLr9FPQ75mt2h3dlVfYWUIXbkOLZ5VPPAC524TZk5U86PQYzRnr84Vm8wiCWVkY2g502h3dHv1AIsROfYUJ/S/0VeyO7p1+js6EJbByVt3kYOCu1ekVWoslWCEr+SM6/YgYq7NCVuJEp1ceydTMAlm12Hk259rNlwi+80B1JU2/LKBCYwkkK4JBpwPPtardsyUzFTlTmf8NRDCIbopRMFIPAS8w6XRACc1I9fV/bIzh6IJ6wtHyNCx1b9RLgL6WnOGAwtEbLOu8iuXPmb9hOHFXXCvNV19vJU0MJ/b0F31t4KqyMpZjd4FgTjo1FvxQEwrk/K7GFeqYpTNyfcn4HsMYQ1b7KZzYfXjQH7f6891vIdr46AINqA+z/QcfiGWsrAIAAA=="
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/22RTW/bMAyGf0vvitalA3Z2U/Q2zEu7c0HLrMNFEj1RWuAJ+u+DZeejwE58XpISX0pbvb3/ou/v4CQb0x83ljqdXyKYo4KTvGXDg6fIOv8UDC2zVbt3f+Ez7Cyhj7elNXOWT+yA/G3DkilKHnR+TOaI9fhKS2jZkpmu6VUv4hEEi+onD477TudX6CzOvRWKkt+i84+EqSYrFCVedH7lkUztnKEoAqfznpfTNV4HL1RUh31gc9R59+6bYd21QmMJpCgLrutB5+fkTSSuq95yi8GRCHFd+Q1EMIpu5qBgpAEinmDSeY8Sm5GqlSs2xnDyUT3haHly6/wb9RJhqP4X2KNwCgbnR7qI9c6Fv2E8cD+nzrR89Pl7pEnxwIH+YqgGLqooYzn1J4jmoHNjIbjaMEMpapcksvvvyI+lNvAf6jFUi/UdZuvkhw9+v6c4plhUO8UD+08P+vNWf737JUSbkHwkh3q/xH8JgJQ+yQIAAA=="
    },
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/CDKMetadata/Default"
@@ -4004,31 +4942,7 @@
     ]
    },
    "Export": {
-    "Name": "ApiGatewayUrl"
-   }
-  },
-  "ApiGatewayDomain": {
-   "Description": "API Gateway Domain for CloudFront",
-   "Value": {
-    "Fn::Join": [
-     "",
-     [
-      {
-       "Ref": "BedrockDiyApi1AA2182A"
-      },
-      ".execute-api.us-east-1.",
-      {
-       "Ref": "AWS::URLSuffix"
-      },
-      "/",
-      {
-       "Ref": "BedrockDiyApiDeploymentStageprod6FFD6E49"
-      }
-     ]
-    ]
-   },
-   "Export": {
-    "Name": "ApiGatewayDomain"
+    "Name": "BedrockDiyApiUrl"
    }
   },
   "PromptBucketName": {
@@ -4040,53 +4954,8 @@
     "Name": "PromptBucketName"
    }
   },
-  "FaissBucketName": {
-   "Description": "FAISS 인덱스 S3 버킷 이름",
-   "Value": {
-    "Ref": "FaissBucket2FC8D023"
-   },
-   "Export": {
-    "Name": "FaissBucketName"
-   }
-  },
-  "BedrockAgentId": {
-   "Description": "Bedrock Agent ID",
-   "Value": {
-    "Fn::GetAtt": [
-     "TitleNomicsAgent",
-     "AgentId"
-    ]
-   },
-   "Export": {
-    "Name": "BedrockAgentId"
-   }
-  },
-  "BedrockAgentAliasId": {
-   "Description": "Bedrock Agent Alias ID",
-   "Value": {
-    "Fn::GetAtt": [
-     "TitleNomicsAgentAlias",
-     "AgentAliasId"
-    ]
-   },
-   "Export": {
-    "Name": "BedrockAgentAliasId"
-   }
-  },
-  "GuardrailId": {
-   "Description": "Bedrock Guardrail ID",
-   "Value": {
-    "Fn::GetAtt": [
-     "ProjectGuardrail",
-     "GuardrailId"
-    ]
-   },
-   "Export": {
-    "Name": "GuardrailId"
-   }
-  },
   "UserPoolId": {
-   "Description": "Cognito 사용자 풀 ID",
+   "Description": "Cognito User Pool ID",
    "Value": {
     "Ref": "BedrockDiyUserPool9F10F9FA"
    },
@@ -4095,7 +4964,7 @@
    }
   },
   "UserPoolClientId": {
-   "Description": "Cognito 사용자 풀 클라이언트 ID",
+   "Description": "Cognito User Pool Client ID",
    "Value": {
     "Ref": "BedrockDiyUserPoolBedrockDiyWebClient2F814CC5"
    },
@@ -4103,22 +4972,30 @@
     "Name": "UserPoolClientId"
    }
   },
-  "CognitoDomainUrl": {
-   "Description": "Cognito 도메인 URL (Hosted UI)",
+  "LegacyApiDeploymentExport": {
+   "Description": "Legacy export to keep FrontendStack stable during migration",
    "Value": {
     "Fn::Join": [
      "",
      [
       "https://",
       {
-       "Ref": "BedrockDiyUserPoolBedrockDiyDomain660B2B86"
+       "Ref": "BedrockDiyApi1AA2182A"
       },
-      ".auth.us-east-1.amazoncognito.com"
+      ".execute-api.us-east-1.",
+      {
+       "Ref": "AWS::URLSuffix"
+      },
+      "/",
+      {
+       "Ref": "BedrockDiyApiDeploymentStageprod6FFD6E49"
+      },
+      "/"
      ]
     ]
    },
    "Export": {
-    "Name": "CognitoDomainUrl"
+    "Name": "BedrockDiyAuthStack:ExportsOutputRefBedrockDiyApiDeploymentStageprod6FFD6E4934FCC1BA"
    }
   }
  },

@@ -42,7 +42,7 @@ class CICDStack(Stack):
         # 1. S3 버킷 생성 (정적 웹사이트 호스팅)
         self.frontend_bucket = s3.Bucket(
             self, "FrontendBucket",
-            bucket_name=f"title-nomics-frontend-{self.account}-{self.region}",
+            bucket_name=f"dynamic-prompt-frontend-{self.account}-{self.region}",
             public_read_access=False,  # CloudFront OAI 사용
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
             versioning=True,  # 버전 관리 활성화
@@ -61,7 +61,7 @@ class CICDStack(Stack):
         # 2. CloudFront Origin Access Identity
         self.origin_access_identity = cloudfront.OriginAccessIdentity(
             self, "FrontendOAI",
-            comment="OAI for TITLE-NOMICS frontend"
+            comment="OAI for Dynamic Prompt System frontend"
         )
         
         # 3. S3 버킷 정책 (CloudFront만 접근 허용)
@@ -133,7 +133,7 @@ class CICDStack(Stack):
             price_class=cloudfront.PriceClass.PRICE_CLASS_100,  # 비용 최적화
             geo_restriction=cloudfront.GeoRestriction.allowlist("KR", "US"),  # 한국, 미국만 허용
             enabled=True,
-            comment="TITLE-NOMICS Frontend Distribution"
+            comment="Dynamic Prompt System Frontend Distribution"
         )
     
     def create_cicd_resources(self):
@@ -142,7 +142,7 @@ class CICDStack(Stack):
         # 1. GitHub Actions용 IAM 역할
         self.github_actions_role = iam.Role(
             self, "GitHubActionsRole",
-            role_name="title-nomics-github-actions-role",
+            role_name="dynamic-prompt-github-actions-role",
             assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
             description="GitHub Actions에서 사용하는 배포 역할",
             managed_policies=[
@@ -198,14 +198,14 @@ class CICDStack(Stack):
         # 6. 배포 설정 저장용 Parameter Store
         self.deployment_config = ssm.StringParameter(
             self, "DeploymentConfig",
-            parameter_name="/title-nomics/deployment/config",
+            parameter_name="/dynamic-prompt/deployment/config",
             string_value=json.dumps({
                 "frontend_bucket": self.frontend_bucket.bucket_name,
                 "cloudfront_distribution_id": self.distribution.distribution_id,
-                "api_gateway_url": self.api_gateway_url or "https://api.title-nomics.com",
+                "api_gateway_url": self.api_gateway_url or "https://api.dynamic-prompt.com",
                 "region": self.region
             }),
-            description="TITLE-NOMICS 배포 설정"
+            description="Dynamic Prompt System 배포 설정"
         )
         
         # 7. 배포 스크립트 생성
@@ -216,7 +216,7 @@ class CICDStack(Stack):
         
         # GitHub Actions 워크플로우 템플릿 (수정된 버전)
         self.github_workflow_template = {
-            "name": "Deploy TITLE-NOMICS",
+            "name": "Deploy Dynamic Prompt System",
             "on": {
                 "push": {
                     "branches": ["main"]
@@ -334,7 +334,7 @@ class CICDStack(Stack):
         # 배포 스크립트 파일 생성 (권장사항)
         self.deployment_script_template = f"""#!/bin/bash
 
-# TITLE-NOMICS 자동 배포 스크립트
+# Dynamic Prompt System 자동 배포 스크립트
 # GitHub Actions에서 사용하거나 로컬에서 직접 실행 가능
 
 set -e
@@ -408,7 +408,7 @@ print_success "캐시 무효화 ID: $INVALIDATION_ID"
 print_step "배포 완료"
 echo "Frontend URL: https://${{CLOUDFRONT_DISTRIBUTION_ID}}.cloudfront.net"
 echo "API URL: $API_URL"
-print_success "TITLE-NOMICS 배포가 성공적으로 완료되었습니다!"
+print_success "Dynamic Prompt System 배포가 성공적으로 완료되었습니다!"
 """
     
     def setup_security(self):

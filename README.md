@@ -554,7 +554,57 @@ DELETE /api/projects/{project_id}
 - **AWS X-Ray**: Distributed tracing for request flow analysis
 - **Error Tracking**: Automated error detection and alerting
 
-## 📚 Contributing
+## 📚 References & Resources
+
+This project was developed by studying and referencing the following official documentation, technical resources, and educational materials.
+
+### 🏛️ Official AWS Documentation
+
+#### 🧠 AWS Bedrock
+
+- 📖 **[AWS Bedrock User Guide](https://docs.aws.amazon.com/pdfs/bedrock/latest/userguide/bedrock-ug.pdf)** - Comprehensive guide for AWS Bedrock foundation models
+- 🔧 **[Bedrock Runtime API - Claude Examples](https://docs.aws.amazon.com/pdfs/bedrock/latest/userguide/bedrock-ug.pdf#service_code_examples_bedrock-runtime_anthropic_claude)** - Service code examples for Anthropic Claude integration
+- 🚀 **[Amazon Bedrock Serverless Prompt Chaining](https://github.com/aws-samples/amazon-bedrock-serverless-prompt-chaining)** - AWS samples for serverless prompt orchestration
+
+#### ☁️ AWS CDK
+
+- 📋 **[AWS CDK v2 Guide](https://docs.aws.amazon.com/pdfs/cdk/v2/guide/awscdk.pdf)** - Infrastructure as Code with AWS CDK Python
+
+### 🤖 AI & Machine Learning Resources
+
+#### 🎯 Multi-Agent Orchestration
+
+- 🧪 **[Design Multi-Agent Orchestration with Amazon Bedrock](https://aws.amazon.com/ko/blogs/machine-learning/design-multi-agent-orchestration-with-reasoning-using-amazon-bedrock-and-open-source-frameworks/)** - Advanced AI orchestration patterns and reasoning frameworks
+
+### 📚 Educational Materials & Books
+
+#### 🔍 Technical References
+
+- 📘 **[AWS 교과서](https://product.kyobobook.co.kr/detail/S000213057687)** - Comprehensive AWS learning resource
+- 📗 **[클라우드 아키텍처 패턴](https://product.kyobobook.co.kr/detail/S000201078147)** - Cloud architecture design patterns and best practices
+- 📙 **[서버리스 아키텍처 가이드](https://product.kyobobook.co.kr/detail/S000214036165)** - Serverless architecture principles and implementation
+
+---
+
+## 🎯 Project Philosophy
+
+> _"This project demonstrates the power of serverless architecture combined with cutting-edge AI capabilities, creating a scalable and cost-effective solution for intelligent content generation."_
+
+### 🌟 Key Achievements
+
+- ✅ **Zero Server Management** - 100% serverless architecture
+- ✅ **AI-Powered Intelligence** - Advanced Claude 3 Sonnet integration
+- ✅ **Enterprise-Ready** - Production-grade security and monitoring
+- ✅ **Cost-Optimized** - Pay-per-use pricing model
+- ✅ **Highly Available** - Multi-AZ deployment with automatic failover
+
+---
+
+### 💡 Feature Requests
+
+- Feature requests are welcome! Please use GitHub Issues with the `enhancement` label.
+
+### 🤝 Contributing
 
 1. Fork the repository
 2. Create a feature branch (`git checkout -b feature/amazing-feature`)
@@ -562,14 +612,34 @@ DELETE /api/projects/{project_id}
 4. Push to the branch (`git push origin feature/amazing-feature`)
 5. Open a Pull Request
 
+---
+
 ## 📄 License
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## 🤝 Support
+---
 
-For support and questions, please open an issue in the GitHub repository or contact the development team.
+## 🎉 Acknowledgments
+
+Special thanks to:
+
+- **AWS Bedrock Team** for providing powerful foundation models
+- **Anthropic** for developing Claude 3 Sonnet
+- **AWS CDK Team** for excellent Infrastructure as Code tools
+- **Open Source Community** for continuous inspiration and support
 
 ---
 
-Built with ❤️ using AWS Bedrock, CDK, and React
+<div align="center">
+
+### 🌟 Star this repository if you found it helpful! 🌟
+
+**Built with ❤️ using AWS Serverless Technologies**
+
+[![AWS](https://img.shields.io/badge/AWS-232F3E?style=for-the-badge&logo=amazon-aws&logoColor=white)](https://aws.amazon.com/)
+[![Python](https://img.shields.io/badge/Python-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org/)
+[![React](https://img.shields.io/badge/React-20232A?style=for-the-badge&logo=react&logoColor=61DAFB)](https://reactjs.org/)
+[![AWS Lambda](https://img.shields.io/badge/AWS_Lambda-FF9900?style=for-the-badge&logo=aws-lambda&logoColor=white)](https://aws.amazon.com/lambda/)
+
+</div>

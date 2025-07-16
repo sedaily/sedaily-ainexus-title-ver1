@@ -12,7 +12,8 @@ from aws_cdk import (
     RemovalPolicy,
     Duration,
     Size,
-    Fn
+    Fn,
+    aws_iam
 )
 from constructs import Construct
 import os
@@ -40,14 +41,28 @@ class FrontendStack(Stack):
             ]
         )
         
-        # CloudFront Origin Access Identity
-        origin_access_identity = cloudfront.OriginAccessIdentity(
-            self, "OAI",
-            comment=f"OAI for {self.website_bucket.bucket_name}"
+        # CloudFront Origin Access Control (OAC) - 새로운 권장 방식
+        origin_access_control = cloudfront.S3OriginAccessControl(
+            self, "OAC",
+            origin_access_control_name=f"OAC-{self.website_bucket.bucket_name}",
+            description=f"OAC for {self.website_bucket.bucket_name}",
+            signing=cloudfront.Signing.SIGV4_ALWAYS
         )
         
-        # S3 버킷 정책 - CloudFront만 접근 허용
-        self.website_bucket.grant_read(origin_access_identity)
+        # S3 버킷 정책 - OAC가 S3에 접근할 수 있도록 허용
+        self.website_bucket.add_to_resource_policy(
+            aws_iam.PolicyStatement(
+                effect=aws_iam.Effect.ALLOW,
+                principals=[aws_iam.ServicePrincipal("cloudfront.amazonaws.com")],
+                actions=["s3:GetObject"],
+                resources=[self.website_bucket.arn_for_objects("*")],
+                conditions={
+                    "StringEquals": {
+                        "AWS:SourceArn": f"arn:aws:cloudfront::{self.account}:distribution/*"
+                    }
+                }
+            )
+        )
         
         # API Gateway URL 처리
         api_origin_for_behavior = None
@@ -75,42 +90,39 @@ class FrontendStack(Stack):
         behaviors = {
             # 정적 파일들은 캐싱
             "*.js": cloudfront.BehaviorOptions(
-                origin=origins.S3Origin(
+                origin=origins.S3BucketOrigin.with_origin_access_control(
                     self.website_bucket,
-                    origin_access_identity=origin_access_identity
+                    origin_access_control=origin_access_control
                 ),
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 cache_policy=cloudfront.CachePolicy.CACHING_OPTIMIZED,
                 compress=True
             ),
             "*.css": cloudfront.BehaviorOptions(
-                origin=origins.S3Origin(
+                origin=origins.S3BucketOrigin.with_origin_access_control(
                     self.website_bucket,
-                    origin_access_identity=origin_access_identity
+                    origin_access_control=origin_access_control
                 ),
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 cache_policy=cloudfront.CachePolicy.CACHING_OPTIMIZED,
                 compress=True
-            )
-        }
-        
-        # API 프록시 설정 (API Gateway가 있는 경우에만)
-        if api_origin_for_behavior is not None:
-            behaviors["/api/*"] = cloudfront.BehaviorOptions(
+            ),
+            "/api/*": cloudfront.BehaviorOptions(
                 origin=api_origin_for_behavior,
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 cache_policy=cloudfront.CachePolicy.CACHING_DISABLED,
                 allowed_methods=cloudfront.AllowedMethods.ALLOW_ALL,
                 origin_request_policy=cloudfront.OriginRequestPolicy.ALL_VIEWER
             )
+        }
         
         # CloudFront 배포
         self.distribution = cloudfront.Distribution(
             self, "Distribution",
             default_behavior=cloudfront.BehaviorOptions(
-                origin=origins.S3Origin(
+                origin=origins.S3BucketOrigin.with_origin_access_control(
                     self.website_bucket,
-                    origin_access_identity=origin_access_identity
+                    origin_access_control=origin_access_control
                 ),
                 viewer_protocol_policy=cloudfront.ViewerProtocolPolicy.REDIRECT_TO_HTTPS,
                 cache_policy=cloudfront.CachePolicy.CACHING_OPTIMIZED,

@@ -772,9 +772,3 @@ class BedrockDiyStack(Stack):
             description="Cognito User Pool Client ID",
             export_name="UserPoolClientId"
         ) 
-        CfnOutput(
-            self, "LegacyApiDeploymentExport",
-            value=self.api.url,
-            description="Legacy export to keep FrontendStack stable during migration",
-            export_name="BedrockDiyAuthStack:ExportsOutputRefBedrockDiyApiDeploymentStageprod6FFD6E4934FCC1BA"
-        ) 

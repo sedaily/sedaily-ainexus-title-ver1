@@ -580,9 +580,10 @@ This project was developed by studying and referencing the following official do
 
 #### 🔍 Technical References
 
-- 📘 **[AWS 교과서](https://product.kyobobook.co.kr/detail/S000213057687)** - Comprehensive AWS learning resource
-- 📗 **[클라우드 아키텍처 패턴](https://product.kyobobook.co.kr/detail/S000201078147)** - Cloud architecture design patterns and best practices
-- 📙 **[서버리스 아키텍처 가이드](https://product.kyobobook.co.kr/detail/S000214036165)** - Serverless architecture principles and implementation
+- 📘 **[한 권으로 배우는 도커 & 쿠버네티스](https://product.kyobobook.co.kr/detail/S000213057687)** - 컨테이너 개념부터 쿠버네티스를 활용한 배포까지 (장철원 저, 한빛미디어)
+- 📗 **[클라우드 서비스 개발자를 위한 AWS로 구현하는 CI/CD 배포 입문](https://product.kyobobook.co.kr/detail/S000201078147)** - 신입 개발자부터 실제 서비스 구축 경험이 없는 모든 개발자를 위한 실무 밀착형 입문서 (최주호, 정재원, 정동진 저, 앤써북)
+- 📙 **[IT 엔지니어를 위한 AWS 운영의 기본과 노하우](https://product.kyobobook.co.kr/detail/S000214036165)** - AWS 클라우드 서비스 운영 및 관리 전문 가이드 (사타케 요이치 외 저, 길벗)
+- 📕 **[RAG 마스터: 랭체인으로 완성하는 LLM 서비스](https://product.kyobobook.co.kr/detail/S000216240484)** - LangChain을 활용한 RAG 기반 LLM 서비스 구축 실무 (브라이스 유 외 저, 프리렉)
 
 ---
 

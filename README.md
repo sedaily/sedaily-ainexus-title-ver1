@@ -221,45 +221,19 @@ sequenceDiagram
 
 ### Database Schema & Data Relationships
 
-**DynamoDB 테이블 구조와 S3 객체 간의 관계를 나타내는 ER 다이어그램**
+**DynamoDB 테이블 구조와 관계를 나타내는 데이터베이스 다이어그램**
 
 ```mermaid
-erDiagram
-    USERS {
-        string userId PK
-        string email
-        string name
-        string createdAt
-    }
+graph TD
+    A[USERS Table] --> B[PROJECTS Table]
+    A --> C[PROMPTS Table]
+    B --> D[CONVERSATIONS Table]
+    C --> D
 
-    PROJECTS {
-        string userId PK
-        string projectId SK
-        string name
-        string description
-        string createdAt
-    }
-
-    PROMPTS {
-        string promptId PK
-        string userId
-        string title
-        string template
-        string createdAt
-    }
-
-    CONVERSATIONS {
-        string projectId PK
-        string timestamp SK
-        string userId
-        string userInput
-        string aiResponse
-        string promptId
-    }
-
-    USERS ||--o{ PROJECTS : creates
-    PROJECTS ||--o{ CONVERSATIONS : contains
-    USERS ||--o{ PROMPTS : owns
+    A -.-> A1["userId (PK)<br/>email<br/>name<br/>createdAt"]
+    B -.-> B1["userId (PK)<br/>projectId (SK)<br/>name<br/>description<br/>createdAt"]
+    C -.-> C1["promptId (PK)<br/>userId<br/>title<br/>template<br/>createdAt"]
+    D -.-> D1["projectId (PK)<br/>timestamp (SK)<br/>userId<br/>userInput<br/>aiResponse<br/>promptId"]
 ```
 
 ---

@@ -72,6 +72,19 @@ const LoadingProgress = ({ loadingProgress }) => {
   );
 };
 
+// 스트리밍 표시 컴포넌트
+const StreamingIndicator = () => {
+  return (
+    <div className="inline-flex items-center mt-2 px-2 py-1 bg-blue-50 rounded-lg text-blue-600 text-xs font-medium">
+      <div className="relative h-2 w-2 mr-2">
+        <div className="absolute animate-ping h-2 w-2 rounded-full bg-blue-400 opacity-75"></div>
+        <div className="absolute h-2 w-2 rounded-full bg-blue-600"></div>
+      </div>
+      스트리밍 중...
+    </div>
+  );
+};
+
 // 오류 상세 정보 표시 컴포넌트
 const ErrorDetails = ({ errorDetails }) => {
   if (!errorDetails) return null;
@@ -136,13 +149,35 @@ const ChatMessage = ({
                 </div>
               ) : message.isLoading ? (
                 <div>
-                  <div className="flex items-center text-blue-600">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                    <span className="text-base font-medium">
-                      {message.content}
-                    </span>
-                  </div>
-                  <LoadingProgress loadingProgress={message.loadingProgress} />
+                  {message.isStreaming ? (
+                    // 스트리밍 메시지 표시
+                    <div>
+                      {message.content ? (
+                        <div className="prose prose-base max-w-none prose-headings:text-gray-900 prose-p:text-gray-800 prose-strong:text-gray-900 prose-ul:text-gray-800 prose-li:text-gray-800 prose-code:text-gray-800 prose-pre:bg-gray-50">
+                          <ReactMarkdown>{message.content}</ReactMarkdown>
+                        </div>
+                      ) : (
+                        <div className="text-blue-600 text-base font-medium">
+                          응답을 생성하는 중...
+                        </div>
+                      )}
+                      <StreamingIndicator />
+                    </div>
+                  ) : (
+                    // 일반 로딩 메시지 표시
+                    <div>
+                      <div className="flex items-center text-blue-600">
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                        <span className="text-base font-medium">
+                          {message.content ||
+                            "AI가 답변을 생성하고 있습니다..."}
+                        </span>
+                      </div>
+                      <LoadingProgress
+                        loadingProgress={message.loadingProgress}
+                      />
+                    </div>
+                  )}
                 </div>
               ) : (
                 <div className="prose prose-base max-w-none prose-headings:text-gray-900 prose-p:text-gray-800 prose-strong:text-gray-900 prose-ul:text-gray-800 prose-li:text-gray-800 prose-code:text-gray-800 prose-pre:bg-gray-50">
@@ -178,38 +213,40 @@ const ChatMessage = ({
             )}
 
             {/* 복사 버튼 및 성능 정보 표시 */}
-            <div className="mt-4 flex items-center justify-between">
-              <div className="flex items-center space-x-3">
-                {/* 복사 버튼 */}
-                <button
-                  onClick={() => onCopyMessage(message.content, message.id)}
-                  className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
-                    copiedMessage === message.id
-                      ? "bg-green-100 text-green-700 border border-green-200"
-                      : "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200"
-                  }`}
-                >
-                  {copiedMessage === message.id ? (
-                    <CheckCircleIcon className="h-4 w-4 mr-2" />
-                  ) : (
-                    <ClipboardDocumentIcon className="h-4 w-4 mr-2" />
+            {!message.isLoading && (
+              <div className="mt-4 flex items-center justify-between">
+                <div className="flex items-center space-x-3">
+                  {/* 복사 버튼 */}
+                  <button
+                    onClick={() => onCopyMessage(message.content, message.id)}
+                    className={`flex items-center px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
+                      copiedMessage === message.id
+                        ? "bg-green-100 text-green-700 border border-green-200"
+                        : "bg-gray-100 hover:bg-gray-200 text-gray-700 border border-gray-200"
+                    }`}
+                  >
+                    {copiedMessage === message.id ? (
+                      <CheckCircleIcon className="h-4 w-4 mr-2" />
+                    ) : (
+                      <ClipboardDocumentIcon className="h-4 w-4 mr-2" />
+                    )}
+                    {copiedMessage === message.id ? "복사됨!" : "복사하기"}
+                  </button>
+
+                  {/* 성능 정보 표시 (AI 응답인 경우) */}
+                  {message.performance_metrics && (
+                    <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
+                      처리시간: {message.performance_metrics.total_time}초
+                    </div>
                   )}
-                  {copiedMessage === message.id ? "복사됨!" : "복사하기"}
-                </button>
+                </div>
 
-                {/* 성능 정보 표시 (AI 응답인 경우) */}
-                {message.performance_metrics && (
-                  <div className="text-xs text-gray-500 bg-gray-50 px-2 py-1 rounded">
-                    처리시간: {message.performance_metrics.total_time}초
-                  </div>
-                )}
+                {/* 타임스탬프 */}
+                <div className="text-xs text-gray-500">
+                  {message.timestamp?.toLocaleTimeString() || ""}
+                </div>
               </div>
-
-              {/* 타임스탬프 */}
-              <div className="text-xs text-gray-500">
-                {message.timestamp?.toLocaleTimeString() || ""}
-              </div>
-            </div>
+            )}
           </div>
         )}
       </div>

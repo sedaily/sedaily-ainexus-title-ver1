@@ -11,11 +11,12 @@ export const useOrchestration = (projectId) => {
   const [isExecuting, setIsExecuting] = useState(false);
   const [currentExecution, setCurrentExecution] = useState(null);
   const [executionStatus, setExecutionStatus] = useState(null);
+  const [isStreaming, setIsStreaming] = useState(false);
 
   /**
    * 제목 생성 실행
    * @param {string} userInput - 사용자 입력
-   * @param {Object} options - 추가 옵션 (예: chat_history)
+   * @param {Object} options - 추가 옵션 (예: chat_history, useStreaming)
    * @returns {Promise<Object>} - 생성 결과
    */
   const executeOrchestration = useCallback(
@@ -39,9 +40,40 @@ export const useOrchestration = (projectId) => {
           projectId,
           inputLength: userInput.length,
           historyLength: data.chat_history.length,
+          useStreaming: options.useStreaming === true,
           timestamp: new Date().toISOString(),
         });
 
+        // 스트리밍 사용 여부 확인
+        if (options.useStreaming === true) {
+          setIsStreaming(true);
+
+          // 스트리밍 콜백 함수 설정
+          const onChunk = options.onChunk || (() => {});
+          const onError = (error) => {
+            setIsExecuting(false);
+            setIsStreaming(false);
+            setExecutionStatus("FAILED");
+            if (options.onError) options.onError(error);
+          };
+          const onComplete = (response) => {
+            setIsExecuting(false);
+            setIsStreaming(false);
+            setExecutionStatus("COMPLETED");
+            if (options.onComplete) options.onComplete(response);
+          };
+
+          // 스트리밍 API 호출
+          return await generateAPI.generateTitleStream(
+            projectId,
+            data,
+            onChunk,
+            onError,
+            onComplete
+          );
+        }
+
+        // 일반 API 호출 (스트리밍 미사용)
         const response = await generateAPI.generateTitle(projectId, data);
 
         console.log("✅ 대화 생성 완료:", {
@@ -62,6 +94,7 @@ export const useOrchestration = (projectId) => {
           timestamp: new Date().toISOString(),
         });
         setIsExecuting(false);
+        setIsStreaming(false);
         setExecutionStatus("FAILED");
 
         // 프롬프트 카드 관련 에러 처리
@@ -90,6 +123,11 @@ export const useOrchestration = (projectId) => {
    */
   const pollOrchestrationResult = useCallback(
     async (executionArn, onComplete, onError) => {
+      // 스트리밍 모드에서는 폴링이 필요 없음
+      if (isStreaming) {
+        return;
+      }
+
       const poll = async () => {
         try {
           const result = await generateAPI.getExecutionStatus(executionArn);
@@ -127,7 +165,7 @@ export const useOrchestration = (projectId) => {
 
       poll();
     },
-    [projectId]
+    [projectId, isStreaming]
   );
 
   /**
@@ -135,12 +173,14 @@ export const useOrchestration = (projectId) => {
    */
   const resetOrchestration = useCallback(() => {
     setIsExecuting(false);
+    setIsStreaming(false);
     setCurrentExecution(null);
     setExecutionStatus(null);
   }, []);
 
   return {
     isExecuting,
+    isStreaming,
     currentExecution,
     executionStatus,
     executeOrchestration,

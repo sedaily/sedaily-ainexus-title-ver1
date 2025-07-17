@@ -518,6 +518,43 @@ class BedrockDiyStack(Stack):
         
         # 프롬프트 관리 경로 생성
         self.create_prompt_routes()
+        
+        # 스트리밍 엔드포인트 추가
+        projects_resource = self.api.root.get_resource("projects")
+        project_resource = projects_resource.get_resource("{projectId}")
+        
+        # 스트리밍 리소스 생성
+        generate_resource = project_resource.get_resource("generate")
+        stream_resource = generate_resource.add_resource("stream")
+        
+        # 스트리밍 메서드 추가 (Lambda 프록시 통합)
+        stream_resource.add_method(
+            "POST",
+            apigateway.LambdaIntegration(
+                self.generate_lambda,
+                proxy=True,
+                integration_responses=[{
+                    'statusCode': '200',
+                    'responseParameters': {
+                        'method.response.header.Content-Type': "'application/json'",
+                        'method.response.header.Access-Control-Allow-Origin': "'*'"
+                    }
+                }]
+            ),
+            method_responses=[{
+                'statusCode': '200',
+                'responseParameters': {
+                    'method.response.header.Content-Type': True,
+                    'method.response.header.Access-Control-Allow-Origin': True
+                }
+            }]
+        )
+        
+        # CORS 옵션 추가
+        self._create_cors_options_method(
+            stream_resource, 
+            "OPTIONS,POST"
+        )
 
     def create_auth_routes(self):
         """인증 관련 API 경로 생성"""

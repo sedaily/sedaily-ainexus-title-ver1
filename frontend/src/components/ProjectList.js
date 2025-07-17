@@ -362,6 +362,7 @@ const ProjectList = () => {
   );
 };
 
+// 프로젝트 카드 컴포넌트
 const ProjectCard = ({ project, onDelete, onEdit, viewMode, navigate }) => {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
@@ -394,7 +395,7 @@ const ProjectCard = ({ project, onDelete, onEdit, viewMode, navigate }) => {
     return (
       <div
         onClick={handleCardClick}
-        className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all cursor-pointer"
+        className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all cursor-pointer h-[320px] flex flex-col"
       >
         <div className="p-6">
           <div className="flex items-center justify-between">
@@ -516,9 +517,9 @@ const ProjectCard = ({ project, onDelete, onEdit, viewMode, navigate }) => {
   return (
     <div
       onClick={handleCardClick}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all cursor-pointer"
+      className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all cursor-pointer h-[280px] flex flex-col"
     >
-      <div className="p-6">
+      <div className="p-6 flex flex-col flex-1">
         <div className="flex justify-between items-start mb-4">
           <div className="flex items-center space-x-3">
             <div className="flex-shrink-0">
@@ -528,7 +529,7 @@ const ProjectCard = ({ project, onDelete, onEdit, viewMode, navigate }) => {
               <h3 className="text-lg font-semibold text-gray-900 truncate">
                 {project.name}
               </h3>
-              <p className="text-sm text-gray-500 mt-1">
+              <p className="text-sm text-gray-500 mt-1 line-clamp-2">
                 {project.description || "설명 없음"}
               </p>
             </div>
@@ -572,55 +573,57 @@ const ProjectCard = ({ project, onDelete, onEdit, viewMode, navigate }) => {
           </div>
         </div>
 
-        {/* 날짜 */}
-        <div className="flex items-center space-x-4 mb-3">
-          <div className="flex items-center text-sm text-gray-500">
-            <CalendarIcon className="h-4 w-4 mr-1.5" />
-            <span>
-              생성 {new Date(project.createdAt).toLocaleDateString("ko-KR")}
-            </span>
-          </div>
-          {project.updatedAt && project.updatedAt !== project.createdAt && (
+        <div className="flex-1 overflow-y-auto">
+          {/* 날짜 */}
+          <div className="flex items-center space-x-4 mb-3">
             <div className="flex items-center text-sm text-gray-500">
-              <span className="text-gray-300">•</span>
-              <span className="ml-1.5">
-                수정 {new Date(project.updatedAt).toLocaleDateString("ko-KR")}
+              <CalendarIcon className="h-4 w-4 mr-1.5" />
+              <span>
+                생성 {new Date(project.createdAt).toLocaleDateString("ko-KR")}
               </span>
+            </div>
+            {project.updatedAt && project.updatedAt !== project.createdAt && (
+              <div className="flex items-center text-sm text-gray-500">
+                <span className="text-gray-300">•</span>
+                <span className="ml-1.5">
+                  수정 {new Date(project.updatedAt).toLocaleDateString("ko-KR")}
+                </span>
+              </div>
+            )}
+          </div>
+
+          {/* 프롬프트 정보 */}
+          <div className="flex items-center space-x-4 mb-3">
+            <div className="flex items-center text-sm text-gray-500">
+              <DocumentTextIcon className="h-4 w-4 mr-1.5" />
+              <span>프롬프트 클릭해 주세요</span>
+            </div>
+          </div>
+
+          {/* 태그 */}
+          {project.tags && project.tags.length > 0 && (
+            <div className="mb-4">
+              <div className="flex items-center">
+                <TagIcon className="h-4 w-4 mr-1.5 text-gray-400" />
+                <div className="flex flex-wrap gap-1.5">
+                  {project.tags.slice(0, 3).map((tag, index) => (
+                    <span
+                      key={index}
+                      className="inline-flex items-center bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full text-xs font-medium"
+                    >
+                      {tag}
+                    </span>
+                  ))}
+                  {project.tags.length > 3 && (
+                    <span className="inline-flex items-center text-xs text-gray-400 px-2">
+                      +{project.tags.length - 3}개
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
           )}
         </div>
-
-        {/* 프롬프트 정보 */}
-        <div className="flex items-center space-x-4 mb-3">
-          <div className="flex items-center text-sm text-gray-500">
-            <DocumentTextIcon className="h-4 w-4 mr-1.5" />
-            <span>프롬프트 클릭해 주세요</span>
-          </div>
-        </div>
-
-        {/* 태그 */}
-        {project.tags && project.tags.length > 0 && (
-          <div className="mb-4">
-            <div className="flex items-center">
-              <TagIcon className="h-4 w-4 mr-1.5 text-gray-400" />
-              <div className="flex flex-wrap gap-1.5">
-                {project.tags.slice(0, 3).map((tag, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full text-xs font-medium"
-                  >
-                    {tag}
-                  </span>
-                ))}
-                {project.tags.length > 3 && (
-                  <span className="inline-flex items-center text-xs text-gray-400 px-2">
-                    +{project.tags.length - 3}개
-                  </span>
-                )}
-              </div>
-            </div>
-          </div>
-        )}
       </div>
     </div>
   );

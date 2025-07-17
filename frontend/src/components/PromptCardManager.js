@@ -149,7 +149,7 @@ const PromptCardManager = ({ projectId, projectName }) => {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* 채팅 인터페이스 */}
-      <div className="flex-1 pr-8">
+      <div className="flex-1">
         <ChatInterface
           projectId={projectId}
           projectName={projectName}

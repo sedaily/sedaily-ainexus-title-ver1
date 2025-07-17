@@ -158,12 +158,16 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         project_id = path_params.get('projectId')
         user_input = body.get('userInput', '').strip()
         chat_history = body.get('chat_history', []) # 프론트에서 이전 대화 기록을 받아옴
+        
+        # 스트리밍 엔드포인트 처리
+        path = event.get('path', '')
+        is_streaming = path.endswith('/stream') or path.endswith('/generate/stream')
 
         if not project_id or not user_input:
             logger.warning(f"잘못된 요청 - project_id: {project_id}, user_input 길이: {len(user_input) if user_input else 0}")
             return {'statusCode': 400, 'headers': get_cors_headers(), 'body': json.dumps({'message': '프로젝트 ID와 사용자 입력은 필수입니다.'})}
 
-        logger.info(f"요청 상세 - 프로젝트: {project_id}, 입력길이: {len(user_input)}, 히스토리: {len(chat_history)}개")
+        logger.info(f"요청 상세 - 프로젝트: {project_id}, 입력길이: {len(user_input)}, 히스토리: {len(chat_history)}개, 스트리밍: {is_streaming}")
 
         # --- 동적 시스템 프롬프트 로드 ---
         prompt_load_start = time.time()
@@ -264,6 +268,85 @@ def handler(event: Dict[str, Any], context: Any) -> Dict[str, Any]:
         max_retries = 3
         response_content = None
         
+        # 스트리밍 모드 처리
+        if is_streaming and supports_streaming:
+            logger.info("스트리밍 응답 모드로 처리합니다")
+            try:
+                # 스트리밍 응답 시작
+                streaming_response = bedrock_client.invoke_model_with_response_stream(
+                    modelId=DEFAULT_MODEL_ID,
+                    contentType="application/json",
+                    accept="application/json",
+                    body=json.dumps(body).encode("utf-8"),
+                )
+                
+                # 스트리밍 응답 처리
+                full_response = ""
+                chunks = []
+                
+                for event in streaming_response["body"]:
+                    chunk = json.loads(event["chunk"]["bytes"])
+                    
+                    if chunk["type"] == "content_block_delta":
+                        text_delta = chunk["delta"].get("text", "")
+                        if text_delta:
+                            full_response += text_delta
+                            chunks.append({"content": text_delta})
+                    
+                    elif chunk["type"] == "message_stop":
+                        logger.info("스트리밍 응답 완료")
+                        break
+                
+                # 성능 메트릭 계산
+                total_execution_time = time.time() - request_start_time
+                bedrock_execution_time = time.time() - bedrock_start_time
+                
+                performance_metrics = {
+                    "total_time": round(total_execution_time, 2),
+                    "bedrock_time": round(bedrock_execution_time, 2),
+                    "input_length": len(user_input),
+                    "output_length": len(full_response)
+                }
+                
+                # 응답 데이터 구성
+                response_body = {
+                    "message": "스트리밍 응답이 생성되었습니다.",
+                    "result": full_response,
+                    "chunks": chunks,
+                    "projectId": project_id,
+                    "mode": "streaming",
+                    "model_info": {
+                        "model_used": DEFAULT_MODEL_ID,
+                        "model_name": model_info["name"],
+                        "supports_streaming": True
+                    },
+                    "performance_metrics": performance_metrics,
+                    "timestamp": datetime.utcnow().isoformat()
+                }
+                
+                # CORS 헤더를 포함한 응답 반환
+                headers = get_cors_headers()
+                headers["Content-Type"] = "application/json"
+                
+                return {
+                    "statusCode": 200,
+                    "headers": headers,
+                    "body": json.dumps(response_body, ensure_ascii=False)
+                }
+                
+            except Exception as e:
+                logger.error(f"스트리밍 처리 중 오류 발생: {str(e)}")
+                # 스트리밍 실패 시 일반 응답으로 폴백
+                return {
+                    "statusCode": 500,
+                    "headers": get_cors_headers(),
+                    "body": json.dumps({
+                        "error": str(e),
+                        "message": "스트리밍 처리 중 오류가 발생했습니다."
+                    }, ensure_ascii=False)
+                }
+        
+        # 일반 응답 모드 처리
         for attempt in range(max_retries):
             try:
                 # 스트리밍 지원 여부 확인 후 시도

@@ -43,12 +43,14 @@ export const useChat = (projectId, projectName, promptCards = []) => {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState("");
   const [copiedMessage, setCopiedMessage] = useState(null);
+  const [streamingMessageId, setStreamingMessageId] = useState(null);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
 
   const {
     isExecuting: isGenerating,
+    isStreaming,
     executeOrchestration,
     pollOrchestrationResult,
     resetOrchestration,
@@ -69,6 +71,72 @@ export const useChat = (projectId, projectName, promptCards = []) => {
   }, []);
 
   /**
+   * 스트리밍 응답 처리 함수
+   */
+  const handleStreamingResponse = useCallback(
+    (chunk, metadata) => {
+      setMessages((prev) => {
+        const updatedMessages = [...prev];
+        const streamingMsgIndex = updatedMessages.findIndex(
+          (msg) => msg.id === streamingMessageId
+        );
+
+        if (streamingMsgIndex !== -1) {
+          // 기존 스트리밍 메시지 업데이트
+          updatedMessages[streamingMsgIndex] = {
+            ...updatedMessages[streamingMsgIndex],
+            content: updatedMessages[streamingMsgIndex].content + chunk,
+            isLoading: true,
+            isStreaming: true,
+          };
+        }
+
+        return updatedMessages;
+      });
+
+      // 스크롤 조정
+      scrollToBottom();
+    },
+    [streamingMessageId, scrollToBottom]
+  );
+
+  /**
+   * 스트리밍 완료 처리 함수
+   */
+  const handleStreamingComplete = useCallback(
+    (result) => {
+      setMessages((prev) => {
+        const updatedMessages = [...prev];
+        const streamingMsgIndex = updatedMessages.findIndex(
+          (msg) => msg.id === streamingMessageId
+        );
+
+        if (streamingMsgIndex !== -1) {
+          // 스트리밍 메시지 완료 처리
+          updatedMessages[streamingMsgIndex] = {
+            ...updatedMessages[streamingMsgIndex],
+            content: result.result,
+            isLoading: false,
+            isStreaming: false,
+            performance_metrics: result.performance_metrics,
+            model_info: result.model_info,
+            timestamp: new Date(),
+          };
+        }
+
+        return updatedMessages;
+      });
+
+      // 스트리밍 ID 초기화
+      setStreamingMessageId(null);
+
+      // 스크롤 조정
+      scrollToBottom();
+    },
+    [streamingMessageId, scrollToBottom]
+  );
+
+  /**
    * 메시지 전송
    */
   const handleSendMessage = useCallback(async () => {
@@ -81,80 +149,24 @@ export const useChat = (projectId, projectName, promptCards = []) => {
       timestamp: new Date(),
     };
 
-    // 개선된 로딩 메시지
-    const loadingMessage = {
-      id: "loading-" + Date.now(),
+    // 스트리밍 메시지 ID 생성
+    const streamMsgId = "streaming-" + Date.now();
+    setStreamingMessageId(streamMsgId);
+
+    // 스트리밍 응답을 위한 초기 메시지
+    const streamingMessage = {
+      id: streamMsgId,
       type: "assistant",
-      content: "AI가 답변을 생성하고 있습니다...",
+      content: "",
       timestamp: new Date(),
       isLoading: true,
-      loadingProgress: {
-        stage: "initializing",
-        message: "요청을 처리하고 있습니다...",
-        percentage: 10,
-      },
+      isStreaming: true,
     };
 
-    setMessages((prev) => [...prev, userMessage, loadingMessage]);
+    setMessages((prev) => [...prev, userMessage, streamingMessage]);
     setInputValue("");
 
     try {
-      // 프롬프트 분석 단계 표시
-      setMessages((prev) =>
-        prev.map((msg) =>
-          msg.isLoading
-            ? {
-                ...msg,
-                content: "프롬프트를 분석하고 있습니다...",
-                loadingProgress: {
-                  stage: "analyzing",
-                  message: "프로젝트 프롬프트를 불러오는 중...",
-                  percentage: 25,
-                },
-              }
-            : msg
-        )
-      );
-
-      // AI 처리 단계 표시
-      setTimeout(() => {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.isLoading
-              ? {
-                  ...msg,
-                  content: "AI 모델이 응답을 생성하고 있습니다...",
-                  loadingProgress: {
-                    stage: "generating",
-                    message:
-                      "고품질 응답을 위해 분석 중입니다. 잠시만 기다려주세요...",
-                    percentage: 60,
-                  },
-                }
-              : msg
-          )
-        );
-      }, 1000);
-
-      // 완료 단계 표시
-      setTimeout(() => {
-        setMessages((prev) =>
-          prev.map((msg) =>
-            msg.isLoading
-              ? {
-                  ...msg,
-                  content: "응답을 정리하고 있습니다...",
-                  loadingProgress: {
-                    stage: "finalizing",
-                    message: "거의 완료되었습니다...",
-                    percentage: 85,
-                  },
-                }
-              : msg
-          )
-        );
-      }, 3000);
-
       const orchestrationData = {
         userInput: userMessage.content,
         chat_history: messages
@@ -165,22 +177,46 @@ export const useChat = (projectId, projectName, promptCards = []) => {
           })),
       };
 
-      // 수정된 호출 방식: 문자열과 옵션 객체로 분리
-      const result = await executeOrchestration(userMessage.content, {
-        chat_history: messages
-          .filter((msg) => !msg.isLoading && !msg.isError)
-          .map((msg) => ({
-            role: msg.type === "user" ? "user" : "assistant",
-            content: msg.content,
-          })),
-      });
-      await pollOrchestrationResult();
+      // 스트리밍 옵션 설정
+      const streamingOptions = {
+        useStreaming: true,
+        chat_history: orchestrationData.chat_history,
+        onChunk: handleStreamingResponse,
+        onError: (error) => {
+          console.error("스트리밍 오류:", error);
 
-      // 로딩 메시지 제거하고 실제 응답 추가
-      const responseMessage = processAIResponse(result);
-      setMessages((prev) =>
-        prev.filter((msg) => !msg.isLoading).concat([responseMessage])
-      );
+          // 오류 메시지로 변환
+          setMessages((prev) => {
+            const updatedMessages = [...prev];
+            const streamingMsgIndex = updatedMessages.findIndex(
+              (msg) => msg.id === streamingMessageId
+            );
+
+            if (streamingMsgIndex !== -1) {
+              updatedMessages[streamingMsgIndex] = {
+                ...updatedMessages[streamingMsgIndex],
+                content:
+                  "메시지 처리 중 오류가 발생했습니다. 다시 시도해주세요.",
+                isLoading: false,
+                isStreaming: false,
+                isError: true,
+                timestamp: new Date(),
+              };
+            }
+
+            return updatedMessages;
+          });
+
+          setStreamingMessageId(null);
+        },
+        onComplete: handleStreamingComplete,
+      };
+
+      // 스트리밍 방식으로 실행
+      await executeOrchestration(userMessage.content, streamingOptions);
+
+      // 스트리밍에서는 pollOrchestrationResult 호출이 필요 없음
+      // 모든 처리는 콜백에서 이루어짐
     } catch (error) {
       console.error("메시지 전송 실패:", error);
 
@@ -202,17 +238,24 @@ export const useChat = (projectId, projectName, promptCards = []) => {
         },
       };
 
-      setMessages((prev) =>
-        prev.filter((msg) => !msg.isLoading).concat([errorMessage])
-      );
+      setMessages((prev) => {
+        // 스트리밍 메시지를 찾아 제거
+        const filteredMessages = prev.filter(
+          (msg) => msg.id !== streamingMessageId
+        );
+        return [...filteredMessages, errorMessage];
+      });
+
+      setStreamingMessageId(null);
     }
   }, [
     inputValue,
     isGenerating,
     executeOrchestration,
-    pollOrchestrationResult,
-    promptCards,
-    messages, // messages를 의존성에 추가
+    handleStreamingResponse,
+    handleStreamingComplete,
+    streamingMessageId,
+    messages,
   ]);
 
   /**
@@ -257,6 +300,7 @@ export const useChat = (projectId, projectName, promptCards = []) => {
     setMessages([]);
     setInputValue("");
     setCopiedMessage(null);
+    setStreamingMessageId(null);
     resetOrchestration();
   }, [resetOrchestration]);
 
@@ -266,6 +310,8 @@ export const useChat = (projectId, projectName, promptCards = []) => {
     setInputValue,
     copiedMessage,
     isGenerating,
+    isStreaming,
+    streamingMessageId,
     messagesEndRef,
     inputRef,
     handleSendMessage,

@@ -163,6 +163,83 @@ export const generateAPI = {
       throw error;
     }
   },
+
+  // 스트리밍 응답을 위한 새로운 메서드
+  generateTitleStream: async (
+    projectId,
+    data,
+    onChunk,
+    onError,
+    onComplete
+  ) => {
+    console.log("스트리밍 대화 생성 요청 시작:", {
+      projectId,
+      inputLength: data.userInput.length,
+      historyLength: data.chat_history?.length || 0,
+      timestamp: new Date().toISOString(),
+    });
+
+    try {
+      // 스트리밍 응답을 받기 위해 API 호출
+      const response = await api.post(
+        `/projects/${projectId}/generate/stream`,
+        data
+      );
+
+      if (!response || !response.data) {
+        throw new Error("응답이 없습니다");
+      }
+
+      const responseData = response.data;
+
+      // 청크 데이터가 있는 경우 각 청크에 대해 콜백 호출
+      if (responseData.chunks && Array.isArray(responseData.chunks)) {
+        for (const chunk of responseData.chunks) {
+          if (chunk.content && onChunk) {
+            onChunk(chunk.content, chunk);
+          }
+        }
+      }
+
+      // 완료 콜백 호출
+      if (onComplete) {
+        onComplete({
+          result: responseData.result,
+          model_info: responseData.model_info,
+          performance_metrics: responseData.performance_metrics,
+          timestamp: responseData.timestamp || new Date().toISOString(),
+        });
+      }
+
+      return {
+        result: responseData.result,
+        model_info: responseData.model_info,
+        performance_metrics: responseData.performance_metrics,
+        timestamp: responseData.timestamp || new Date().toISOString(),
+      };
+    } catch (error) {
+      console.error("스트리밍 대화 생성 실패:", {
+        code: error.code,
+        message: error.message,
+        timestamp: new Date().toISOString(),
+      });
+
+      // 에러 콜백 호출
+      if (onError) {
+        onError(error);
+      }
+
+      throw error;
+    }
+  },
+
+  getExecutionStatus: async (executionArn) => {
+    // 현재 구현에서는 사용하지 않음
+    return {
+      status: "SUCCEEDED",
+      output: "{}",
+    };
+  },
 };
 
 // =============================================================================

@@ -18,6 +18,7 @@ const initialState = {
   currentProject: null,
   promptCards: [],
   categories: [],
+  mode: null, // 'user' 또는 'admin'
 };
 
 // 액션 타입
@@ -28,6 +29,7 @@ const actionTypes = {
   SET_CURRENT_PROJECT: "SET_CURRENT_PROJECT",
   SET_PROMPT_CARDS: "SET_PROMPT_CARDS",
   SET_CATEGORIES: "SET_CATEGORIES",
+  SET_MODE: "SET_MODE",
   ADD_PROJECT: "ADD_PROJECT",
   UPDATE_PROJECT: "UPDATE_PROJECT",
   DELETE_PROJECT: "DELETE_PROJECT",
@@ -57,54 +59,63 @@ const appReducer = (state, action) => {
     case actionTypes.SET_CATEGORIES:
       return { ...state, categories: action.payload };
 
+    case actionTypes.SET_MODE:
+      return { ...state, mode: action.payload };
+
     case actionTypes.ADD_PROJECT:
-      return { 
-        ...state, 
-        projects: [...state.projects, action.payload] 
+      return {
+        ...state,
+        projects: [...state.projects, action.payload],
       };
 
     case actionTypes.UPDATE_PROJECT:
       return {
         ...state,
-        projects: state.projects.map(project =>
+        projects: state.projects.map((project) =>
           project.projectId === action.payload.projectId
             ? { ...project, ...action.payload }
             : project
         ),
-        currentProject: state.currentProject?.projectId === action.payload.projectId
-          ? { ...state.currentProject, ...action.payload }
-          : state.currentProject
+        currentProject:
+          state.currentProject?.projectId === action.payload.projectId
+            ? { ...state.currentProject, ...action.payload }
+            : state.currentProject,
       };
 
     case actionTypes.DELETE_PROJECT:
       return {
         ...state,
-        projects: state.projects.filter(project => project.projectId !== action.payload),
-        currentProject: state.currentProject?.projectId === action.payload
-          ? null
-          : state.currentProject
+        projects: state.projects.filter(
+          (project) => project.projectId !== action.payload
+        ),
+        currentProject:
+          state.currentProject?.projectId === action.payload
+            ? null
+            : state.currentProject,
       };
 
     case actionTypes.ADD_PROMPT_CARD:
       return {
         ...state,
-        promptCards: [...state.promptCards, action.payload]
+        promptCards: [...state.promptCards, action.payload],
       };
 
     case actionTypes.UPDATE_PROMPT_CARD:
       return {
         ...state,
-        promptCards: state.promptCards.map(card =>
+        promptCards: state.promptCards.map((card) =>
           card.promptId === action.payload.promptId
             ? { ...card, ...action.payload }
             : card
-        )
+        ),
       };
 
     case actionTypes.DELETE_PROMPT_CARD:
       return {
         ...state,
-        promptCards: state.promptCards.filter(card => card.promptId !== action.payload)
+        promptCards: state.promptCards.filter(
+          (card) => card.promptId !== action.payload
+        ),
       };
 
     default:
@@ -117,18 +128,31 @@ export const AppProvider = ({ children }) => {
 
   // 액션 크리에이터들
   const actions = {
-    setLoading: (loading) => dispatch({ type: actionTypes.SET_LOADING, payload: loading }),
-    setError: (error) => dispatch({ type: actionTypes.SET_ERROR, payload: error }),
-    setProjects: (projects) => dispatch({ type: actionTypes.SET_PROJECTS, payload: projects }),
-    setCurrentProject: (project) => dispatch({ type: actionTypes.SET_CURRENT_PROJECT, payload: project }),
-    setPromptCards: (cards) => dispatch({ type: actionTypes.SET_PROMPT_CARDS, payload: cards }),
-    setCategories: (categories) => dispatch({ type: actionTypes.SET_CATEGORIES, payload: categories }),
-    addProject: (project) => dispatch({ type: actionTypes.ADD_PROJECT, payload: project }),
-    updateProject: (project) => dispatch({ type: actionTypes.UPDATE_PROJECT, payload: project }),
-    deleteProject: (projectId) => dispatch({ type: actionTypes.DELETE_PROJECT, payload: projectId }),
-    addPromptCard: (card) => dispatch({ type: actionTypes.ADD_PROMPT_CARD, payload: card }),
-    updatePromptCard: (card) => dispatch({ type: actionTypes.UPDATE_PROMPT_CARD, payload: card }),
-    deletePromptCard: (cardId) => dispatch({ type: actionTypes.DELETE_PROMPT_CARD, payload: cardId }),
+    setLoading: (loading) =>
+      dispatch({ type: actionTypes.SET_LOADING, payload: loading }),
+    setError: (error) =>
+      dispatch({ type: actionTypes.SET_ERROR, payload: error }),
+    setProjects: (projects) =>
+      dispatch({ type: actionTypes.SET_PROJECTS, payload: projects }),
+    setCurrentProject: (project) =>
+      dispatch({ type: actionTypes.SET_CURRENT_PROJECT, payload: project }),
+    setPromptCards: (cards) =>
+      dispatch({ type: actionTypes.SET_PROMPT_CARDS, payload: cards }),
+    setCategories: (categories) =>
+      dispatch({ type: actionTypes.SET_CATEGORIES, payload: categories }),
+    setMode: (mode) => dispatch({ type: actionTypes.SET_MODE, payload: mode }),
+    addProject: (project) =>
+      dispatch({ type: actionTypes.ADD_PROJECT, payload: project }),
+    updateProject: (project) =>
+      dispatch({ type: actionTypes.UPDATE_PROJECT, payload: project }),
+    deleteProject: (projectId) =>
+      dispatch({ type: actionTypes.DELETE_PROJECT, payload: projectId }),
+    addPromptCard: (card) =>
+      dispatch({ type: actionTypes.ADD_PROMPT_CARD, payload: card }),
+    updatePromptCard: (card) =>
+      dispatch({ type: actionTypes.UPDATE_PROMPT_CARD, payload: card }),
+    deletePromptCard: (cardId) =>
+      dispatch({ type: actionTypes.DELETE_PROMPT_CARD, payload: cardId }),
   };
 
   const value = {

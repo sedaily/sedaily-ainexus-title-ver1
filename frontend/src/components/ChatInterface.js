@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   PaperAirplaneIcon,
-  ArrowLeftIcon,
   DocumentPlusIcon,
   XMarkIcon,
   ChatBubbleLeftRightIcon,
@@ -75,36 +74,11 @@ const ChatInterface = ({ projectId, projectName, promptCards = [] }) => {
 
   return (
     <div className="flex flex-col h-full bg-gray-50">
-      {/* 헤더 */}
-      <div className="flex-shrink-0 bg-white border-b border-gray-100 px-6 py-4 shadow-sm">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center space-x-4">
-            <button
-              onClick={() => navigate("/")}
-              className="text-gray-500 hover:text-gray-700 transition-colors p-2 hover:bg-gray-50 rounded-full"
-            >
-              <ArrowLeftIcon className="h-5 w-5" />
-            </button>
-            <div>
-              <h1 className="text-xl font-semibold text-gray-800">
-                {projectName}
-              </h1>
-            </div>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1 bg-green-50 border border-green-100 rounded-full">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
-              <span className="text-xs text-green-700">준비완료</span>
-            </div>
-          </div>
-        </div>
-      </div>
-
       {/* 메시지 영역 */}
       <div className="flex-1 overflow-y-auto px-6 py-6 min-h-0 bg-gray-50">
         <div className="max-w-4xl mx-auto space-y-6">
           {messages.length === 0 ? (
-            <div className="flex flex-col items-center justify-center py-12">
+            <div className="flex flex-col items-center justify-center py-24 mt-12">
               <div className="bg-white rounded-2xl shadow-md p-8 max-w-2xl w-full">
                 <div className="flex justify-center mb-6">
                   <div className="bg-blue-100 p-3 rounded-full">

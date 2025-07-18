@@ -18,7 +18,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::887078546492:role/cdk-hnb659fds-deploy-role-887078546492-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::887078546492:role/cdk-hnb659fds-cfn-exec-role-887078546492-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-887078546492-us-east-1/9bbd893c1e83d149e7d46e6c72c7828d52ddf9dd5ed3932623f5a0c2f0bc1f73.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-887078546492-us-east-1/15258c0e2be4ea588b3f5b05a4dd0f44a578c6c56858aa081b8d8ff80bca1c19.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [
@@ -273,7 +273,7 @@
         "/BedrockDiyAuthStack/BedrockDiyApi/Deployment/Resource": [
           {
             "type": "aws:cdk:logicalId",
-            "data": "BedrockDiyApiDeployment43E7B7E5a5fdca5ee61e57308ca45235089524db"
+            "data": "BedrockDiyApiDeployment43E7B7E5e563a79b1f543e1bbe0ecbd47556dadb"
           }
         ],
         "/BedrockDiyAuthStack/BedrockDiyApi/DeploymentStage.prod/Resource": [
@@ -648,6 +648,36 @@
             "data": "BedrockDiyApiprojectsprojectIdgenerateOPTIONS2AEECF38"
           }
         ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/generate/stream/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdgeneratestreamB95D9185"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/generate/stream/POST/ApiPermission.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..projects.{projectId}.generate.stream": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdgeneratestreamPOSTApiPermissionBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTprojectsprojectIdgeneratestream2D5B6B89"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/generate/stream/POST/ApiPermission.Test.BedrockDiyAuthStackBedrockDiyApi9B9A491F.POST..projects.{projectId}.generate.stream": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdgeneratestreamPOSTApiPermissionTestBedrockDiyAuthStackBedrockDiyApi9B9A491FPOSTprojectsprojectIdgeneratestreamF93F29FC"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/generate/stream/POST/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdgeneratestreamPOST38D858DC"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/generate/stream/OPTIONS/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyApiprojectsprojectIdgeneratestreamOPTIONS2363E427"
+          }
+        ],
         "/BedrockDiyAuthStack/BedrockDiyApi/Default/projects/{projectId}/upload-url/Resource": [
           {
             "type": "aws:cdk:logicalId",
@@ -816,6 +846,122 @@
             "data": "BedrockDiyApiAuthorizer2BB71853"
           }
         ],
+        "/BedrockDiyAuthStack/WebSocketConnectionsTable": [
+          {
+            "type": "aws:cdk:hasPhysicalName",
+            "data": {
+              "Ref": "WebSocketConnectionsTable7F0028CC"
+            }
+          }
+        ],
+        "/BedrockDiyAuthStack/WebSocketConnectionsTable/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "WebSocketConnectionsTable7F0028CC"
+          }
+        ],
+        "/BedrockDiyAuthStack/WebSocketLambdaRole/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "WebSocketLambdaRole0DF09B59"
+          }
+        ],
+        "/BedrockDiyAuthStack/WebSocketLambdaRole/DefaultPolicy/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "WebSocketLambdaRoleDefaultPolicyF19D90C5"
+          }
+        ],
+        "/BedrockDiyAuthStack/WebSocketConnectFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "WebSocketConnectFunction72183AC0"
+          }
+        ],
+        "/BedrockDiyAuthStack/WebSocketDisconnectFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "WebSocketDisconnectFunction189772FC"
+          }
+        ],
+        "/BedrockDiyAuthStack/WebSocketStreamFunction/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "WebSocketStreamFunctionB192D3D1"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyWebSocketApi/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyWebSocketApi0A64C23D"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyWebSocketApi/$connect-Route/ConnectIntegration-Permission": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyWebSocketApiconnectRouteConnectIntegrationPermission1783501D"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyWebSocketApi/$connect-Route/ConnectIntegration/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyWebSocketApiconnectRouteConnectIntegrationD2DB3EA4"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyWebSocketApi/$connect-Route/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyWebSocketApiconnectRouteC1252AB9"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyWebSocketApi/$disconnect-Route/DisconnectIntegration-Permission": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyWebSocketApidisconnectRouteDisconnectIntegrationPermission23884B7E"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyWebSocketApi/$disconnect-Route/DisconnectIntegration/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyWebSocketApidisconnectRouteDisconnectIntegration700AE92D"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyWebSocketApi/$disconnect-Route/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyWebSocketApidisconnectRouteA209011A"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyWebSocketApi/stream-Route/StreamIntegration-Permission": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyWebSocketApistreamRouteStreamIntegrationPermission91B298E2"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyWebSocketApi/stream-Route/StreamIntegration/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyWebSocketApistreamRouteStreamIntegrationC5A8332D"
+          }
+        ],
+        "/BedrockDiyAuthStack/BedrockDiyWebSocketApi/stream-Route/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "BedrockDiyWebSocketApistreamRoute05D5C97D"
+          }
+        ],
+        "/BedrockDiyAuthStack/WebSocketStage/Resource": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "WebSocketStageC46B7E43"
+          }
+        ],
+        "/BedrockDiyAuthStack/WebSocketApiUrl": [
+          {
+            "type": "aws:cdk:logicalId",
+            "data": "WebSocketApiUrl"
+          }
+        ],
         "/BedrockDiyAuthStack/GenerateErrorAlarm/Resource": [
           {
             "type": "aws:cdk:logicalId",
@@ -920,7 +1066,7 @@
         "validateOnSynth": false,
         "assumeRoleArn": "arn:${AWS::Partition}:iam::887078546492:role/cdk-hnb659fds-deploy-role-887078546492-us-east-1",
         "cloudFormationExecutionRoleArn": "arn:${AWS::Partition}:iam::887078546492:role/cdk-hnb659fds-cfn-exec-role-887078546492-us-east-1",
-        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-887078546492-us-east-1/136f96956fcc350d662cb3de30a07582faa1c2d4e1cd1d9777fb88be22989934.json",
+        "stackTemplateAssetObjectUrl": "s3://cdk-hnb659fds-assets-887078546492-us-east-1/2a04c823c2bd6cf5b132d63b6c0541db36dbf8c1c48d2e8fb769be2abc1b055f.json",
         "requiresBootstrapStackVersion": 6,
         "bootstrapStackVersionSsmParameter": "/cdk-bootstrap/hnb659fds/version",
         "additionalDependencies": [

@@ -16,15 +16,8 @@ const ProjectDetail = () => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // 모드가 선택되지 않았다면 모드 선택 페이지로 리다이렉트
-    if (!mode) {
-      toast.error("먼저 모드를 선택해주세요.");
-      navigate("/");
-      return;
-    }
-
     loadProjectData();
-  }, [projectId, mode, navigate]);
+  }, [projectId, navigate]);
 
   const loadProjectData = async () => {
     try {

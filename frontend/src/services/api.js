@@ -9,7 +9,7 @@ const API_BASE_URL =
 const api = axios.create({
   baseURL: API_BASE_URL,
   headers: { "Content-Type": "application/json" },
-  timeout: 900000, // 15분 타임아웃 (긴 텍스트 및 복잡한 대화 처리를 위해 대폭 연장)
+  timeout: 300000, // 5분
 });
 
 // 요청 인터셉터
@@ -37,7 +37,7 @@ api.interceptors.response.use(
 );
 
 // =============================================================================
-// 1. 프로젝트 API
+// 프로젝트 API (기존 유지)
 // =============================================================================
 
 export const projectAPI = {
@@ -75,7 +75,7 @@ export const projectAPI = {
 };
 
 // =============================================================================
-// 2. 프롬프트 카드 API
+// 프롬프트 카드 API (기존 유지)
 // =============================================================================
 
 export const promptCardAPI = {
@@ -114,8 +114,6 @@ export const promptCardAPI = {
   },
 
   reorderPromptCards: async (projectId, reorderData) => {
-    // 백엔드에서 별도의 reorder API가 없으므로 개별 업데이트로 처리
-    // reorderData = [{ promptId, stepOrder }, ...]
     const updatePromises = reorderData.map(({ promptId, stepOrder }) =>
       api.put(`/prompts/${projectId}/${promptId}`, { stepOrder })
     );
@@ -129,7 +127,7 @@ export const promptCardAPI = {
 };
 
 // =============================================================================
-// 3. 제목 생성 API
+// 🔧 완전 수정된 제목 생성 API
 // =============================================================================
 
 export const generateAPI = {
@@ -164,7 +162,7 @@ export const generateAPI = {
     }
   },
 
-  // 스트리밍 응답을 위한 새로운 메서드
+  // 🔧 실제 스트리밍 구현 - Server-Sent Events 사용
   generateTitleStream: async (
     projectId,
     data,
@@ -180,61 +178,133 @@ export const generateAPI = {
     });
 
     try {
-      // 스트리밍 응답을 받기 위해 API 호출
-      const response = await api.post(
-        `/projects/${projectId}/generate/stream`,
-        data
-      );
+      // 1. 먼저 실제 스트리밍 API 시도
+      const streamingUrl = `${API_BASE_URL}/projects/${projectId}/generate/stream`;
+      
+      console.log("🚀 실제 스트리밍 API 시도:", streamingUrl);
 
-      if (!response || !response.data) {
-        throw new Error("응답이 없습니다");
-      }
-
-      const responseData = response.data;
-
-      // 청크 데이터가 있는 경우 각 청크에 대해 콜백 호출
-      if (responseData.chunks && Array.isArray(responseData.chunks)) {
-        for (const chunk of responseData.chunks) {
-          if (chunk.content && onChunk) {
-            onChunk(chunk.content, chunk);
-          }
-        }
-      }
-
-      // 완료 콜백 호출
-      if (onComplete) {
-        onComplete({
-          result: responseData.result,
-          model_info: responseData.model_info,
-          performance_metrics: responseData.performance_metrics,
-          timestamp: responseData.timestamp || new Date().toISOString(),
-        });
-      }
-
-      return {
-        result: responseData.result,
-        model_info: responseData.model_info,
-        performance_metrics: responseData.performance_metrics,
-        timestamp: responseData.timestamp || new Date().toISOString(),
-      };
-    } catch (error) {
-      console.error("스트리밍 대화 생성 실패:", {
-        code: error.code,
-        message: error.message,
-        timestamp: new Date().toISOString(),
+      const response = await fetch(streamingUrl, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'text/event-stream',
+        },
+        body: JSON.stringify(data),
       });
 
-      // 에러 콜백 호출
-      if (onError) {
-        onError(error);
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}: ${response.statusText}`);
       }
 
-      throw error;
+      // 2. 응답이 스트리밍 형식인지 확인
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('text/event-stream')) {
+        console.log("❌ 스트리밍 응답이 아님, 폴백 처리");
+        throw new Error("스트리밍 응답이 아닙니다");
+      }
+
+      // 3. 실제 스트리밍 처리
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+      let fullResponse = '';
+
+      try {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop() || '';
+
+          for (const line of lines) {
+            if (line.startsWith('data: ')) {
+              try {
+                const eventData = JSON.parse(line.slice(6));
+                
+                if (eventData.type === 'start') {
+                  console.log("✅ 스트리밍 시작");
+                } else if (eventData.type === 'chunk') {
+                  fullResponse += eventData.response;
+                  if (onChunk) {
+                    onChunk(eventData.response, { content: eventData.response });
+                  }
+                } else if (eventData.type === 'complete') {
+                  console.log("✅ 스트리밍 완료");
+                  if (onComplete) {
+                    onComplete({
+                      result: eventData.fullResponse || fullResponse,
+                      timestamp: new Date().toISOString(),
+                    });
+                  }
+                  return { result: eventData.fullResponse || fullResponse };
+                } else if (eventData.type === 'error') {
+                  throw new Error(eventData.error);
+                }
+              } catch (parseError) {
+                console.error("JSON 파싱 오류:", parseError);
+              }
+            }
+          }
+        }
+      } finally {
+        reader.releaseLock();
+      }
+
+      return { result: fullResponse };
+
+    } catch (streamError) {
+      console.log("⚠️ 스트리밍 실패, 폴백 처리:", streamError.message);
+      
+      // 4. 폴백: 일반 API 호출
+      try {
+        const fallbackResponse = await api.post(
+          `/projects/${projectId}/generate`,
+          data
+        );
+
+        console.log("✅ 폴백 API 성공:", {
+          mode: fallbackResponse.data.mode,
+          timestamp: new Date().toISOString(),
+        });
+
+        // 폴백 응답을 스트리밍처럼 시뮬레이션
+        if (fallbackResponse.data.result && onChunk) {
+          const fullText = fallbackResponse.data.result;
+          const words = fullText.split(" ");
+
+          for (let i = 0; i < words.length; i++) {
+            const word = words[i] + (i < words.length - 1 ? " " : "");
+            onChunk(word, { content: word });
+            await new Promise((resolve) => setTimeout(resolve, 30));
+          }
+        }
+
+        // 완료 콜백 호출
+        if (onComplete) {
+          onComplete({
+            result: fallbackResponse.data.result,
+            model_info: fallbackResponse.data.model_info,
+            performance_metrics: fallbackResponse.data.performance_metrics,
+            timestamp: new Date().toISOString(),
+          });
+        }
+
+        return fallbackResponse.data;
+      } catch (fallbackError) {
+        console.error("❌ 폴백 API도 실패:", fallbackError);
+        if (onError) {
+          onError(
+            new Error("서비스에 연결할 수 없습니다. 잠시 후 다시 시도해주세요.")
+          );
+        }
+        throw new Error("서비스를 사용할 수 없습니다.");
+      }
     }
   },
 
   getExecutionStatus: async (executionArn) => {
-    // 현재 구현에서는 사용하지 않음
     return {
       status: "SUCCEEDED",
       output: "{}",
@@ -243,12 +313,11 @@ export const generateAPI = {
 };
 
 // =============================================================================
-// 4. 채팅 API (generate API로 리다이렉트)
+// 채팅 API (기존 유지)
 // =============================================================================
 
 export const chatAPI = {
   sendMessage: async (projectId, message, sessionId, userId = "default") => {
-    // 채팅은 generate API를 사용하여 처리
     console.log("채팅 메시지를 generate API로 전달:", {
       projectId,
       message,
@@ -260,7 +329,7 @@ export const chatAPI = {
       const response = await generateAPI.generateTitle(projectId, {
         userInput: message,
         userRequest: "",
-        chat_history: [], // 현재 채팅 히스토리는 비워둠
+        chat_history: [],
       });
 
       return {
@@ -277,7 +346,6 @@ export const chatAPI = {
   },
 
   getChatHistory: async (projectId, sessionId, userId = "default") => {
-    // 현재 백엔드에서 채팅 히스토리를 별도로 저장하지 않음
     console.log("채팅 히스토리 조회:", { projectId, sessionId, userId });
 
     return {
@@ -290,7 +358,6 @@ export const chatAPI = {
   },
 
   getChatSessions: async (projectId, userId = "default") => {
-    // 현재 백엔드에서 세션을 별도로 관리하지 않음
     console.log("채팅 세션 목록 조회:", { projectId, userId });
 
     return {
@@ -301,7 +368,6 @@ export const chatAPI = {
   },
 
   deleteChatSession: async (projectId, sessionId, userId = "default") => {
-    // 현재 백엔드에서 세션을 별도로 관리하지 않음
     console.log("채팅 세션 삭제:", { projectId, sessionId, userId });
 
     return {
@@ -313,17 +379,15 @@ export const chatAPI = {
 };
 
 // =============================================================================
-// 5. 인증 API
+// 인증 API (기존 유지)
 // =============================================================================
 
 export const authAPI = {
   isAuthenticated: () => {
-    // 실제 토큰 검증 로직으로 대체 필요
     return true;
   },
 
   getCurrentUser: () => {
-    // 실제 사용자 정보 가져오기 로직으로 대체 필요
     return {
       id: "user",
       email: "user@example.com",
@@ -363,12 +427,63 @@ export const authAPI = {
 };
 
 // =============================================================================
-// 공통 유틸리티
+// 🔧 개선된 오류 처리 함수
 // =============================================================================
 
 export const handleAPIError = (error) => {
+  console.error("API 오류 상세 분석:", {
+    message: error.message,
+    code: error.code,
+    status: error.response?.status,
+    statusText: error.response?.statusText,
+    data: error.response?.data,
+    timestamp: new Date().toISOString(),
+  });
+
+  // 403 Forbidden 특별 처리
+  if (error.response?.status === 403) {
+    return {
+      message: "API 접근이 차단되었습니다. 관리자에게 문의하세요.",
+      statusCode: 403,
+      errorType: "FORBIDDEN",
+    };
+  }
+
+  // Gateway Timeout 특별 처리
+  if (error.response?.status === 504) {
+    return {
+      message:
+        "서버 응답 시간이 초과되었습니다. 요청을 간소화하거나 잠시 후 다시 시도해주세요.",
+      statusCode: 504,
+      errorType: "GATEWAY_TIMEOUT",
+    };
+  }
+
+  // CORS 오류 특별 처리
+  if (
+    error.message?.includes("CORS") ||
+    error.code === "ERR_NETWORK" ||
+    error.message?.includes("Access-Control-Allow-Origin")
+  ) {
+    return {
+      message:
+        "서버 연결 설정에 문제가 있습니다. 페이지를 새로고침하고 다시 시도해주세요.",
+      statusCode: 0,
+      errorType: "CORS_ERROR",
+    };
+  }
+
+  // 타임아웃 오류 특별 처리
+  if (error.code === "ECONNABORTED") {
+    return {
+      message:
+        "요청 처리 시간이 초과되었습니다. 입력을 줄이거나 잠시 후 다시 시도해주세요.",
+      statusCode: 0,
+      errorType: "TIMEOUT_ERROR",
+    };
+  }
+
   if (error.response) {
-    // 서버에서 응답을 받았지만 오류 상태
     const status = error.response.status;
     const message =
       error.response.data?.message ||
@@ -380,8 +495,6 @@ export const handleAPIError = (error) => {
         return { message: `잘못된 요청: ${message}`, statusCode: 400 };
       case 401:
         return { message: "인증이 필요합니다", statusCode: 401 };
-      case 403:
-        return { message: "권한이 없습니다", statusCode: 403 };
       case 404:
         return { message: "요청한 리소스를 찾을 수 없습니다", statusCode: 404 };
       case 429:
@@ -398,28 +511,28 @@ export const handleAPIError = (error) => {
         };
     }
   } else if (error.request) {
-    // 요청은 보냈지만 응답을 받지 못함
     return {
       message: "서버에 연결할 수 없습니다. 네트워크 연결을 확인해주세요",
       statusCode: 0,
+      errorType: "NETWORK_ERROR",
     };
   } else {
-    // 요청 설정 중 오류 발생
     return {
       message: `요청 오류: ${error.message}`,
       statusCode: -1,
+      errorType: "REQUEST_ERROR",
     };
   }
 };
 
 // =============================================================================
-// 6. 동적 프롬프트 시스템 - 기본 설정 및 헬퍼 함수들
+// 기타 유틸리티 함수들 (기존 유지)
 // =============================================================================
 
 export const DYNAMIC_PROMPT_SYSTEM = {
   message:
     "원하는 만큼 프롬프트 카드를 생성하여 나만의 AI 어시스턴트를 만들어보세요!",
-  maxPromptCards: 50, // 최대 프롬프트 카드 개수 제한 (선택사항)
+  maxPromptCards: 50,
   supportedFormats: ["text", "markdown"],
   defaultStepOrder: 1,
 };
@@ -491,7 +604,6 @@ export const COLOR_OPTIONS = [
 ];
 
 export const getPromptCardInfo = (promptCard) => {
-  // 동적 프롬프트 카드 정보 반환
   return {
     id: promptCard.promptId || promptCard.id,
     title: promptCard.title || "새 프롬프트 카드",
@@ -505,7 +617,6 @@ export const getPromptCardInfo = (promptCard) => {
 export const filterProjects = (projects, filters) => {
   let filtered = [...projects];
 
-  // 검색어 필터
   if (filters.searchQuery) {
     const query = filters.searchQuery.toLowerCase();
     filtered = filtered.filter(
@@ -516,7 +627,6 @@ export const filterProjects = (projects, filters) => {
     );
   }
 
-  // 정렬
   switch (filters.sortBy) {
     case "created":
       filtered.sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));

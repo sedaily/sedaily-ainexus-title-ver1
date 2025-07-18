@@ -27,6 +27,9 @@ const ChatInterface = ({ projectId, projectName, promptCards = [] }) => {
     handleKeyPress,
     handleCopyMessage,
     handleCopyTitle,
+    wsConnected,
+    wsConnecting,
+    wsError,
   } = useChat(projectId, projectName, promptCards);
 
   const handleFileUpload = (event) => {
@@ -204,6 +207,7 @@ const ChatInterface = ({ projectId, projectName, promptCards = [] }) => {
                   disabled={!inputValue.trim() || isGenerating}
                   className="flex-shrink-0 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
                   style={{ width: "32px", height: "32px" }}
+                  title={wsConnected ? "실시간 스트리밍 사용 가능" : "일반 모드 (WebSocket 연결 안됨)"}
                 >
                   {isGenerating ? (
                     <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
@@ -218,6 +222,31 @@ const ChatInterface = ({ projectId, projectName, promptCards = [] }) => {
               <div className="flex items-center gap-2 text-xs text-gray-400">
                 <span>{inputValue.length}자</span>
                 {inputValue.length < 50 && <span>📝 50자 이상 권장</span>}
+              </div>
+              
+              {/* WebSocket 연결 상태 표시 */}
+              <div className="flex items-center gap-2 text-xs">
+                {wsConnecting ? (
+                  <div className="flex items-center gap-1 text-yellow-600">
+                    <div className="animate-spin rounded-full h-3 w-3 border-b-2 border-yellow-600"></div>
+                    <span>연결 중...</span>
+                  </div>
+                ) : wsConnected ? (
+                  <div className="flex items-center gap-1 text-green-600">
+                    <div className="w-2 h-2 bg-green-600 rounded-full"></div>
+                    <span>실시간 스트리밍</span>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-1 text-gray-500">
+                    <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                    <span>일반 모드</span>
+                  </div>
+                )}
+                {wsError && (
+                  <div className="text-red-500 text-xs" title={wsError}>
+                    ⚠️
+                  </div>
+                )}
               </div>
             </div>
           </div>

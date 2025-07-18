@@ -61,10 +61,10 @@ def handler(event, context):
 def _handle_streaming_generation(project_id, user_input, chat_history):
     """
     Bedrock에서 스트리밍 응답을 받아 실시간으로 반환합니다.
-    청크별로 즉시 SSE 형식으로 구성하여 반환합니다.
+    Lambda Response Streaming을 사용하여 진짜 실시간 스트리밍을 구현합니다.
     """
     try:
-        print(f"스트리밍 생성 시작: 프로젝트 ID={project_id}")
+        print(f"실시간 스트리밍 생성 시작: 프로젝트 ID={project_id}")
         final_prompt = _build_final_prompt(project_id, user_input, chat_history)
         
         request_body = {
@@ -75,52 +75,66 @@ def _handle_streaming_generation(project_id, user_input, chat_history):
             "top_p": 0.9,
         }
 
-        response_stream = bedrock_client.invoke_model_with_response_stream(
-            modelId=MODEL_ID,
-            body=json.dumps(request_body)
-        )
-        
-        # 💡 최적화된 스트리밍 구현 - 버퍼링 최소화
-        sse_chunks = []
-        full_response = ""
-        
-        # 시작 이벤트
-        start_data = {
-            "response": "",
-            "sessionId": project_id,
-            "type": "start"
-        }
-        sse_chunks.append(f"data: {json.dumps(start_data)}\n\n")
-        
-        # 실시간 청크 처리 - 최소 지연
-        for event in response_stream.get("body"):
-            chunk = json.loads(event["chunk"]["bytes"].decode())
-            if chunk['type'] == 'content_block_delta':
-                text = chunk['delta']['text']
-                full_response += text
-                
-                # 즉시 청크 전송 (버퍼링 없음)
-                sse_data = {
-                    "response": text,
+        # Lambda Response Streaming을 위한 Generator 사용
+        def stream_generator():
+            """진짜 실시간 스트리밍 Generator"""
+            try:
+                # 시작 이벤트
+                start_data = {
+                    "response": "",
                     "sessionId": project_id,
-                    "type": "chunk"
+                    "type": "start"
                 }
-                sse_chunks.append(f"data: {json.dumps(sse_data)}\n\n")
-        
-        # 완료 이벤트 전송
-        completion_data = {
-            "response": "",
-            "sessionId": project_id,
-            "type": "complete",
-            "fullResponse": full_response
-        }
-        sse_chunks.append(f"data: {json.dumps(completion_data)}\n\n")
-        
-        print(f"스트리밍 생성 완료: 총 {len(sse_chunks)} 청크 생성됨, 응답 길이={len(full_response)}")
+                yield f"data: {json.dumps(start_data)}\n\n"
+                
+                # Bedrock 스트리밍 호출
+                response_stream = bedrock_client.invoke_model_with_response_stream(
+                    modelId=MODEL_ID,
+                    body=json.dumps(request_body)
+                )
+                
+                full_response = ""
+                
+                # 실시간 청크 처리
+                for event in response_stream.get("body"):
+                    chunk = json.loads(event["chunk"]["bytes"].decode())
+                    if chunk['type'] == 'content_block_delta':
+                        text = chunk['delta']['text']
+                        full_response += text
+                        
+                        # 실시간으로 청크 전송
+                        sse_data = {
+                            "response": text,
+                            "sessionId": project_id,
+                            "type": "chunk"
+                        }
+                        yield f"data: {json.dumps(sse_data)}\n\n"
+                
+                # 완료 이벤트 전송
+                completion_data = {
+                    "response": "",
+                    "sessionId": project_id,
+                    "type": "complete",
+                    "fullResponse": full_response
+                }
+                yield f"data: {json.dumps(completion_data)}\n\n"
+                
+                print(f"실시간 스트리밍 완료: 응답 길이={len(full_response)}")
+                
+            except Exception as e:
+                print(f"스트리밍 중 오류: {e}")
+                error_data = {
+                    "error": str(e),
+                    "sessionId": project_id,
+                    "type": "error"
+                }
+                yield f"data: {json.dumps(error_data)}\n\n"
+
+        # Lambda Response Streaming 반환
         return {
             "statusCode": 200,
             "headers": _get_sse_headers(),
-            "body": "".join(sse_chunks),
+            "body": stream_generator(),
             "isBase64Encoded": False
         }
 

@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { toast } from "react-hot-toast";
 import { copyToClipboard } from "../utils/clipboard";
 import { useOrchestration } from "./useOrchestration";
+import { useWebSocket } from "./useWebSocket";
 
 /**
  * AI 응답을 파싱하고 UI에 맞는 메시지 객체로 변환
@@ -43,7 +44,7 @@ export const useChat = (projectId, projectName, promptCards = []) => {
   const [messages, setMessages] = useState([]);
   const [inputValue, setInputValue] = useState("");
   const [copiedMessage, setCopiedMessage] = useState(null);
-  const [streamingMessageId, setStreamingMessageId] = useState(null);
+  const streamingMessageIdRef = useRef(null);
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -56,29 +57,196 @@ export const useChat = (projectId, projectName, promptCards = []) => {
     resetOrchestration,
   } = useOrchestration(projectId);
 
+  // WebSocket 훅 추가
+  const {
+    isConnected: wsConnected,
+    isConnecting: wsConnecting,
+    error: wsError,
+    startStreaming: wsStartStreaming,
+    addMessageListener,
+    removeMessageListener,
+  } = useWebSocket(projectId);
+
   // 초기 환영 메시지 설정 - 제거됨 (빈 상태로 시작)
   useEffect(() => {
     setMessages([]); // 빈 배열로 시작
   }, [projectName]);
 
-  // 메시지 추가 시 스크롤 하단으로
-  useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
-
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, []);
+
+  // 메시지 추가 시 스크롤 하단으로
+  useEffect(() => {
+    scrollToBottom();
+  }, [messages, scrollToBottom]);
+
+  // WebSocket 메시지 리스너 설정
+  useEffect(() => {
+    const handleWebSocketMessage = (event) => {
+      try {
+        const data = JSON.parse(event.data);
+        console.log('WebSocket 메시지 수신:', data);
+
+        const currentStreamingId = streamingMessageIdRef.current;
+
+        switch (data.type) {
+          case 'stream_start':
+            console.log('WebSocket 스트리밍 시작');
+            break;
+
+          case 'progress':
+            console.log(`진행 상황: ${data.step} (${data.progress}%)`);
+            // 진행 상황을 UI에 표시
+            if (currentStreamingId) {
+              setMessages((prev) => {
+                const updatedMessages = [...prev];
+                const streamingMsgIndex = updatedMessages.findIndex(
+                  (msg) => msg.id === currentStreamingId
+                );
+
+                if (streamingMsgIndex !== -1) {
+                  // LoadingProgress 컴포넌트 형태로 변환
+                  const stage = data.progress <= 25 ? 'initializing' : 
+                               data.progress <= 50 ? 'analyzing' : 
+                               data.progress <= 75 ? 'generating' : 'finalizing';
+                  
+                  updatedMessages[streamingMsgIndex] = {
+                    ...updatedMessages[streamingMsgIndex],
+                    content: data.step,
+                    isLoading: true,
+                    isStreaming: false, // progress 단계에서는 스트리밍 인디케이터 숨김
+                    loadingProgress: {
+                      stage: stage,
+                      message: data.step,
+                      percentage: data.progress
+                    }
+                  };
+                }
+
+                return updatedMessages;
+              });
+            }
+            break;
+
+          case 'stream_chunk':
+            if (currentStreamingId) {
+              setMessages((prev) => {
+                const updatedMessages = [...prev];
+                const streamingMsgIndex = updatedMessages.findIndex(
+                  (msg) => msg.id === currentStreamingId
+                );
+
+                if (streamingMsgIndex !== -1) {
+                  // 첫 번째 청크인 경우 progress 내용을 초기화
+                  const isFirstChunk = updatedMessages[streamingMsgIndex].loadingProgress !== undefined;
+                  const currentContent = isFirstChunk ? "" : updatedMessages[streamingMsgIndex].content;
+                  
+                  updatedMessages[streamingMsgIndex] = {
+                    ...updatedMessages[streamingMsgIndex],
+                    content: currentContent + data.content,
+                    isLoading: true,
+                    isStreaming: true,
+                    loadingProgress: undefined, // progress 상태 제거
+                  };
+                }
+
+                return updatedMessages;
+              });
+              scrollToBottom();
+            }
+            break;
+
+          case 'stream_complete':
+            if (currentStreamingId) {
+              setMessages((prev) => {
+                const updatedMessages = [...prev];
+                const streamingMsgIndex = updatedMessages.findIndex(
+                  (msg) => msg.id === currentStreamingId
+                );
+
+                if (streamingMsgIndex !== -1) {
+                  updatedMessages[streamingMsgIndex] = {
+                    ...updatedMessages[streamingMsgIndex],
+                    content: data.fullContent,
+                    isLoading: false,
+                    isStreaming: false,
+                    loadingProgress: undefined,
+                    timestamp: new Date(),
+                  };
+                }
+
+                return updatedMessages;
+              });
+              streamingMessageIdRef.current = null;
+              scrollToBottom();
+            }
+            break;
+
+          case 'error':
+            console.error('WebSocket 스트리밍 오류:', data.message);
+            if (currentStreamingId) {
+              setMessages((prev) => {
+                const updatedMessages = [...prev];
+                const streamingMsgIndex = updatedMessages.findIndex(
+                  (msg) => msg.id === currentStreamingId
+                );
+
+                if (streamingMsgIndex !== -1) {
+                  updatedMessages[streamingMsgIndex] = {
+                    ...updatedMessages[streamingMsgIndex],
+                    content: '메시지 처리 중 오류가 발생했습니다. 다시 시도해주세요.',
+                    isLoading: false,
+                    isStreaming: false,
+                    isError: true,
+                    timestamp: new Date(),
+                  };
+                }
+
+                return updatedMessages;
+              });
+              streamingMessageIdRef.current = null;
+            }
+            toast.error(data.message);
+            break;
+
+          default:
+            console.log('알 수 없는 WebSocket 메시지 타입:', data.type);
+        }
+      } catch (error) {
+        console.error('WebSocket 메시지 파싱 오류:', error);
+      }
+    };
+
+    if (wsConnected) {
+      addMessageListener(handleWebSocketMessage);
+    }
+
+    return () => {
+      if (wsConnected) {
+        removeMessageListener(handleWebSocketMessage);
+      }
+    };
+  }, [wsConnected, addMessageListener, removeMessageListener, scrollToBottom]);
 
   /**
    * 스트리밍 응답 처리 함수
    */
   const handleStreamingResponse = useCallback(
     (chunk, metadata) => {
+      const currentStreamingId = streamingMessageIdRef.current;
+      
+      console.log("청크 수신:", chunk, "스트리밍 ID:", currentStreamingId);
+      
+      if (!currentStreamingId) {
+        console.error("스트리밍 ID가 없습니다!");
+        return;
+      }
+
       setMessages((prev) => {
         const updatedMessages = [...prev];
         const streamingMsgIndex = updatedMessages.findIndex(
-          (msg) => msg.id === streamingMessageId
+          (msg) => msg.id === currentStreamingId
         );
 
         if (streamingMsgIndex !== -1) {
@@ -89,6 +257,9 @@ export const useChat = (projectId, projectName, promptCards = []) => {
             isLoading: true,
             isStreaming: true,
           };
+          console.log("스트리밍 메시지 업데이트 성공:", updatedMessages[streamingMsgIndex].content);
+        } else {
+          console.error("스트리밍 메시지를 찾을 수 없음:", currentStreamingId);
         }
 
         return updatedMessages;
@@ -97,7 +268,7 @@ export const useChat = (projectId, projectName, promptCards = []) => {
       // 스크롤 조정
       scrollToBottom();
     },
-    [streamingMessageId, scrollToBottom]
+    [scrollToBottom]
   );
 
   /**
@@ -105,10 +276,19 @@ export const useChat = (projectId, projectName, promptCards = []) => {
    */
   const handleStreamingComplete = useCallback(
     (result) => {
+      const currentStreamingId = streamingMessageIdRef.current;
+      
+      console.log("스트리밍 완료:", result, "스트리밍 ID:", currentStreamingId);
+      
+      if (!currentStreamingId) {
+        console.error("스트리밍 완료 처리 중 ID가 없습니다!");
+        return;
+      }
+
       setMessages((prev) => {
         const updatedMessages = [...prev];
         const streamingMsgIndex = updatedMessages.findIndex(
-          (msg) => msg.id === streamingMessageId
+          (msg) => msg.id === currentStreamingId
         );
 
         if (streamingMsgIndex !== -1) {
@@ -122,18 +302,21 @@ export const useChat = (projectId, projectName, promptCards = []) => {
             model_info: result.model_info,
             timestamp: new Date(),
           };
+          console.log("스트리밍 완료 처리 성공:", updatedMessages[streamingMsgIndex].content);
+        } else {
+          console.error("스트리밍 완료 처리 중 메시지를 찾을 수 없음:", currentStreamingId);
         }
 
         return updatedMessages;
       });
 
       // 스트리밍 ID 초기화
-      setStreamingMessageId(null);
+      streamingMessageIdRef.current = null;
 
       // 스크롤 조정
       scrollToBottom();
     },
-    [streamingMessageId, scrollToBottom]
+    [scrollToBottom]
   );
 
   /**
@@ -151,7 +334,9 @@ export const useChat = (projectId, projectName, promptCards = []) => {
 
     // 스트리밍 메시지 ID 생성
     const streamMsgId = "streaming-" + Date.now();
-    setStreamingMessageId(streamMsgId);
+    streamingMessageIdRef.current = streamMsgId;
+    
+    console.log("새 스트리밍 메시지 ID 생성:", streamMsgId);
 
     // 스트리밍 응답을 위한 초기 메시지
     const streamingMessage = {
@@ -166,15 +351,34 @@ export const useChat = (projectId, projectName, promptCards = []) => {
     setMessages((prev) => [...prev, userMessage, streamingMessage]);
     setInputValue("");
 
+    const chatHistory = messages
+      .filter((msg) => !msg.isLoading && !msg.isError)
+      .map((msg) => ({
+        role: msg.type === "user" ? "user" : "assistant",
+        content: msg.content,
+      }));
+
     try {
+      // WebSocket 연결 확인 및 실시간 스트리밍 시도
+      if (wsConnected) {
+        console.log('WebSocket을 통한 실시간 스트리밍 시작');
+        
+        const success = wsStartStreaming(userMessage.content, chatHistory);
+        
+        if (success) {
+          // WebSocket 스트리밍 성공, 나머지는 리스너에서 처리
+          return;
+        } else {
+          console.log('WebSocket 전송 실패, SSE 폴백 모드로 전환');
+        }
+      } else {
+        console.log('WebSocket 미연결, SSE 모드 사용');
+      }
+
+      // WebSocket 실패 시 기존 SSE 방식으로 폴백
       const orchestrationData = {
         userInput: userMessage.content,
-        chat_history: messages
-          .filter((msg) => !msg.isLoading && !msg.isError)
-          .map((msg) => ({
-            role: msg.type === "user" ? "user" : "assistant",
-            content: msg.content,
-          })),
+        chat_history: chatHistory,
       };
 
       // 스트리밍 옵션 설정
@@ -184,12 +388,15 @@ export const useChat = (projectId, projectName, promptCards = []) => {
         onChunk: handleStreamingResponse,
         onError: (error) => {
           console.error("스트리밍 오류:", error);
+          
+          const currentStreamingId = streamingMessageIdRef.current;
+          console.log("에러 처리 스트리밍 ID:", currentStreamingId);
 
           // 오류 메시지로 변환
           setMessages((prev) => {
             const updatedMessages = [...prev];
             const streamingMsgIndex = updatedMessages.findIndex(
-              (msg) => msg.id === streamingMessageId
+              (msg) => msg.id === currentStreamingId
             );
 
             if (streamingMsgIndex !== -1) {
@@ -207,16 +414,13 @@ export const useChat = (projectId, projectName, promptCards = []) => {
             return updatedMessages;
           });
 
-          setStreamingMessageId(null);
+          streamingMessageIdRef.current = null;
         },
         onComplete: handleStreamingComplete,
       };
 
-      // 스트리밍 방식으로 실행
+      // SSE 스트리밍 방식으로 실행
       await executeOrchestration(userMessage.content, streamingOptions);
-
-      // 스트리밍에서는 pollOrchestrationResult 호출이 필요 없음
-      // 모든 처리는 콜백에서 이루어짐
     } catch (error) {
       console.error("메시지 전송 실패:", error);
 
@@ -240,13 +444,14 @@ export const useChat = (projectId, projectName, promptCards = []) => {
 
       setMessages((prev) => {
         // 스트리밍 메시지를 찾아 제거
+        const currentStreamingId = streamingMessageIdRef.current;
         const filteredMessages = prev.filter(
-          (msg) => msg.id !== streamingMessageId
+          (msg) => msg.id !== currentStreamingId
         );
         return [...filteredMessages, errorMessage];
       });
 
-      setStreamingMessageId(null);
+      streamingMessageIdRef.current = null;
     }
   }, [
     inputValue,
@@ -254,7 +459,6 @@ export const useChat = (projectId, projectName, promptCards = []) => {
     executeOrchestration,
     handleStreamingResponse,
     handleStreamingComplete,
-    streamingMessageId,
     messages,
   ]);
 
@@ -300,7 +504,7 @@ export const useChat = (projectId, projectName, promptCards = []) => {
     setMessages([]);
     setInputValue("");
     setCopiedMessage(null);
-    setStreamingMessageId(null);
+    streamingMessageIdRef.current = null;
     resetOrchestration();
   }, [resetOrchestration]);
 
@@ -311,7 +515,7 @@ export const useChat = (projectId, projectName, promptCards = []) => {
     copiedMessage,
     isGenerating,
     isStreaming,
-    streamingMessageId,
+    streamingMessageId: streamingMessageIdRef.current,
     messagesEndRef,
     inputRef,
     handleSendMessage,
@@ -320,5 +524,9 @@ export const useChat = (projectId, projectName, promptCards = []) => {
     handleCopyTitle,
     resetChat,
     scrollToBottom,
+    // WebSocket 상태 추가
+    wsConnected,
+    wsConnecting,
+    wsError,
   };
 };

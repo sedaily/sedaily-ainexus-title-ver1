@@ -61,7 +61,7 @@ def handler(event, context):
 def _handle_streaming_generation(project_id, user_input, chat_history):
     """
     Bedrock에서 스트리밍 응답을 받아 실시간으로 반환합니다.
-    청크별로 즉시 SSE 형식으로 구성하여 반환합니다.
+    청크별로 실시간 SSE 형식으로 구성하여 반환합니다.
     """
     try:
         print(f"스트리밍 생성 시작: 프로젝트 ID={project_id}")
@@ -80,7 +80,7 @@ def _handle_streaming_generation(project_id, user_input, chat_history):
             body=json.dumps(request_body)
         )
         
-        # 💡 최적화된 스트리밍 구현 - 버퍼링 최소화
+        # 실시간 스트리밍 구현
         sse_chunks = []
         full_response = ""
         
@@ -92,14 +92,14 @@ def _handle_streaming_generation(project_id, user_input, chat_history):
         }
         sse_chunks.append(f"data: {json.dumps(start_data)}\n\n")
         
-        # 실시간 청크 처리 - 최소 지연
+        # 실시간 청크 처리
         for event in response_stream.get("body"):
             chunk = json.loads(event["chunk"]["bytes"].decode())
             if chunk['type'] == 'content_block_delta':
                 text = chunk['delta']['text']
                 full_response += text
                 
-                # 즉시 청크 전송 (버퍼링 없음)
+                # 실시간으로 청크 전송
                 sse_data = {
                     "response": text,
                     "sessionId": project_id,
@@ -116,7 +116,7 @@ def _handle_streaming_generation(project_id, user_input, chat_history):
         }
         sse_chunks.append(f"data: {json.dumps(completion_data)}\n\n")
         
-        print(f"스트리밍 생성 완료: 총 {len(sse_chunks)} 청크 생성됨, 응답 길이={len(full_response)}")
+        print(f"스트리밍 생성 완료: 총 {len(sse_chunks)} 청크 생성됨")
         return {
             "statusCode": 200,
             "headers": _get_sse_headers(),

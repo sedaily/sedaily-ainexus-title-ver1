@@ -4,6 +4,8 @@ from aws_cdk import (
     aws_dynamodb as dynamodb,
     aws_lambda as lambda_,
     aws_apigateway as apigateway,
+    aws_apigatewayv2 as apigatewayv2,
+    aws_apigatewayv2_integrations as integrations,
     aws_iam as iam,
     aws_s3_notifications as s3_notifications,
     aws_cloudwatch as cloudwatch,
@@ -50,6 +52,9 @@ class BedrockDiyStack(Stack):
         
         # 8. API Gateway 생성
         self.create_api_gateway()
+        
+        # WebSocket API 설정
+        self.create_websocket_api()
         
         # 9. CloudWatch 알람 생성
         self.create_cloudwatch_alarms()
@@ -346,6 +351,7 @@ class BedrockDiyStack(Stack):
                     "sqs:ReceiveMessage",
                     "sns:Publish",
                     "bedrock:InvokeModel",
+                    "bedrock:InvokeModelWithResponseStream",
                     "cognito-idp:AdminCreateUser",
                     "cognito-idp:AdminSetUserPassword",
                     "cognito-idp:AdminGetUser",
@@ -379,33 +385,16 @@ class BedrockDiyStack(Stack):
             )
         )
 
-        # Lambda Layer for LangChain
-        # langchain_layer = lambda_.LayerVersion(
-        #     self, "LangChainLayer",
-        #     code=lambda_.Code.from_asset(
-        #         "../lambda/generate",
-        #         bundling=BundlingOptions(
-        #             image=lambda_.Runtime.PYTHON_3_11.bundling_image,
-        #             command=[
-        #                 "bash", "-c",
-        #                 "pip install --no-cache-dir --no-deps -r requirements.txt -t /asset-output/python && find /asset-output/python -type d -name 'tests' -exec rm -rf {} + && find /asset-output/python -type d -name '__pycache__' -exec rm -rf {} + && find /asset-output -name '*.pyc' -delete"
-        #             ]
-        #         )
-        #     ),
-        #     compatible_runtimes=[lambda_.Runtime.PYTHON_3_11],
-        #     description="LangChain and other dependencies"
-        # )
-
-        # 1. 제목 생성 Lambda (핵심 기능) - 최대 성능 설정
+        # 1. 제목 생성 Lambda (핵심 기능) - 최대 성능 설정 + 스트리밍 활성화
         self.generate_lambda = lambda_.Function(
             self, "GenerateFunction",
             runtime=lambda_.Runtime.PYTHON_3_11,
             handler="generate.handler",
+            # 🔧 강제 재배포를 위해 코드 자산을 명시적으로 지정
             code=lambda_.Code.from_asset("../lambda/generate"),
-            timeout=Duration.minutes(15),  # 최대 15분으로 증가
-            memory_size=3008,  # 최대 메모리로 증가 (더 빠른 처리)
+            timeout=Duration.minutes(15),
+            memory_size=3008,
             role=lambda_role,
-            # layers=[langchain_layer], # Layer 연결
             environment={
                 "PROMPT_META_TABLE": self.prompt_meta_table.table_name,
                 "PROMPT_BUCKET": self.prompt_bucket.bucket_name,
@@ -414,6 +403,12 @@ class BedrockDiyStack(Stack):
             },
             dead_letter_queue=self.dlq
         )
+        
+        # 🔥 Lambda Response Streaming - 일단 주석 처리 (CloudFormation 미지원)
+        # cfn_generate_function = self.generate_lambda.node.default_child
+        # cfn_generate_function.add_property_override("InvokeConfig", {
+        #     "InvokeMode": "RESPONSE_STREAM"
+        # })
 
         # 2. 프롬프트 저장 Lambda (단순화됨)
         self.save_prompt_lambda = lambda_.Function(
@@ -463,9 +458,9 @@ class BedrockDiyStack(Stack):
             }
         )
 
-    # 🔧 개선: CORS 공통 설정 함수 추가
+    # 간소화된 CORS 설정 함수
     def _create_cors_options_method(self, resource, allowed_methods):
-        """CORS OPTIONS 메소드 생성 (중복 제거)"""
+        """CORS OPTIONS 메소드 생성 (간소화)"""
         return resource.add_method(
             "OPTIONS",
             apigateway.MockIntegration(
@@ -493,13 +488,13 @@ class BedrockDiyStack(Stack):
         )
 
     def create_api_gateway(self):
-        """API Gateway 생성 - 정리된 버전"""
-        # REST API 생성 (CORS preflight 자동 생성 비활성화)
+        """API Gateway 생성 - 간소화된 버전"""
+        # REST API 생성
         self.api = apigateway.RestApi(
             self, "BedrockDiyApi",
             rest_api_name="bedrock-diy-api",
             description="동적 프롬프트 시스템 - 완전한 빈깡통 AI",
-            retain_deployments=True  # 🔧 다른 스택이 참조하는 기존 Deployment Export 유지
+            retain_deployments=True
         )
 
         # Cognito Authorizer 생성
@@ -527,40 +522,21 @@ class BedrockDiyStack(Stack):
         generate_resource = project_resource.get_resource("generate")
         stream_resource = generate_resource.add_resource("stream")
         
-        # 스트리밍 메서드 추가 (Lambda 프록시 통합)
+        # 스트리밍 메서드 추가 (간소화된 설정)
         stream_resource.add_method(
             "POST",
-            apigateway.LambdaIntegration(
-                self.generate_lambda,
-                proxy=True,
-                integration_responses=[{
-                    'statusCode': '200',
-                    'responseParameters': {
-                        'method.response.header.Content-Type': "'application/json'",
-                        'method.response.header.Access-Control-Allow-Origin': "'*'"
-                    }
-                }]
-            ),
-            method_responses=[{
-                'statusCode': '200',
-                'responseParameters': {
-                    'method.response.header.Content-Type': True,
-                    'method.response.header.Access-Control-Allow-Origin': True
-                }
-            }]
+            apigateway.LambdaIntegration(self.generate_lambda, proxy=True),
+            authorization_type=apigateway.AuthorizationType.NONE
         )
         
         # CORS 옵션 추가
-        self._create_cors_options_method(
-            stream_resource, 
-            "OPTIONS,POST"
-        )
+        self._create_cors_options_method(stream_resource, "OPTIONS,POST")
 
     def create_auth_routes(self):
         """인증 관련 API 경로 생성"""
         auth_resource = self.api.root.add_resource("auth")
         
-        # 인증 엔드포인트들 (Authorization 불필요)
+        # 인증 엔드포인트들
         auth_endpoints = ["signup", "signin", "refresh", "signout", "verify", "forgot-password", "confirm-password"]
         
         for endpoint in auth_endpoints:
@@ -569,11 +545,11 @@ class BedrockDiyStack(Stack):
             # POST 메소드 추가
             endpoint_resource.add_method(
                 "POST",
-                apigateway.LambdaIntegration(self.auth_lambda),
+                apigateway.LambdaIntegration(self.auth_lambda, proxy=True),
                 authorization_type=apigateway.AuthorizationType.NONE
             )
             
-            # 🔧 개선: 공통 함수 사용
+            # CORS 옵션 추가
             self._create_cors_options_method(endpoint_resource, "POST,OPTIONS")
 
     def create_project_routes(self):
@@ -583,22 +559,18 @@ class BedrockDiyStack(Stack):
         # POST /projects (프로젝트 생성)
         projects_resource.add_method(
             "POST",
-            apigateway.LambdaIntegration(self.project_lambda),
-            # 🔧 수정: 개발 편의를 위해 임시 비활성화 (운영에서는 활성화 필요)
+            apigateway.LambdaIntegration(self.project_lambda, proxy=True),
             authorization_type=apigateway.AuthorizationType.NONE
-            # TODO: 운영 배포 시 아래 주석 해제
-            # authorization_type=apigateway.AuthorizationType.COGNITO,
-            # authorizer=self.api_authorizer
         )
 
         # GET /projects (프로젝트 목록)
         projects_resource.add_method(
             "GET",
-            apigateway.LambdaIntegration(self.project_lambda),
+            apigateway.LambdaIntegration(self.project_lambda, proxy=True),
             authorization_type=apigateway.AuthorizationType.NONE
         )
         
-        # 🔧 개선: 공통 함수 사용
+        # CORS 옵션 추가
         self._create_cors_options_method(projects_resource, "GET,POST,PUT,DELETE,OPTIONS")
 
         # /projects/{id} 리소스
@@ -607,49 +579,48 @@ class BedrockDiyStack(Stack):
         # GET /projects/{id} (프로젝트 상세)
         project_resource.add_method(
             "GET",
-            apigateway.LambdaIntegration(self.project_lambda),
+            apigateway.LambdaIntegration(self.project_lambda, proxy=True),
             authorization_type=apigateway.AuthorizationType.NONE
         )
         
         # PUT /projects/{id} (프로젝트 수정)
         project_resource.add_method(
             "PUT",
-            apigateway.LambdaIntegration(self.project_lambda),
+            apigateway.LambdaIntegration(self.project_lambda, proxy=True),
             authorization_type=apigateway.AuthorizationType.NONE
         )
         
         # DELETE /projects/{id} (프로젝트 삭제)
         project_resource.add_method(
             "DELETE",
-            apigateway.LambdaIntegration(self.project_lambda),
+            apigateway.LambdaIntegration(self.project_lambda, proxy=True),
             authorization_type=apigateway.AuthorizationType.NONE
         )
         
-        # 🔧 개선: 공통 함수 사용
+        # CORS 옵션 추가
         self._create_cors_options_method(project_resource, "GET,POST,PUT,DELETE,OPTIONS")
 
         # POST /projects/{id}/generate (제목 생성)
         generate_resource = project_resource.add_resource("generate")
         generate_resource.add_method(
             "POST",
-            apigateway.LambdaIntegration(self.generate_lambda),
+            apigateway.LambdaIntegration(self.generate_lambda, proxy=True),
             authorization_type=apigateway.AuthorizationType.NONE
         )
         
-        # 🔧 개선: 공통 함수 사용
-        self._create_cors_options_method(generate_resource, "GET,POST,PUT,DELETE,OPTIONS")
+        # CORS 옵션 추가
+        self._create_cors_options_method(generate_resource, "POST,OPTIONS")
 
         # GET /projects/{id}/upload-url (파일 업로드용 pre-signed URL)
         upload_url_resource = project_resource.add_resource("upload-url")
         upload_url_resource.add_method(
             "GET",
-            apigateway.LambdaIntegration(self.project_lambda),
-            # 🔧 수정: 파일 업로드는 인증 필요
+            apigateway.LambdaIntegration(self.project_lambda, proxy=True),
             authorization_type=apigateway.AuthorizationType.COGNITO,
             authorizer=self.api_authorizer
         )
         
-        # 🔧 개선: 공통 함수 사용
+        # CORS 옵션 추가
         self._create_cors_options_method(upload_url_resource, "GET,OPTIONS")
 
     def create_prompt_routes(self):
@@ -660,18 +631,18 @@ class BedrockDiyStack(Stack):
         # POST /prompts/{projectId} (새 프롬프트 카드 생성)
         prompts_project_resource.add_method(
             "POST",
-            apigateway.LambdaIntegration(self.save_prompt_lambda),
+            apigateway.LambdaIntegration(self.save_prompt_lambda, proxy=True),
             authorization_type=apigateway.AuthorizationType.NONE
         )
         
         # GET /prompts/{projectId} (프롬프트 카드 목록 조회)
         prompts_project_resource.add_method(
             "GET",
-            apigateway.LambdaIntegration(self.save_prompt_lambda),
+            apigateway.LambdaIntegration(self.save_prompt_lambda, proxy=True),
             authorization_type=apigateway.AuthorizationType.NONE
         )
         
-        # 🔧 개선: 공통 함수 사용
+        # CORS 옵션 추가
         self._create_cors_options_method(prompts_project_resource, "GET,POST,PUT,DELETE,OPTIONS")
         
         # /prompts/{projectId}/{promptId} 리소스
@@ -680,18 +651,18 @@ class BedrockDiyStack(Stack):
         # PUT /prompts/{projectId}/{promptId} (프롬프트 카드 수정)
         prompt_card_resource.add_method(
             "PUT",
-            apigateway.LambdaIntegration(self.save_prompt_lambda),
+            apigateway.LambdaIntegration(self.save_prompt_lambda, proxy=True),
             authorization_type=apigateway.AuthorizationType.NONE
         )
         
         # DELETE /prompts/{projectId}/{promptId} (프롬프트 카드 삭제)
         prompt_card_resource.add_method(
             "DELETE",
-            apigateway.LambdaIntegration(self.save_prompt_lambda),
+            apigateway.LambdaIntegration(self.save_prompt_lambda, proxy=True),
             authorization_type=apigateway.AuthorizationType.NONE
         )
         
-        # 🔧 개선: 공통 함수 사용
+        # CORS 옵션 추가
         self._create_cors_options_method(prompt_card_resource, "GET,POST,PUT,DELETE,OPTIONS")
         
         # /prompts/{projectId}/{promptId}/content 리소스 추가
@@ -700,13 +671,12 @@ class BedrockDiyStack(Stack):
         # GET /prompts/{projectId}/{promptId}/content (프롬프트 내용 조회)
         content_resource.add_method(
             "GET",
-            apigateway.LambdaIntegration(self.save_prompt_lambda),
-            # 🔧 수정: 컨텐츠 조회는 인증 필요
+            apigateway.LambdaIntegration(self.save_prompt_lambda, proxy=True),
             authorization_type=apigateway.AuthorizationType.COGNITO,
             authorizer=self.api_authorizer
         )
         
-        # 🔧 개선: 공통 함수 사용
+        # CORS 옵션 추가
         self._create_cors_options_method(content_resource, "GET,OPTIONS")
 
     # Step Functions 제거됨 - 단순화된 동적 프롬프트 시스템으로 불필요
@@ -808,4 +778,144 @@ class BedrockDiyStack(Stack):
             value=self.user_pool_client.user_pool_client_id,
             description="Cognito User Pool Client ID",
             export_name="UserPoolClientId"
+        )
+
+    def create_websocket_api(self):
+        """WebSocket API 생성 - 실시간 스트리밍용"""
+        
+        # WebSocket 연결 테이블
+        self.websocket_connections_table = dynamodb.Table(
+            self, "WebSocketConnectionsTable",
+            table_name="bedrock-diy-websocket-connections",
+            partition_key=dynamodb.Attribute(
+                name="connectionId",
+                type=dynamodb.AttributeType.STRING
+            ),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            removal_policy=RemovalPolicy.DESTROY,
+            time_to_live_attribute="ttl"
+        )
+        
+        # WebSocket Lambda 함수들용 공통 역할
+        websocket_lambda_role = iam.Role(
+            self, "WebSocketLambdaRole",
+            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
+            managed_policies=[
+                iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaBasicExecutionRole"),
+                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonBedrockFullAccess")
+            ]
+        )
+        
+        # WebSocket 및 DynamoDB 권한 추가
+        websocket_lambda_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "execute-api:ManageConnections",
+                    "dynamodb:PutItem",
+                    "dynamodb:DeleteItem",
+                    "dynamodb:GetItem",
+                    "dynamodb:Scan",
+                    "s3:GetObject",
+                    "bedrock:InvokeModel",
+                    "bedrock:InvokeModelWithResponseStream"
+                ],
+                resources=[
+                    f"arn:aws:execute-api:{self.region}:{self.account}:*/*/*",
+                    self.websocket_connections_table.table_arn,
+                    self.prompt_meta_table.table_arn,
+                    self.prompt_bucket.bucket_arn + "/*"
+                ]
+            )
+        )
+        
+        # Connect Lambda
+        self.websocket_connect_lambda = lambda_.Function(
+            self, "WebSocketConnectFunction",
+            runtime=lambda_.Runtime.PYTHON_3_11,
+            handler="connect.handler",
+            code=lambda_.Code.from_asset("../lambda/websocket"),
+            timeout=Duration.minutes(1),
+            memory_size=256,
+            role=websocket_lambda_role,
+            environment={
+                "CONNECTIONS_TABLE": self.websocket_connections_table.table_name,
+                "REGION": self.region
+            }
+        )
+        
+        # Disconnect Lambda
+        self.websocket_disconnect_lambda = lambda_.Function(
+            self, "WebSocketDisconnectFunction",
+            runtime=lambda_.Runtime.PYTHON_3_11,
+            handler="disconnect.handler",
+            code=lambda_.Code.from_asset("../lambda/websocket"),
+            timeout=Duration.minutes(1),
+            memory_size=256,
+            role=websocket_lambda_role,
+            environment={
+                "CONNECTIONS_TABLE": self.websocket_connections_table.table_name,
+                "REGION": self.region
+            }
+        )
+        
+        # Stream Lambda
+        self.websocket_stream_lambda = lambda_.Function(
+            self, "WebSocketStreamFunction",
+            runtime=lambda_.Runtime.PYTHON_3_11,
+            handler="stream.handler",
+            code=lambda_.Code.from_asset("../lambda/websocket"),
+            timeout=Duration.minutes(15),
+            memory_size=3008,
+            role=websocket_lambda_role,
+            environment={
+                "CONNECTIONS_TABLE": self.websocket_connections_table.table_name,
+                "PROMPT_META_TABLE": self.prompt_meta_table.table_name,
+                "PROMPT_BUCKET": self.prompt_bucket.bucket_name,
+                "REGION": self.region
+            }
+        )
+        
+        # WebSocket API 생성
+        self.websocket_api = apigatewayv2.WebSocketApi(
+            self, "BedrockDiyWebSocketApi",
+            api_name="bedrock-diy-websocket-api",
+            description="실시간 스트리밍을 위한 WebSocket API",
+            connect_route_options=apigatewayv2.WebSocketRouteOptions(
+                integration=integrations.WebSocketLambdaIntegration(
+                    "ConnectIntegration",
+                    self.websocket_connect_lambda
+                )
+            ),
+            disconnect_route_options=apigatewayv2.WebSocketRouteOptions(
+                integration=integrations.WebSocketLambdaIntegration(
+                    "DisconnectIntegration", 
+                    self.websocket_disconnect_lambda
+                )
+            )
+        )
+        
+        # Stream 라우트 추가
+        self.websocket_api.add_route(
+            "stream",
+            integration=integrations.WebSocketLambdaIntegration(
+                "StreamIntegration",
+                self.websocket_stream_lambda
+            )
+        )
+        
+        # WebSocket API Stage 생성
+        self.websocket_stage = apigatewayv2.WebSocketStage(
+            self, "WebSocketStage",
+            web_socket_api=self.websocket_api,
+            stage_name="prod",
+            auto_deploy=True
+        )
+        
+        # WebSocket API URL 출력 (stage 포함)
+        websocket_url = f"{self.websocket_api.api_endpoint}/prod"
+        CfnOutput(
+            self, "WebSocketApiUrl",
+            value=websocket_url,
+            description="WebSocket API URL with stage",
+            export_name="WebSocketApiUrl"
         ) 

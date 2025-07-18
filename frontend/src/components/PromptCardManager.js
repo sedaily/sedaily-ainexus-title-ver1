@@ -147,9 +147,9 @@ const PromptCardManager = ({ projectId, projectName }) => {
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-full bg-gray-50 dark:bg-gray-900">
       {/* 채팅 인터페이스 */}
-      <div className="flex-1">
+      <div className="flex-1 min-w-0">
         <ChatInterface
           projectId={projectId}
           projectName={projectName}
@@ -158,30 +158,32 @@ const PromptCardManager = ({ projectId, projectName }) => {
       </div>
 
       {/* 프롬프트 관리 사이드바 (우측) */}
-      <div className="w-80 bg-white border-l border-gray-100 flex flex-col shadow-sm">
-        <div className="p-4 border-b border-gray-100">
+      <div className="w-80 bg-white dark:bg-gray-800 border-l border-gray-100 dark:border-gray-700 flex flex-col shadow-sm flex-shrink-0">
+        <div className="flex-shrink-0 p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
           <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold text-gray-800">
+            <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
               프롬프트 카드
             </h2>
             <button
               onClick={handleNewCard}
-              className="inline-flex items-center px-3 py-1.5 text-sm bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors shadow-sm"
+              className="inline-flex items-center px-4 py-2 text-sm bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-md hover:shadow-lg font-medium"
             >
-              <PlusIcon className="h-4 w-4 mr-1" />
-              추가
+              <PlusIcon className="h-4 w-4 mr-1.5" />
+              새 추가
             </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
           {promptCards.length === 0 ? (
-            <div className="text-center py-10">
-              <p className="text-gray-500 mb-5">프롬프트 카드가 없습니다</p>
+            <div className="text-center py-8">
+              <SparklesIcon className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
+              <p className="text-gray-500 dark:text-gray-400 mb-4">프롬프트 카드가 없습니다</p>
               <button
                 onClick={handleNewCard}
-                className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                className="inline-flex items-center px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-sm font-medium"
               >
+                <PlusIcon className="h-4 w-4 mr-1.5" />
                 첫 번째 카드 만들기
               </button>
             </div>
@@ -216,10 +218,10 @@ const PromptCardManager = ({ projectId, projectName }) => {
 // 간단한 프롬프트 카드 컴포넌트
 const PromptCard = ({ card, onEdit, onDelete }) => {
   return (
-    <div className="bg-white rounded-xl p-4 flex flex-col space-y-3 border border-gray-200 hover:shadow-lg hover:border-blue-400 transition-all duration-200">
+    <div className="bg-white dark:bg-gray-700 rounded-xl p-4 flex flex-col space-y-3 border border-gray-200 dark:border-gray-600 hover:shadow-lg hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-200">
       {/* Header: Title and Actions */}
       <div className="flex items-start justify-between">
-        <h3 className="font-semibold text-sm text-gray-800 leading-tight pr-2 flex-1">
+        <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-200 leading-tight pr-2 flex-1">
           {card.title || `프롬프트 ${card.promptId || card.prompt_id}`}
         </h3>
         <div className="flex items-center flex-shrink-0">
@@ -229,13 +231,13 @@ const PromptCard = ({ card, onEdit, onDelete }) => {
               e.stopPropagation();
               await onEdit();
             }}
-            className="p-1 text-gray-500 rounded-full hover:bg-gray-100 hover:text-blue-600 transition-colors"
+            className="p-1 text-gray-500 dark:text-gray-400 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
           >
             <PencilIcon className="h-4 w-4" />
           </button>
           <button
             onClick={onDelete}
-            className="p-1 text-gray-500 rounded-full hover:bg-gray-100 hover:text-red-600 transition-colors"
+            className="p-1 text-gray-500 dark:text-gray-400 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-red-600 dark:hover:text-red-400 transition-colors"
           >
             <TrashIcon className="h-4 w-4" />
           </button>
@@ -248,13 +250,13 @@ const PromptCard = ({ card, onEdit, onDelete }) => {
           {card.tags.slice(0, 3).map((tag) => (
             <span
               key={tag}
-              className="px-2 py-0.5 text-xs bg-gray-100 text-gray-700 rounded-full"
+              className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full"
             >
               #{tag}
             </span>
           ))}
           {card.tags.length > 3 && (
-            <span className="text-xs text-gray-500">
+            <span className="text-xs text-gray-500 dark:text-gray-400">
               +{card.tags.length - 3}
             </span>
           )}
@@ -263,13 +265,13 @@ const PromptCard = ({ card, onEdit, onDelete }) => {
 
       {/* Content Snippet */}
       {(card.content || card.prompt_text) && (
-        <p className="text-xs text-gray-600 leading-relaxed line-clamp-2">
+        <p className="text-xs text-gray-600 dark:text-gray-300 leading-relaxed line-clamp-2">
           {card.content || card.prompt_text}
         </p>
       )}
 
       {/* Date */}
-      <div className="flex items-end justify-between pt-2 text-xs text-gray-400">
+      <div className="flex items-end justify-between pt-2 text-xs text-gray-400 dark:text-gray-500">
         <span className="flex-shrink-0">
           생성:{" "}
           {new Date(card.createdAt || new Date()).toLocaleDateString("ko-KR", {

@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { promptCardAPI } from "../services/api";
 import ChatInterface from "./ChatInterface";
 import LoadingSpinner from "./LoadingSpinner";
+import { ChatInterfaceSkeleton } from "./skeleton/SkeletonComponents";
 
 const UserView = ({ projectId, projectName }) => {
   const [promptCards, setPromptCards] = useState([]);
@@ -11,8 +12,10 @@ const UserView = ({ projectId, projectName }) => {
     const loadPromptCards = async () => {
       try {
         setLoading(true);
-        const promptCardsData = await promptCardAPI.getPromptCards(projectId);
-        setPromptCards(promptCardsData);
+        // AdminView와 동일하게 includeContent=true로 설정하여 프롬프트 내용을 포함하여 로드
+        const response = await promptCardAPI.getPromptCards(projectId, true);
+        // 응답 구조가 AdminView와 동일하게 처리
+        setPromptCards(response.promptCards || []);
       } catch (error) {
         console.warn("프롬프트 카드 로드 실패:", error);
         setPromptCards([]);
@@ -25,14 +28,7 @@ const UserView = ({ projectId, projectName }) => {
   }, [projectId]);
 
   if (loading) {
-    return (
-      <div className="h-full flex items-center justify-center">
-        <LoadingSpinner />
-        <div className="ml-4 text-gray-600">
-          채팅 화면을 준비하고 있습니다...
-        </div>
-      </div>
-    );
+    return <ChatInterfaceSkeleton />;
   }
 
   return (

@@ -7,67 +7,14 @@ import {
   ExclamationTriangleIcon,
   ClockIcon,
 } from "@heroicons/react/24/outline";
+import { ChatMessageSkeleton } from "../skeleton/SkeletonComponents";
 
-// 로딩 진행률 표시 컴포넌트
-const LoadingProgress = ({ loadingProgress }) => {
-  if (!loadingProgress) return null;
-
-  const { stage, message, percentage } = loadingProgress;
-
-  const getStageIcon = (currentStage) => {
-    const stages = ["initializing", "analyzing", "generating", "finalizing"];
-    const currentIndex = stages.indexOf(currentStage);
-
-    return stages.map((stageName, index) => {
-      const isActive = index <= currentIndex;
-      const isCurrent = index === currentIndex;
-
-      return (
-        <div
-          key={stageName}
-          className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-medium ${
-            isActive
-              ? isCurrent
-                ? "bg-blue-600 text-white animate-pulse"
-                : "bg-green-500 text-white"
-              : "bg-gray-200 text-gray-500"
-          }`}
-        >
-          {isActive && !isCurrent ? "✓" : index + 1}
-        </div>
-      );
-    });
-  };
-
+// 간단한 로딩 표시만 유지
+const SimpleLoadingIndicator = () => {
   return (
-    <div className="mt-3 p-4 bg-blue-50 rounded-lg border border-blue-200">
-      {/* 진행률 바 */}
-      <div className="mb-3">
-        <div className="flex justify-between text-xs text-blue-600 mb-1">
-          <span>처리 진행률</span>
-          <span>{percentage}%</span>
-        </div>
-        <div className="w-full bg-blue-200 rounded-full h-2">
-          <div
-            className="bg-blue-600 h-2 rounded-full transition-all duration-300 ease-out"
-            style={{ width: `${percentage}%` }}
-          ></div>
-        </div>
-      </div>
-
-      {/* 단계별 진행 상황 */}
-      <div className="flex justify-between items-center mb-2">
-        {getStageIcon(stage)}
-      </div>
-
-      {/* 현재 상태 메시지 */}
-      <div className="text-sm text-blue-700 font-medium">{message}</div>
-
-      {/* 예상 소요 시간 표시 */}
-      <div className="flex items-center mt-2 text-xs text-blue-600">
-        <ClockIcon className="h-3 w-3 mr-1" />
-        <span>일반적으로 30초-2분 소요됩니다</span>
-      </div>
+    <div className="flex items-center text-blue-600 text-sm">
+      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+      <span>답변 생성 중...</span>
     </div>
   );
 };
@@ -164,19 +111,8 @@ const ChatMessage = ({
                       <StreamingIndicator />
                     </div>
                   ) : (
-                    // 일반 로딩 메시지 표시
-                    <div>
-                      <div className="flex items-center text-blue-600">
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
-                        <span className="text-base font-medium">
-                          {message.content ||
-                            "AI가 답변을 생성하고 있습니다..."}
-                        </span>
-                      </div>
-                      <LoadingProgress
-                        loadingProgress={message.loadingProgress}
-                      />
-                    </div>
+                    // 스켈레톤 UI 표시
+                    <ChatMessageSkeleton isUser={false} />
                   )}
                 </div>
               ) : (

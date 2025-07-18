@@ -20,9 +20,14 @@ import {
 } from "@heroicons/react/24/outline";
 import { projectAPI, handleAPIError, filterProjects } from "../services/api";
 import CreateProject from "./CreateProject";
+import { usePrefetch } from "../hooks/usePrefetch";
+import { ProjectListSkeleton } from "./skeleton/SkeletonComponents";
+import AnimatedProjectCard from "./AnimatedProjectCard";
 
 const ProjectList = () => {
   const navigate = useNavigate();
+  const { prefetchProjectDetail, prefetchCreateProject } = usePrefetch();
+  
   // 상태 관리
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -166,14 +171,7 @@ const ProjectList = () => {
   );
 
   if (loading) {
-    return (
-      <div className="flex justify-center items-center h-64">
-        <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
-          <p className="text-gray-600">프로젝트 목록을 불러오는 중...</p>
-        </div>
-      </div>
-    );
+    return <ProjectListSkeleton />;
   }
 
   if (error) {
@@ -209,7 +207,7 @@ const ProjectList = () => {
       </div>
 
       {/* 필터링 바 */}
-      <div className="bg-white rounded-xl border border-gray-200 p-6 shadow-sm">
+      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm transition-colors duration-200">
         <div className="flex flex-col sm:flex-row gap-4">
           {/* 검색바 */}
           <div className="flex-1 relative">
@@ -219,7 +217,7 @@ const ProjectList = () => {
               placeholder="프로젝트 이름, 설명, 태그로 검색..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
             />
           </div>
 
@@ -229,10 +227,10 @@ const ProjectList = () => {
             <div className="relative" ref={sortDropdownRef}>
               <button
                 onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
-                className="flex items-center justify-between pl-4 pr-3 py-3 bg-white border border-gray-300 rounded-lg hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 min-w-[140px]"
+                className="flex items-center justify-between pl-4 pr-3 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-gray-400 dark:hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 min-w-[140px]"
               >
                 <div className="flex items-center space-x-2">
-                  <span className="text-gray-700 font-medium">
+                  <span className="text-gray-700 dark:text-gray-300 font-medium">
                     {currentSortOption?.label}
                   </span>
                 </div>
@@ -245,7 +243,7 @@ const ProjectList = () => {
 
               {/* 드롭다운 메뉴 */}
               {sortDropdownOpen && (
-                <div className="absolute top-full left-0 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg z-50 overflow-hidden">
+                <div className="absolute top-full left-0 mt-1 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-50 overflow-hidden">
                   {sortOptions.map((option) => (
                     <button
                       key={option.value}
@@ -253,10 +251,10 @@ const ProjectList = () => {
                         setSortBy(option.value);
                         setSortDropdownOpen(false);
                       }}
-                      className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 transition-colors duration-150 ${
+                      className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-150 ${
                         sortBy === option.value
-                          ? "bg-blue-50 text-blue-600"
-                          : "text-gray-700"
+                          ? "bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-400"
+                          : "text-gray-700 dark:text-gray-300"
                       }`}
                     >
                       <div className="flex items-center space-x-2">
@@ -295,6 +293,7 @@ const ProjectList = () => {
           {/* 새 프로젝트 버튼 */}
           <button
             onClick={() => setShowCreateModal(true)}
+            onMouseEnter={prefetchCreateProject}
             className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
           >
             <PlusIcon className="h-4 w-4 mr-2" />새 프로젝트
@@ -304,20 +303,21 @@ const ProjectList = () => {
 
       {/* 프로젝트 목록 */}
       {filteredProjects.length === 0 ? (
-        <div className="text-center py-16 bg-white rounded-xl border border-gray-200">
+        <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 transition-colors duration-200">
           <FolderOpenIcon className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-          <h3 className="text-xl font-medium text-gray-900 mb-2">
+          <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">
             {searchQuery
               ? "조건에 맞는 프로젝트가 없습니다"
               : "프로젝트가 없습니다"}
           </h3>
-          <p className="text-gray-500 mb-8">
+          <p className="text-gray-500 dark:text-gray-400 mb-8">
             {searchQuery
               ? "다른 조건으로 검색해보세요"
               : "첫 번째 프로젝트를 생성해보세요"}
           </p>
           <button
             onClick={() => setShowCreateModal(true)}
+            onMouseEnter={prefetchCreateProject}
             className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
           >
             <PlusIcon className="h-4 w-4 mr-2" />새 프로젝트 생성
@@ -332,13 +332,14 @@ const ProjectList = () => {
           }
         >
           {filteredProjects.map((project) => (
-            <ProjectCard
+            <AnimatedProjectCard
               key={project.projectId}
               project={project}
               onDelete={deleteProject}
               onEdit={handleEditProject}
               viewMode={viewMode}
               navigate={navigate}
+              onMouseEnter={prefetchProjectDetail}
             />
           ))}
         </div>
@@ -395,6 +396,7 @@ const ProjectCard = ({ project, onDelete, onEdit, viewMode, navigate }) => {
     return (
       <div
         onClick={handleCardClick}
+        onMouseEnter={prefetchProjectDetail}
         className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all cursor-pointer h-[320px] flex flex-col"
       >
         <div className="p-6">
@@ -517,7 +519,8 @@ const ProjectCard = ({ project, onDelete, onEdit, viewMode, navigate }) => {
   return (
     <div
       onClick={handleCardClick}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 hover:shadow-md transition-all cursor-pointer h-[280px] flex flex-col"
+      onMouseEnter={prefetchProjectDetail}
+      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all cursor-pointer h-[280px] flex flex-col"
     >
       <div className="p-6 flex flex-col flex-1">
         <div className="flex justify-between items-start mb-4">
@@ -526,10 +529,10 @@ const ProjectCard = ({ project, onDelete, onEdit, viewMode, navigate }) => {
               <DocumentTextIcon className="h-8 w-8 text-blue-600" />
             </div>
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 truncate">
+              <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
                 {project.name}
               </h3>
-              <p className="text-sm text-gray-500 mt-1 line-clamp-2">
+              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
                 {project.description || "설명 없음"}
               </p>
             </div>

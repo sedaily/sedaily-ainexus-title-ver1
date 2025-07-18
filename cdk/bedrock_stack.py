@@ -814,6 +814,7 @@ class BedrockDiyStack(Stack):
                     "dynamodb:PutItem",
                     "dynamodb:DeleteItem",
                     "dynamodb:GetItem",
+                    "dynamodb:Query",
                     "dynamodb:Scan",
                     "s3:GetObject",
                     "bedrock:InvokeModel",

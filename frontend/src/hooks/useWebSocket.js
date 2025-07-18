@@ -199,7 +199,7 @@ export const useWebSocket = (projectId) => {
 
   // 스트리밍 요청
   const startStreaming = useCallback(
-    (userInput, chatHistory = []) => {
+    (userInput, chatHistory = [], promptCards = []) => {
       if (!isConnected) {
         setError("WebSocket 연결이 필요합니다");
         return false;
@@ -210,7 +210,16 @@ export const useWebSocket = (projectId) => {
         projectId,
         userInput,
         chat_history: chatHistory,
+        prompt_cards: promptCards,
       };
+
+      console.log('WebSocket 메시지 전송:', {
+        action: message.action,
+        projectId: message.projectId,
+        inputLength: userInput.length,
+        historyLength: chatHistory.length,
+        promptCardsCount: promptCards.length
+      });
 
       return sendMessage(message);
     },

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense } from "react";
 import {
   BrowserRouter as Router,
   Routes,
@@ -8,12 +8,33 @@ import {
 import { Toaster } from "react-hot-toast";
 import { AuthProvider } from "./contexts/AuthContext";
 import { AppProvider } from "./contexts/AppContext";
+import { ThemeProvider } from "./contexts/ThemeContext";
 import Header from "./components/Header";
-import ProjectList from "./components/ProjectList";
-import ProjectDetail from "./components/ProjectDetail";
-import CreateProject from "./components/CreateProject";
-import ModeSelection from "./components/ModeSelection";
 import "./App.css";
+
+// 코드 스플리팅 - 필요할 때만 로드
+const ModeSelection = React.lazy(() => import("./components/ModeSelection"));
+const ProjectList = React.lazy(() => import("./components/ProjectList"));
+const ProjectDetail = React.lazy(() => import("./components/ProjectDetail"));
+const CreateProject = React.lazy(() => import("./components/CreateProject"));
+
+// 빠른 로딩을 위한 미니멀 스켈레톤 컴포넌트
+const PageSkeleton = () => (
+  <div className="min-h-screen bg-gray-50 dark:bg-gray-900 animate-pulse">
+    <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+      <div className="max-w-7xl mx-auto px-4 py-4">
+        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+      </div>
+    </div>
+    <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="space-y-4">
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
+        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+      </div>
+    </div>
+  </div>
+);
 
 function AppContent() {
   const location = useLocation();
@@ -22,19 +43,21 @@ function AppContent() {
     location.pathname === "/" || location.pathname.startsWith("/projects/");
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
       {!isHeaderHidden && <Header />}
       <main
         className={
           isHeaderHidden ? "" : "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
         }
       >
-        <Routes>
-          <Route path="/" element={<ModeSelection />} />
-          <Route path="/projects" element={<ProjectList />} />
-          <Route path="/create" element={<CreateProject />} />
-          <Route path="/projects/:projectId" element={<ProjectDetail />} />
-        </Routes>
+        <Suspense fallback={<PageSkeleton />}>
+          <Routes>
+            <Route path="/" element={<ModeSelection />} />
+            <Route path="/projects" element={<ProjectList />} />
+            <Route path="/create" element={<CreateProject />} />
+            <Route path="/projects/:projectId" element={<ProjectDetail />} />
+          </Routes>
+        </Suspense>
       </main>
     </div>
   );
@@ -42,10 +65,11 @@ function AppContent() {
 
 function App() {
   return (
-    <AuthProvider>
-      <AppProvider>
-        <Router>
-          <AppContent />
+    <ThemeProvider>
+      <AuthProvider>
+        <AppProvider>
+          <Router>
+            <AppContent />
           <Toaster
             position="top-right"
             toastOptions={{
@@ -63,9 +87,10 @@ function App() {
               },
             }}
           />
-        </Router>
-      </AppProvider>
-    </AuthProvider>
+          </Router>
+        </AppProvider>
+      </AuthProvider>
+    </ThemeProvider>
   );
 }
 

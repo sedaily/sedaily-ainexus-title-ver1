@@ -998,7 +998,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "a6bdaa1a8d6af1e75a3e7f0ef0117f3bacb21c49542f8936d3a767996dfb9b7d.zip"
+     "S3Key": "e5eebfcbfc110c61d63ba88cc7ac0bc61ef5039da4de1c905af27f461001e74b.zip"
     },
     "DeadLetterConfig": {
      "TargetArn": {
@@ -1039,7 +1039,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/GenerateFunction/Resource",
-    "aws:asset:path": "asset.a6bdaa1a8d6af1e75a3e7f0ef0117f3bacb21c49542f8936d3a767996dfb9b7d",
+    "aws:asset:path": "asset.e5eebfcbfc110c61d63ba88cc7ac0bc61ef5039da4de1c905af27f461001e74b",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -4463,6 +4463,7 @@
         "dynamodb:PutItem",
         "dynamodb:DeleteItem",
         "dynamodb:GetItem",
+        "dynamodb:Query",
         "dynamodb:Scan",
         "s3:GetObject",
         "bedrock:InvokeModel",
@@ -4518,7 +4519,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "f9f975981ed8fe07edea855c61993068847cefff791f41dd1694818a619fbdc2.zip"
+     "S3Key": "1a469d37d5db8c56b0c9a0bb66452105f69fe75f8652f83a229da86c6d91639d.zip"
     },
     "Environment": {
      "Variables": {
@@ -4545,7 +4546,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/WebSocketConnectFunction/Resource",
-    "aws:asset:path": "asset.f9f975981ed8fe07edea855c61993068847cefff791f41dd1694818a619fbdc2",
+    "aws:asset:path": "asset.1a469d37d5db8c56b0c9a0bb66452105f69fe75f8652f83a229da86c6d91639d",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -4555,7 +4556,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "f9f975981ed8fe07edea855c61993068847cefff791f41dd1694818a619fbdc2.zip"
+     "S3Key": "1a469d37d5db8c56b0c9a0bb66452105f69fe75f8652f83a229da86c6d91639d.zip"
     },
     "Environment": {
      "Variables": {
@@ -4582,7 +4583,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/WebSocketDisconnectFunction/Resource",
-    "aws:asset:path": "asset.f9f975981ed8fe07edea855c61993068847cefff791f41dd1694818a619fbdc2",
+    "aws:asset:path": "asset.1a469d37d5db8c56b0c9a0bb66452105f69fe75f8652f83a229da86c6d91639d",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -4592,7 +4593,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "f9f975981ed8fe07edea855c61993068847cefff791f41dd1694818a619fbdc2.zip"
+     "S3Key": "1a469d37d5db8c56b0c9a0bb66452105f69fe75f8652f83a229da86c6d91639d.zip"
     },
     "Environment": {
      "Variables": {
@@ -4625,7 +4626,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "BedrockDiyAuthStack/WebSocketStreamFunction/Resource",
-    "aws:asset:path": "asset.f9f975981ed8fe07edea855c61993068847cefff791f41dd1694818a619fbdc2",
+    "aws:asset:path": "asset.1a469d37d5db8c56b0c9a0bb66452105f69fe75f8652f83a229da86c6d91639d",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }

@@ -1,4 +1,8 @@
+<<<<<<< HEAD
 # Real-time Streaming Implementation Manual
+=======
+# Real-time Streaming Implementation Guide
+>>>>>>> bcad35988ccd7afaa5c21397467781396ddbb70a
 
 ## Overview
 

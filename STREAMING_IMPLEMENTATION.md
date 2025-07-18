@@ -1,4 +1,4 @@
-# WebSocket Real-time Streaming Implementation Guide
+# Real-time Streaming Implementation Guide
 
 ## Project Overview
 

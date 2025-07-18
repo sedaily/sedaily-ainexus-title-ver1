@@ -339,7 +339,7 @@ const ProjectList = () => {
               onEdit={handleEditProject}
               viewMode={viewMode}
               navigate={navigate}
-              onMouseEnter={prefetchProjectDetail}
+              onMouseEnter={onMouseEnter}
             />
           ))}
         </div>
@@ -364,7 +364,7 @@ const ProjectList = () => {
 };
 
 // 프로젝트 카드 컴포넌트
-const ProjectCard = ({ project, onDelete, onEdit, viewMode, navigate }) => {
+const ProjectCard = ({ project, onDelete, onEdit, viewMode, navigate, onMouseEnter }) => {
   const [showMenu, setShowMenu] = useState(false);
   const menuRef = useRef(null);
 
@@ -396,7 +396,7 @@ const ProjectCard = ({ project, onDelete, onEdit, viewMode, navigate }) => {
     return (
       <div
         onClick={handleCardClick}
-        onMouseEnter={prefetchProjectDetail}
+        onMouseEnter={onMouseEnter}
         className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all cursor-pointer h-[320px] flex flex-col"
       >
         <div className="p-6">

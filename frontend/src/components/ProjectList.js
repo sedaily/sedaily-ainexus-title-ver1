@@ -339,7 +339,7 @@ const ProjectList = () => {
               onEdit={handleEditProject}
               viewMode={viewMode}
               navigate={navigate}
-              onMouseEnter={onMouseEnter}
+              onMouseEnter={prefetchProjectDetail}
             />
           ))}
         </div>
@@ -519,7 +519,7 @@ const ProjectCard = ({ project, onDelete, onEdit, viewMode, navigate, onMouseEnt
   return (
     <div
       onClick={handleCardClick}
-      onMouseEnter={prefetchProjectDetail}
+      onMouseEnter={onMouseEnter}
       className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all cursor-pointer h-[280px] flex flex-col"
     >
       <div className="p-6 flex flex-col flex-1">

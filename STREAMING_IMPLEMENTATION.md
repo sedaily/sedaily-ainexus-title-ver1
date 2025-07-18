@@ -1,6 +1,6 @@
-# WebSocket Real-time Streaming Implementation Guide
+# Real-time Streaming Implementation Manual
 
-## Project Overview
+## Overview
 
 Detailed documentation of implementing real-time text streaming functionality similar to ChatGPT/Claude in an AI title generation system.
 

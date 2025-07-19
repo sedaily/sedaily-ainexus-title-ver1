@@ -45,9 +45,12 @@ export const useChat = (projectId, projectName, promptCards = []) => {
   const [inputValue, setInputValue] = useState("");
   const [copiedMessage, setCopiedMessage] = useState(null);
   const [canSendMessage, setCanSendMessage] = useState(true);
+  const [inputHeight, setInputHeight] = useState(24); // 동적 높이 관리
+  const [selectedModel, setSelectedModel] = useState("anthropic.claude-3-5-sonnet-20241022-v2:0");
   const streamingMessageIdRef = useRef(null);
   const currentWebSocketRef = useRef(null);
   const currentExecutionIdRef = useRef(null);
+  
 
   const messagesEndRef = useRef(null);
   const inputRef = useRef(null);
@@ -392,6 +395,41 @@ export const useChat = (projectId, projectName, promptCards = []) => {
   }, [resetOrchestration]);
 
   /**
+   * 입력창 높이 자동 조절
+   */
+  const adjustInputHeight = useCallback((value) => {
+    if (!value.trim()) {
+      setInputHeight(24); // 기본 높이
+      return;
+    }
+    
+    // 줄 수 계산 (대략적)
+    const lines = value.split('\n').length;
+    const charBasedLines = Math.ceil(value.length / 80); // 80자당 1줄로 추정
+    const estimatedLines = Math.max(lines, charBasedLines);
+    
+    // 높이 계산 (lineHeight: 1.4, fontSize: 16px)
+    let calculatedHeight;
+    if (estimatedLines <= 3) {
+      calculatedHeight = 24 + (estimatedLines - 1) * 22; // 기본 + 추가 줄
+    } else if (estimatedLines <= 10) {
+      calculatedHeight = 150 + (estimatedLines - 6) * 15; // 중간 범위
+    } else {
+      calculatedHeight = Math.min(400, 150 + (estimatedLines - 6) * 12); // 최대 400px
+    }
+    
+    setInputHeight(Math.max(24, calculatedHeight));
+  }, []);
+  
+  /**
+   * 입력값 변경 처리
+   */
+  const handleInputChange = useCallback((value) => {
+    setInputValue(value);
+    adjustInputHeight(value);
+  }, [adjustInputHeight]);
+
+  /**
    * 메시지 전송
    */
   const handleSendMessage = useCallback(async () => {
@@ -435,6 +473,7 @@ export const useChat = (projectId, projectName, promptCards = []) => {
 
     setMessages((prev) => [...prev, userMessage, streamingMessage]);
     setInputValue("");
+    setInputHeight(24); // 입력창 높이 초기화
 
     // 기존 메시지 + 현재 사용자 메시지를 포함한 대화 히스토리 생성
     const allMessages = [...messages, userMessage];
@@ -494,7 +533,8 @@ export const useChat = (projectId, projectName, promptCards = []) => {
         const success = wsStartStreaming(
           userMessage.content,
           trimmedChatHistory,
-          activePromptCards
+          activePromptCards,
+          selectedModel
         );
 
         if (success) {
@@ -512,6 +552,7 @@ export const useChat = (projectId, projectName, promptCards = []) => {
         userInput: userMessage.content,
         chat_history: trimmedChatHistory,
         prompt_cards: activePromptCards,
+        modelId: selectedModel,
       };
 
       console.log("백엔드 전송 데이터 최종 확인:", orchestrationData);
@@ -521,6 +562,7 @@ export const useChat = (projectId, projectName, promptCards = []) => {
         useStreaming: true,
         chat_history: orchestrationData.chat_history,
         prompt_cards: orchestrationData.prompt_cards,
+        modelId: orchestrationData.modelId,
         onChunk: handleStreamingResponse,
         onError: (error) => {
           console.error("스트리밍 오류:", error);
@@ -661,6 +703,7 @@ export const useChat = (projectId, projectName, promptCards = []) => {
     messages,
     inputValue,
     setInputValue,
+    handleInputChange, // 새로운 입력 핸들러
     copiedMessage,
     isGenerating,
     isStreaming,
@@ -668,6 +711,7 @@ export const useChat = (projectId, projectName, promptCards = []) => {
     streamingMessageId: streamingMessageIdRef.current,
     messagesEndRef,
     inputRef,
+    inputHeight, // 동적 높이
     handleSendMessage,
     handleStopGeneration,
     handleKeyPress,
@@ -683,5 +727,8 @@ export const useChat = (projectId, projectName, promptCards = []) => {
     scrollContainerRef,
     handleScroll,
     isUserScrolling,
+    // 모델 선택 관련 추가
+    selectedModel,
+    setSelectedModel,
   };
 };

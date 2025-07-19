@@ -1,13 +1,21 @@
-import React from 'react';
+import React from "react";
 
 // 기본 스켈레톤 박스
-export const SkeletonBox = ({ width = 'w-full', height = 'h-4', className = '' }) => (
-  <div className={`bg-gray-200 dark:bg-gray-700 rounded animate-pulse ${width} ${height} ${className}`}></div>
+export const SkeletonBox = ({
+  width = "w-full",
+  height = "h-4",
+  className = "",
+}) => (
+  <div
+    className={`bg-gray-200 dark:bg-gray-700 rounded animate-pulse ${width} ${height} ${className}`}
+  ></div>
 );
 
 // 원형 스켈레톤 (아바타용)
-export const SkeletonCircle = ({ size = 'w-10 h-10', className = '' }) => (
-  <div className={`bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse ${size} ${className}`}></div>
+export const SkeletonCircle = ({ size = "w-10 h-10", className = "" }) => (
+  <div
+    className={`bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse ${size} ${className}`}
+  ></div>
 );
 
 // 채팅 메시지 스켈레톤
@@ -34,7 +42,7 @@ export const ChatMessageSkeleton = ({ isUser = false }) => (
             <SkeletonBox width="w-3/4" height="h-4" />
             <SkeletonBox width="w-2/3" height="h-4" />
           </div>
-          
+
           {/* 복사 버튼 영역 스켈레톤 */}
           <div className="mt-4 flex items-center justify-between">
             <div className="flex items-center space-x-3">
@@ -63,13 +71,13 @@ export const ProjectCardSkeleton = () => (
         </div>
         <SkeletonBox width="w-6" height="h-6" className="rounded" />
       </div>
-      
+
       <div className="flex-1 space-y-3 mb-4">
         <SkeletonBox width="w-full" height="h-4" />
         <SkeletonBox width="w-5/6" height="h-4" />
         <SkeletonBox width="w-4/5" height="h-4" />
       </div>
-      
+
       <div className="flex items-center justify-between text-sm">
         <SkeletonBox width="w-20" height="h-4" />
         <SkeletonBox width="w-16" height="h-4" />
@@ -102,7 +110,7 @@ export const ChatInterfaceSkeleton = () => (
         </div>
       </div>
     </div>
-    
+
     {/* 메시지 영역 스켈레톤 */}
     <div className="flex-1 overflow-y-auto p-4 space-y-6">
       <ChatMessageSkeleton isUser={true} />
@@ -110,7 +118,7 @@ export const ChatInterfaceSkeleton = () => (
       <ChatMessageSkeleton isUser={true} />
       <ChatMessageSkeleton isUser={false} />
     </div>
-    
+
     {/* 입력 영역 스켈레톤 */}
     <div className="border-t border-gray-200 dark:border-gray-700 p-4">
       <div className="flex space-x-3">
@@ -123,8 +131,8 @@ export const ChatInterfaceSkeleton = () => (
 
 // 페이지 스켈레톤 (이미 있던 것을 향상)
 export const PageSkeleton = () => (
-  <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
-    <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 animate-pulse">
+  <div className="min-h-screen bg-gray-50 dark:bg-dark-primary">
+    <div className="bg-white dark:bg-dark-secondary border-b border-gray-200 dark:border-gray-700 animate-pulse">
       <div className="max-w-7xl mx-auto px-4 py-4">
         <SkeletonBox width="w-32" height="h-6" />
       </div>
@@ -134,7 +142,10 @@ export const PageSkeleton = () => (
         <SkeletonBox width="w-48" height="h-8" />
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {Array.from({ length: 6 }, (_, index) => (
-            <div key={index} className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 animate-pulse">
+            <div
+              key={index}
+              className="bg-white dark:bg-dark-secondary rounded-xl border border-gray-200 dark:border-gray-700 p-6 animate-pulse"
+            >
               <div className="space-y-4">
                 <SkeletonBox width="w-3/4" height="h-5" />
                 <SkeletonBox width="w-full" height="h-4" />

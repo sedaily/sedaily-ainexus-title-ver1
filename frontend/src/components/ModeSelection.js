@@ -1,6 +1,7 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
 import { useApp } from "../contexts/AppContext";
+import DarkModeToggle from "./DarkModeToggle";
 
 const ModeSelection = () => {
   const navigate = useNavigate();
@@ -12,73 +13,83 @@ const ModeSelection = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex flex-col items-center justify-center p-4">
-      <div className="text-center mb-16">
-        <h1 className="text-6xl font-bold text-gray-800 mb-4">
-          AI 제목 생성기
-        </h1>
-        <p className="text-xl text-gray-600 max-w-2xl mx-auto leading-relaxed">
-          원하시는 모드를 선택하여 시작해보세요
-        </p>
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-primary flex flex-col items-center justify-center p-4 transition-all duration-500 relative">
+      {/* 다크모드 토글 - 상단 우측에 고정 */}
+      <div className="absolute top-8 right-8 z-20">
+        <DarkModeToggle size="md" />
       </div>
 
-      <div className="flex flex-col md:flex-row gap-8 w-full max-w-4xl">
-        {/* 사용자 모드 카드 - 정사각형 디자인 */}
-        <div className="flex-1 group">
-          <button
-            onClick={() => handleModeSelect("user")}
-            className="w-full aspect-square relative overflow-hidden bg-gradient-to-br from-blue-500 to-blue-700 rounded-3xl shadow-xl hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300 ease-out p-8 text-white"
-          >
-            {/* 배경 장식 효과 */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -translate-y-16 translate-x-16"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full translate-y-12 -translate-x-12"></div>
-            <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-white opacity-5 rounded-full"></div>
-
-            <div className="relative z-10 h-full flex flex-col items-center justify-center">
-              <div className="text-7xl mb-6 transform group-hover:scale-110 transition-transform duration-300">
-                👥
-              </div>
-              <h2 className="text-3xl font-bold mb-3">사용자 모드</h2>
-              <p className="text-blue-100 text-lg text-center leading-relaxed px-4">
-                깔끔한 채팅 화면으로
-                <br />
-                바로 대화를 시작하세요
-              </p>
-            </div>
-          </button>
+      {/* 메인 컨텐츠 */}
+      <div className="relative z-10">
+        {/* 헤더 섹션 */}
+        <div className="text-center mb-20">
+          <div className="mb-8">
+            <h1 className="text-7xl md:text-8xl font-bold text-gray-900 dark:text-white mb-6 animate-fade-in">
+              AI 제목 생성기
+            </h1>
+            <div className="w-32 h-1 bg-blue-500 mx-auto rounded-full" />
+          </div>
+          <p className="text-xl md:text-2xl text-gray-600 dark:text-gray-300 max-w-2xl mx-auto leading-relaxed font-light">
+            원하시는 모드를 선택하여
+            <span className="text-blue-600 dark:text-blue-400 font-medium">
+              {" "}
+              효율적인 AI 경험
+            </span>
+            을 시작해보세요
+          </p>
         </div>
 
-        {/* 관리자 모드 카드 - 정사각형 디자인 */}
-        <div className="flex-1 group">
-          <button
-            onClick={() => handleModeSelect("admin")}
-            className="w-full aspect-square relative overflow-hidden bg-gradient-to-br from-green-500 to-green-700 rounded-3xl shadow-xl hover:shadow-2xl transform hover:-translate-y-2 transition-all duration-300 ease-out p-8 text-white"
-          >
-            {/* 배경 장식 효과 */}
-            <div className="absolute top-0 right-0 w-32 h-32 bg-white opacity-10 rounded-full -translate-y-16 translate-x-16"></div>
-            <div className="absolute bottom-0 left-0 w-24 h-24 bg-white opacity-10 rounded-full translate-y-12 -translate-x-12"></div>
-            <div className="absolute -bottom-20 -right-20 w-64 h-64 bg-white opacity-5 rounded-full"></div>
-
-            <div className="relative z-10 h-full flex flex-col items-center justify-center">
-              <div className="text-7xl mb-6 transform group-hover:scale-110 transition-transform duration-300">
-                ⚙️
+        {/* 모드 선택 카드들 */}
+        <div className="flex flex-col lg:flex-row gap-8 w-full max-w-5xl mx-auto items-stretch">
+          {/* 사용자 모드 카드 */}
+          <div className="flex-1 group">
+            <button
+              onClick={() => handleModeSelect("user")}
+              className="w-full h-96 relative overflow-hidden card-neo group-hover:scale-105 transition-all duration-300 p-8 text-gray-900 dark:text-white"
+            >
+              <div className="relative z-10 h-full flex flex-col items-center justify-center">
+                <div className="text-8xl mb-8 transform group-hover:scale-110 transition-all duration-300">
+                  👥
+                </div>
+                <h2 className="text-4xl font-bold mb-4 text-blue-600 dark:text-blue-400">
+                  사용자 모드
+                </h2>
+                <p className="text-gray-600 dark:text-gray-300 text-lg text-center leading-relaxed px-6 whitespace-nowrap">
+                  <span className="font-semibold">직관적인 채팅으로 바로 시작하세요</span>
+                </p>
               </div>
-              <h2 className="text-3xl font-bold mb-3">관리자 모드</h2>
-              <p className="text-green-100 text-lg text-center leading-relaxed px-4">
-                프롬프트를 관리하고
-                <br />
-                시스템을 설정하세요
-              </p>
-            </div>
-          </button>
-        </div>
-      </div>
+            </button>
+          </div>
 
-      {/* 부가 정보 */}
-      <div className="mt-16 text-center">
-        <p className="text-gray-500 text-sm">
-          모드는 언제든지 변경할 수 있습니다
-        </p>
+          {/* 관리자 모드 카드 */}
+          <div className="flex-1 group">
+            <button
+              onClick={() => handleModeSelect("admin")}
+              className="w-full h-96 relative overflow-hidden card-neo group-hover:scale-105 transition-all duration-300 p-8 text-gray-900 dark:text-white"
+            >
+              <div className="relative z-10 h-full flex flex-col items-center justify-center">
+                <div className="text-8xl mb-8 transform group-hover:scale-110 transition-all duration-300">
+                  ⚙️
+                </div>
+                <h2 className="text-4xl font-bold mb-4 text-emerald-600 dark:text-emerald-400">
+                  관리자 모드
+                </h2>
+                <p className="text-gray-600 dark:text-gray-300 text-lg text-center leading-relaxed px-6 whitespace-nowrap">
+                  <span className="font-semibold">고급 관리 기능으로 시스템 최적화</span>
+                </p>
+              </div>
+            </button>
+          </div>
+        </div>
+
+        {/* 부가 정보 */}
+        <div className="mt-20 text-center">
+          <div className="card-neo px-8 py-4 rounded-2xl inline-block">
+            <p className="text-gray-600 dark:text-gray-300 text-sm font-medium">
+              💡 모드는 언제든지 변경할 수 있습니다
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );

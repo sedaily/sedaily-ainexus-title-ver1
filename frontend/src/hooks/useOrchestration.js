@@ -30,11 +30,12 @@ export const useOrchestration = (projectId) => {
         setIsExecuting(true);
         setExecutionStatus("STARTING");
 
-        // chat_history, prompt_cards, userInput을 포함하는 data 객체 생성
+        // chat_history, prompt_cards, userInput, modelId를 포함하는 data 객체 생성
         const data = {
           userInput: userInput,
           chat_history: options.chat_history || [],
           prompt_cards: options.prompt_cards || [],
+          modelId: options.modelId || null,
         };
 
         console.log("🚀 대화 생성 요청 시작:", {
@@ -43,6 +44,7 @@ export const useOrchestration = (projectId) => {
           historyLength: data.chat_history.length,
           promptCardsCount: data.prompt_cards.length,
           useStreaming: options.useStreaming === true,
+          modelId: data.modelId,
           timestamp: new Date().toISOString(),
         });
 

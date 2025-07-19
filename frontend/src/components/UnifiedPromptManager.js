@@ -152,14 +152,16 @@ const UnifiedPromptManager = ({ projectId, projectName }) => {
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6 bg-white rounded-lg shadow-lg">
+    <div className="max-w-4xl mx-auto p-6 bg-white dark:bg-dark-secondary rounded-lg shadow-lg transition-colors duration-300">
       {/* 헤더 */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center space-x-3">
           <DocumentTextIcon className="h-8 w-8 text-blue-600" />
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{projectName}</h1>
-            <p className="text-sm text-gray-500">
+            <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+              {projectName}
+            </h1>
+            <p className="text-sm text-gray-500 dark:text-gray-400">
               통합 프롬프트 문서 • {metadata.total_prompts}개 프롬프트
             </p>
           </div>
@@ -195,17 +197,19 @@ const UnifiedPromptManager = ({ projectId, projectName }) => {
       {/* 섹션 목록 */}
       {document.sections.length > 0 && (
         <div className="mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-3">
+          <h3 className="text-lg font-semibold text-gray-900 dark:text-white mb-3">
             프롬프트 섹션
           </h3>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
             {document.sections.map((section) => (
               <div
                 key={section.id}
-                className="bg-gray-50 rounded-lg p-3 flex items-center justify-between"
+                className="bg-gray-50 dark:bg-gray-700 rounded-lg p-3 flex items-center justify-between transition-colors duration-200"
               >
                 <div>
-                  <h4 className="font-medium text-gray-900">{section.title}</h4>
+                  <h4 className="font-medium text-gray-900 dark:text-white">
+                    {section.title}
+                  </h4>
                   <p className="text-xs text-gray-500">
                     {new Date(section.created_at).toLocaleDateString("ko-KR")}
                   </p>
@@ -223,10 +227,10 @@ const UnifiedPromptManager = ({ projectId, projectName }) => {
       )}
 
       {/* 메인 에디터/미리보기 */}
-      <div className="border rounded-lg">
-        <div className="border-b bg-gray-50 px-4 py-2">
+      <div className="bg-gray-50 dark:bg-dark-tertiary rounded-lg transition-colors duration-200">
+        <div className="bg-gray-50 dark:bg-dark-tertiary px-4 py-2 transition-colors duration-200">
           <div className="flex items-center justify-between">
-            <h3 className="font-medium text-gray-900">
+            <h3 className="font-medium text-gray-900 dark:text-white">
               {showPreview ? "미리보기" : "편집 모드"}
             </h3>
             {!showPreview && (
@@ -254,7 +258,7 @@ const UnifiedPromptManager = ({ projectId, projectName }) => {
         <div className="p-4">
           {showPreview ? (
             <div className="prose max-w-none">
-              <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono">
+              <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-mono">
                 {document.content || "프롬프트 내용이 없습니다."}
               </pre>
             </div>
@@ -264,15 +268,15 @@ const UnifiedPromptManager = ({ projectId, projectName }) => {
               onChange={(e) =>
                 setDocument((prev) => ({ ...prev, content: e.target.value }))
               }
-              className="w-full h-96 p-3 border rounded-md font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full h-96 p-3 bg-white dark:bg-dark-primary text-gray-900 dark:text-white rounded-md font-mono text-sm resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
               placeholder="프롬프트 내용을 입력하세요..."
             />
           ) : (
             <div
-              className="min-h-96 p-3 bg-gray-50 rounded-md cursor-text"
+              className="min-h-96 p-3 bg-gray-50 dark:bg-dark-primary rounded-md cursor-text transition-colors duration-200"
               onClick={() => setEditing(true)}
             >
-              <pre className="whitespace-pre-wrap text-sm text-gray-800 font-mono">
+              <pre className="whitespace-pre-wrap text-sm text-gray-800 dark:text-gray-200 font-mono">
                 {document.content || "클릭하여 프롬프트를 작성하세요..."}
               </pre>
             </div>
@@ -281,7 +285,7 @@ const UnifiedPromptManager = ({ projectId, projectName }) => {
       </div>
 
       {/* 메타데이터 */}
-      <div className="mt-4 text-xs text-gray-500 flex items-center justify-between">
+      <div className="mt-4 text-xs text-gray-500 dark:text-gray-400 flex items-center justify-between transition-colors duration-200">
         <span>버전 {document.version}</span>
         <span>
           마지막 수정:{" "}
@@ -294,31 +298,33 @@ const UnifiedPromptManager = ({ projectId, projectName }) => {
       {/* 프롬프트 추가 모달 */}
       {showAddForm && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <div className="bg-white rounded-lg p-6 w-full max-w-md">
-            <h3 className="text-lg font-semibold mb-4">새 프롬프트 추가</h3>
+          <div className="bg-white dark:bg-dark-secondary rounded-lg p-6 w-full max-w-md transition-colors duration-200">
+            <h3 className="text-lg font-semibold mb-4 text-gray-900 dark:text-white">
+              새 프롬프트 추가
+            </h3>
 
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   제목
                 </label>
                 <input
                   type="text"
                   value={newPromptTitle}
                   onChange={(e) => setNewPromptTitle(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-dark-tertiary text-gray-900 dark:text-white rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
                   placeholder="프롬프트 제목을 입력하세요"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
                   내용
                 </label>
                 <textarea
                   value={newPromptContent}
                   onChange={(e) => setNewPromptContent(e.target.value)}
-                  className="w-full px-3 py-2 border rounded-md h-32 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className="w-full px-3 py-2 bg-white dark:bg-dark-tertiary text-gray-900 dark:text-white rounded-md h-32 resize-none focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
                   placeholder="프롬프트 내용을 입력하세요"
                 />
               </div>
@@ -331,13 +337,13 @@ const UnifiedPromptManager = ({ projectId, projectName }) => {
                   setNewPromptTitle("");
                   setNewPromptContent("");
                 }}
-                className="px-4 py-2 text-gray-600 hover:text-gray-800"
+                className="px-4 py-2 text-gray-600 dark:text-gray-400 hover:text-gray-800 dark:hover:text-gray-200 transition-colors duration-200"
               >
                 취소
               </button>
               <button
                 onClick={addNewPrompt}
-                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700"
+                className="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 transition-colors duration-200"
               >
                 추가
               </button>

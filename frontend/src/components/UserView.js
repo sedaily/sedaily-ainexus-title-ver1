@@ -32,7 +32,7 @@ const UserView = ({ projectId, projectName }) => {
   }
 
   return (
-    <div className="h-full bg-white">
+    <div className="h-full bg-white dark:bg-dark-primary transition-colors duration-300">
       <ChatInterface
         projectId={projectId}
         projectName={projectName}

@@ -14,7 +14,36 @@ from datetime import datetime
 bedrock_client = boto3.client("bedrock-runtime", region_name=os.environ.get("REGION", "us-east-1"))
 dynamodb_client = boto3.client("dynamodb", region_name=os.environ.get("REGION", "us-east-1"))
 PROMPT_META_TABLE = os.environ.get("PROMPT_META_TABLE", "BedrockDiyPrompts")
-MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0"
+# 기본 모델 ID (프론트엔드에서 지정하지 않을 때 사용)
+DEFAULT_MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0"
+
+# 지원되는 모델 목록
+SUPPORTED_MODELS = {
+    # Anthropic Claude 모델들
+    "anthropic.claude-opus-4-v1:0": {"name": "Claude Opus 4", "provider": "Anthropic"},
+    "anthropic.claude-sonnet-4-v1:0": {"name": "Claude Sonnet 4", "provider": "Anthropic"},
+    "anthropic.claude-3-7-sonnet-v1:0": {"name": "Claude 3.7 Sonnet", "provider": "Anthropic"},
+    "anthropic.claude-3-5-haiku-20241022-v1:0": {"name": "Claude 3.5 Haiku", "provider": "Anthropic"},
+    "anthropic.claude-3-5-sonnet-20241022-v2:0": {"name": "Claude 3.5 Sonnet v2", "provider": "Anthropic"},
+    "anthropic.claude-3-5-sonnet-20240620-v1:0": {"name": "Claude 3.5 Sonnet", "provider": "Anthropic"},
+    "anthropic.claude-3-opus-20240229-v1:0": {"name": "Claude 3 Opus", "provider": "Anthropic"},
+    "anthropic.claude-3-haiku-20240307-v1:0": {"name": "Claude 3 Haiku", "provider": "Anthropic"},
+    "anthropic.claude-3-sonnet-20240229-v1:0": {"name": "Claude 3 Sonnet", "provider": "Anthropic"},
+    
+    # Meta Llama 모델들
+    "meta.llama4-scout-17b-instruct-v4:0": {"name": "Llama 4 Scout 17B", "provider": "Meta"},
+    "meta.llama4-maverick-17b-instruct-v4:0": {"name": "Llama 4 Maverick 17B", "provider": "Meta"},
+    "meta.llama3-3-70b-instruct-v1:0": {"name": "Llama 3.3 70B", "provider": "Meta"},
+    "meta.llama3-2-11b-instruct-v1:0": {"name": "Llama 3.2 11B Vision", "provider": "Meta"},
+    "meta.llama3-2-1b-instruct-v1:0": {"name": "Llama 3.2 1B", "provider": "Meta"},
+    "meta.llama3-2-3b-instruct-v1:0": {"name": "Llama 3.2 3B", "provider": "Meta"},
+    
+    # Amazon Nova 모델들
+    "amazon.nova-premier-v1:0": {"name": "Nova Premier", "provider": "Amazon"},
+    "amazon.nova-lite-v1:0": {"name": "Nova Lite", "provider": "Amazon"},
+    "amazon.nova-micro-v1:0": {"name": "Nova Micro", "provider": "Amazon"},
+    "amazon.nova-pro-v1:0": {"name": "Nova Pro", "provider": "Amazon"},
+}
 
 def handler(event, context):
     """
@@ -37,24 +66,34 @@ def handler(event, context):
             user_input = params.get('userInput', '')
             chat_history_str = params.get('chat_history', '[]')
             chat_history = json.loads(chat_history_str)
+            model_id = params.get('modelId', DEFAULT_MODEL_ID)
         else: # POST
             body = json.loads(event.get('body', '{}'))
             user_input = body.get('userInput', '')
             chat_history = body.get('chat_history', [])
             prompt_cards = body.get('prompt_cards', [])
+            model_id = body.get('modelId', DEFAULT_MODEL_ID)
             
         if not user_input.strip():
             return _create_error_response(400, "사용자 입력이 필요합니다.")
+        
+        # 모델 ID 검증
+        if model_id not in SUPPORTED_MODELS:
+            print(f"지원되지 않는 모델 ID: {model_id}")
+            model_id = DEFAULT_MODEL_ID
         
         # GET 요청일 때 prompt_cards 처리
         if http_method == 'GET':
             prompt_cards = []
         
+        print(f"🤖 선택된 모델: {model_id} ({SUPPORTED_MODELS.get(model_id, {}).get('name', 'Unknown')})")
+        print(f"📋 요청 본문에서 받은 modelId: {body.get('modelId') if http_method == 'POST' else params.get('modelId')}")
+        
         # 스트리밍 또는 일반 생성 분기
         if "/stream" in path:
-            return _handle_streaming_generation(project_id, user_input, chat_history, prompt_cards)
+            return _handle_streaming_generation(project_id, user_input, chat_history, prompt_cards, model_id)
         else:
-            return _handle_standard_generation(project_id, user_input, chat_history, prompt_cards)
+            return _handle_standard_generation(project_id, user_input, chat_history, prompt_cards, model_id)
 
     except json.JSONDecodeError:
         print("JSON 파싱 오류 발생")
@@ -63,25 +102,35 @@ def handler(event, context):
         print(f"오류 발생: {traceback.format_exc()}")
         return _create_error_response(500, f"서버 내부 오류: {e}")
 
-def _handle_streaming_generation(project_id, user_input, chat_history, prompt_cards):
+def _handle_streaming_generation(project_id, user_input, chat_history, prompt_cards, model_id):
     """
     Bedrock에서 스트리밍 응답을 받아 실시간으로 반환합니다.
     청크별로 즉시 SSE 형식으로 구성하여 반환합니다.
     """
     try:
-        print(f"스트리밍 생성 시작: 프로젝트 ID={project_id}")
+        print(f"스트리밍 생성 시작: 프로젝트 ID={project_id}, 모델={model_id}")
         final_prompt = _build_final_prompt(project_id, user_input, chat_history, prompt_cards)
         
-        request_body = {
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 4096,
-            "messages": [{"role": "user", "content": final_prompt}],
-            "temperature": 0.3,
-            "top_p": 0.9,
-        }
+        # 모델에 따른 요청 본문 구성
+        if model_id.startswith("anthropic."):
+            request_body = {
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": 4096,
+                "messages": [{"role": "user", "content": final_prompt}],
+                "temperature": 0.1,
+                "top_p": 0.9,
+            }
+            else:
+            # Meta Llama나 Amazon Nova 모델들을 위한 요청 형식
+            request_body = {
+                "prompt": final_prompt,
+                "max_gen_len": 4096,
+                "temperature": 0.1,
+                "top_p": 0.9,
+            }
 
         response_stream = bedrock_client.invoke_model_with_response_stream(
-            modelId=MODEL_ID,
+            modelId=model_id,
             body=json.dumps(request_body)
         )
         
@@ -100,8 +149,21 @@ def _handle_streaming_generation(project_id, user_input, chat_history, prompt_ca
         # 실시간 청크 처리 - 최소 지연
         for event in response_stream.get("body"):
             chunk = json.loads(event["chunk"]["bytes"].decode())
-            if chunk['type'] == 'content_block_delta':
-                text = chunk['delta']['text']
+            
+            # 모델별 응답 형식 처리
+            text = None
+            if model_id.startswith("anthropic."):
+                # Anthropic 모델 응답 형식
+                if chunk['type'] == 'content_block_delta':
+                    text = chunk['delta']['text']
+            else:
+                # Meta Llama나 Amazon Nova 모델 응답 형식
+                if 'generation' in chunk:
+                    text = chunk['generation']
+                elif 'text' in chunk:
+                    text = chunk['text']
+            
+            if text:
                 full_response += text
                 
                 # 즉시 청크 전송 (버퍼링 없음)
@@ -122,47 +184,69 @@ def _handle_streaming_generation(project_id, user_input, chat_history, prompt_ca
         sse_chunks.append(f"data: {json.dumps(completion_data)}\n\n")
         
         print(f"스트리밍 생성 완료: 총 {len(sse_chunks)} 청크 생성됨, 응답 길이={len(full_response)}")
-        return {
-            "statusCode": 200,
+                return {
+                    "statusCode": 200,
             "headers": _get_sse_headers(),
             "body": "".join(sse_chunks),
             "isBase64Encoded": False
-        }
-
-    except Exception as e:
+                }
+                
+            except Exception as e:
         print(f"스트리밍 오류: {traceback.format_exc()}")
         error_data = {
             "error": str(e),
             "sessionId": project_id,
             "type": "error"
         }
-        return {
-            "statusCode": 500,
+                return {
+                    "statusCode": 500,
             "headers": _get_sse_headers(),
             "body": f"data: {json.dumps(error_data)}\n\n",
             "isBase64Encoded": False
         }
 
-def _handle_standard_generation(project_id, user_input, chat_history, prompt_cards):
+def _handle_standard_generation(project_id, user_input, chat_history, prompt_cards, model_id):
     """일반(non-streaming) Bedrock 응답을 처리합니다."""
     try:
-        print(f"일반 생성 시작: 프로젝트 ID={project_id}")
+        print(f"일반 생성 시작: 프로젝트 ID={project_id}, 모델={model_id}")
         final_prompt = _build_final_prompt(project_id, user_input, chat_history, prompt_cards)
         
-        request_body = {
-            "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 4096,
-            "messages": [{"role": "user", "content": final_prompt}],
-            "temperature": 0.3,
-            "top_p": 0.9
-        }
+        # 모델에 따른 요청 본문 구성
+        if model_id.startswith("anthropic."):
+            request_body = {
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": 4096,
+                "messages": [{"role": "user", "content": final_prompt}],
+                "temperature": 0.1,
+                "top_p": 0.9
+            }
+                        else:
+            # Meta Llama나 Amazon Nova 모델들을 위한 요청 형식
+            request_body = {
+                "prompt": final_prompt,
+                "max_gen_len": 4096,
+                "temperature": 0.1,
+                "top_p": 0.9,
+            }
 
-        response = bedrock_client.invoke_model(
-            modelId=MODEL_ID,
+                response = bedrock_client.invoke_model(
+            modelId=model_id,
             body=json.dumps(request_body)
         )
         response_body = json.loads(response['body'].read())
-        result_text = response_body['content'][0]['text']
+        
+        # 모델별 응답 형식 처리
+        if model_id.startswith("anthropic."):
+            # Anthropic 모델 응답 형식
+            result_text = response_body['content'][0]['text']
+        else:
+            # Meta Llama나 Amazon Nova 모델 응답 형식
+            if 'generation' in response_body:
+                result_text = response_body['generation']
+            elif 'outputs' in response_body:
+                result_text = response_body['outputs'][0]['text']
+            else:
+                result_text = response_body.get('text', str(response_body))
         
         print(f"일반 생성 완료: 응답 길이={len(result_text)}")
         return {
@@ -171,7 +255,7 @@ def _handle_standard_generation(project_id, user_input, chat_history, prompt_car
             "body": json.dumps({"result": result_text}),
             "isBase64Encoded": False
         }
-    except Exception as e:
+            except Exception as e:
         print(f"일반 생성 오류: {traceback.format_exc()}")
         return _create_error_response(500, f"Bedrock 호출 오류: {e}")
 
@@ -227,7 +311,7 @@ def _build_final_prompt(project_id, user_input, chat_history, prompt_cards):
         print(f"최종 프롬프트 길이: {len(final_prompt)}자")
         
         return final_prompt
-        
+
     except Exception as e:
         print(f"프롬프트 구성 오류: {traceback.format_exc()}")
         # 오류 발생 시 기본 프롬프트 반환 (히스토리 포함)
@@ -242,7 +326,7 @@ def _build_final_prompt(project_id, user_input, chat_history, prompt_cards):
 
 def _get_sse_headers():
     """Server-Sent Events 응답을 위한 헤더를 반환합니다."""
-    return {
+        return {
         'Content-Type': 'text/event-stream',
         'Cache-Control': 'no-cache',
         'Connection': 'keep-alive',
@@ -257,4 +341,4 @@ def _create_error_response(status_code, message):
         "headers": {"Content-Type": "application/json", "Access-Control-Allow-Origin": "*"},
         "body": json.dumps({"error": message, "timestamp": datetime.utcnow().isoformat()}),
         "isBase64Encoded": False
-    } 
+        } 

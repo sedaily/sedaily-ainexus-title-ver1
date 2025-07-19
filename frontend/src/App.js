@@ -20,17 +20,17 @@ const CreateProject = React.lazy(() => import("./components/CreateProject"));
 
 // 빠른 로딩을 위한 미니멀 스켈레톤 컴포넌트
 const PageSkeleton = () => (
-  <div className="min-h-screen bg-gray-50 dark:bg-gray-900 animate-pulse">
-    <div className="bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700">
+  <div className="min-h-screen bg-gray-50 dark:bg-dark-primary animate-pulse">
+    <div className="bg-white dark:bg-dark-secondary">
       <div className="max-w-7xl mx-auto px-4 py-4">
-        <div className="h-6 bg-gray-200 dark:bg-gray-700 rounded w-32"></div>
+        <div className="h-6 bg-gray-200 dark:bg-dark-tertiary rounded w-32"></div>
       </div>
     </div>
     <div className="max-w-7xl mx-auto px-4 py-8">
       <div className="space-y-4">
-        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-3/4"></div>
-        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-1/2"></div>
-        <div className="h-4 bg-gray-200 dark:bg-gray-700 rounded w-5/6"></div>
+        <div className="h-4 bg-gray-200 dark:bg-dark-tertiary rounded w-3/4"></div>
+        <div className="h-4 bg-gray-200 dark:bg-dark-tertiary rounded w-1/2"></div>
+        <div className="h-4 bg-gray-200 dark:bg-dark-tertiary rounded w-5/6"></div>
       </div>
     </div>
   </div>
@@ -43,11 +43,13 @@ function AppContent() {
     location.pathname === "/" || location.pathname.startsWith("/projects/");
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-primary transition-colors duration-300">
       {!isHeaderHidden && <Header />}
       <main
         className={
-          isHeaderHidden ? "" : "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8"
+          isHeaderHidden
+            ? ""
+            : "max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 bg-gray-50 dark:bg-dark-primary"
         }
       >
         <Suspense fallback={<PageSkeleton />}>
@@ -70,23 +72,34 @@ function App() {
         <AppProvider>
           <Router>
             <AppContent />
-          <Toaster
-            position="top-right"
-            toastOptions={{
-              duration: 4000,
-              style: {
-                background: "#363636",
-                color: "#fff",
-              },
-              success: {
-                duration: 3000,
-                theme: {
-                  primary: "green",
-                  secondary: "black",
+            <Toaster
+              position="top-right"
+              toastOptions={{
+                duration: 4000,
+                className: "dark:bg-gray-800 dark:text-white",
+                style: {
+                  background: "var(--toaster-bg, #ffffff)",
+                  color: "var(--toaster-color, #374151)",
+                  border: "1px solid var(--toaster-border, #e5e7eb)",
                 },
-              },
-            }}
-          />
+                success: {
+                  className: "dark:bg-gray-800 dark:text-green-400",
+                  style: {
+                    background: "var(--toaster-success-bg, #f0fdf4)",
+                    color: "var(--toaster-success-color, #15803d)",
+                    border: "1px solid var(--toaster-success-border, #bbf7d0)",
+                  },
+                },
+                error: {
+                  className: "dark:bg-gray-800 dark:text-red-400",
+                  style: {
+                    background: "var(--toaster-error-bg, #fef2f2)",
+                    color: "var(--toaster-error-color, #dc2626)",
+                    border: "1px solid var(--toaster-error-border, #fecaca)",
+                  },
+                },
+              }}
+            />
           </Router>
         </AppProvider>
       </AuthProvider>

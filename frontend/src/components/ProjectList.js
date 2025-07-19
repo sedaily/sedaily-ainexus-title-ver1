@@ -27,7 +27,7 @@ import AnimatedProjectCard from "./AnimatedProjectCard";
 const ProjectList = () => {
   const navigate = useNavigate();
   const { prefetchProjectDetail, prefetchCreateProject } = usePrefetch();
-  
+
   // 상태 관리
   const [projects, setProjects] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -195,437 +195,184 @@ const ProjectList = () => {
   };
 
   return (
-    <div className="space-y-6">
-      {/* 헤더 */}
-      <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-        <div>
-          <h2 className="text-3xl font-bold text-gray-900">프로젝트 목록</h2>
-          <p className="text-gray-600 mt-1">
-            AI 제목 생성 프로젝트를 관리하고 새로운 프로젝트를 생성하세요
-          </p>
-        </div>
-      </div>
+    <div className="min-h-screen bg-gray-50 dark:bg-dark-primary transition-colors duration-300">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* 상단 헤더 제거 (불필요한 소개 영역) */}
 
-      {/* 필터링 바 */}
-      <div className="bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 p-6 shadow-sm transition-colors duration-200">
-        <div className="flex flex-col sm:flex-row gap-4">
-          {/* 검색바 */}
-          <div className="flex-1 relative">
-            <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-            <input
-              type="text"
-              placeholder="프로젝트 이름, 설명, 태그로 검색..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-10 pr-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-700 text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200"
-            />
-          </div>
-
-          {/* 정렬 옵션 - 커스텀 드롭다운 */}
-          <div className="flex items-center space-x-3">
-            <FunnelIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
-            <div className="relative" ref={sortDropdownRef}>
-              <button
-                onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
-                className="flex items-center justify-between pl-4 pr-3 py-3 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 rounded-lg hover:border-gray-400 dark:hover:border-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500 transition-all duration-200 min-w-[140px]"
-              >
-                <div className="flex items-center space-x-2">
-                  <span className="text-gray-700 dark:text-gray-300 font-medium">
-                    {currentSortOption?.label}
-                  </span>
-                </div>
-                <ChevronDownIcon
-                  className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
-                    sortDropdownOpen ? "rotate-180" : ""
-                  }`}
-                />
-              </button>
-
-              {/* 드롭다운 메뉴 */}
-              {sortDropdownOpen && (
-                <div className="absolute top-full left-0 mt-1 w-full bg-white dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg shadow-lg z-50 overflow-hidden">
-                  {sortOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => {
-                        setSortBy(option.value);
-                        setSortDropdownOpen(false);
-                      }}
-                      className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-gray-600 transition-colors duration-150 ${
-                        sortBy === option.value
-                          ? "bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-400"
-                          : "text-gray-700 dark:text-gray-300"
-                      }`}
-                    >
-                      <div className="flex items-center space-x-2">
-                        <span className="font-medium">{option.label}</span>
-                      </div>
-                      {sortBy === option.value && (
-                        <CheckIcon className="h-4 w-4 text-blue-600" />
-                      )}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* 뷰 모드 */}
-          <div className="flex items-center space-x-1 bg-gray-100 rounded-lg p-1">
-            <button
-              onClick={() => setViewMode("grid")}
-              className={`p-2 rounded-md ${
-                viewMode === "grid" ? "bg-white shadow-sm" : "hover:bg-gray-200"
-              }`}
-            >
-              <Squares2X2Icon className="h-4 w-4" />
-            </button>
-            <button
-              onClick={() => setViewMode("list")}
-              className={`p-2 rounded-md ${
-                viewMode === "list" ? "bg-white shadow-sm" : "hover:bg-gray-200"
-              }`}
-            >
-              <ListBulletIcon className="h-4 w-4" />
-            </button>
-          </div>
-
-          {/* 새 프로젝트 버튼 */}
-          <button
-            onClick={() => setShowCreateModal(true)}
-            onMouseEnter={prefetchCreateProject}
-            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />새 프로젝트
-          </button>
-        </div>
-      </div>
-
-      {/* 프로젝트 목록 */}
-      {filteredProjects.length === 0 ? (
-        <div className="text-center py-16 bg-white dark:bg-gray-800 rounded-xl border border-gray-200 dark:border-gray-700 transition-colors duration-200">
-          <FolderOpenIcon className="mx-auto h-16 w-16 text-gray-400 mb-4" />
-          <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">
-            {searchQuery
-              ? "조건에 맞는 프로젝트가 없습니다"
-              : "프로젝트가 없습니다"}
-          </h3>
-          <p className="text-gray-500 dark:text-gray-400 mb-8">
-            {searchQuery
-              ? "다른 조건으로 검색해보세요"
-              : "첫 번째 프로젝트를 생성해보세요"}
-          </p>
-          <button
-            onClick={() => setShowCreateModal(true)}
-            onMouseEnter={prefetchCreateProject}
-            className="inline-flex items-center px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium"
-          >
-            <PlusIcon className="h-4 w-4 mr-2" />새 프로젝트 생성
-          </button>
-        </div>
-      ) : (
-        <div
-          className={
-            viewMode === "grid"
-              ? "grid gap-6 md:grid-cols-2 lg:grid-cols-3"
-              : "space-y-4"
-          }
-        >
-          {filteredProjects.map((project) => (
-            <AnimatedProjectCard
-              key={project.projectId}
-              project={project}
-              onDelete={deleteProject}
-              onEdit={handleEditProject}
-              viewMode={viewMode}
-              navigate={navigate}
-              onMouseEnter={prefetchProjectDetail}
-            />
-          ))}
-        </div>
-      )}
-
-      {/* 새 프로젝트 생성 모달 */}
-      <CreateProject
-        isOpen={showCreateModal}
-        onClose={() => setShowCreateModal(false)}
-        onSuccess={handleCreateSuccess}
-      />
-
-      {/* 프로젝트 편집 모달 */}
-      <ProjectEditModal
-        project={editingProject}
-        isOpen={showEditModal}
-        onSave={handleUpdateProject}
-        onCancel={handleCancelEdit}
-      />
-    </div>
-  );
-};
-
-// 프로젝트 카드 컴포넌트
-const ProjectCard = ({ project, onDelete, onEdit, viewMode, navigate, onMouseEnter }) => {
-  const [showMenu, setShowMenu] = useState(false);
-  const menuRef = useRef(null);
-
-  // 카드 클릭 핸들러
-  const handleCardClick = (e) => {
-    // 메뉴 버튼을 클릭한 경우 무시
-    if (e.target.closest("button") || e.target.closest("a")) {
-      return;
-    }
-    // 프로젝트 상세 페이지로 이동
-    navigate(`/projects/${project.projectId}`);
-  };
-
-  // 외부 클릭 시 메뉴 닫기
-  useEffect(() => {
-    const handleClickOutside = (event) => {
-      if (menuRef.current && !menuRef.current.contains(event.target)) {
-        setShowMenu(false);
-      }
-    };
-
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => {
-      document.removeEventListener("mousedown", handleClickOutside);
-    };
-  }, []);
-
-  if (viewMode === "list") {
-    return (
-      <div
-        onClick={handleCardClick}
-        onMouseEnter={onMouseEnter}
-        className="bg-white rounded-xl border border-gray-200 hover:shadow-md transition-all cursor-pointer h-[320px] flex flex-col"
-      >
-        <div className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-4 flex-1">
-              <div className="flex-shrink-0">
-                <DocumentTextIcon className="h-12 w-12 text-blue-600" />
-              </div>
-
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center space-x-3 mb-2">
-                  <h3 className="text-xl font-semibold text-gray-900 truncate">
-                    {project.name}
-                  </h3>
-                </div>
-                <p className="text-gray-500 truncate mb-3">
-                  {project.description || "설명 없음"}
-                </p>
-
-                {/* 날짜 */}
-                <div className="flex items-center space-x-4 mb-3">
-                  <div className="flex items-center text-sm text-gray-500">
-                    <CalendarIcon className="h-4 w-4 mr-1.5" />
-                    <span>
-                      생성{" "}
-                      {new Date(project.createdAt).toLocaleDateString("ko-KR")}
-                    </span>
-                  </div>
-                  {project.updatedAt &&
-                    project.updatedAt !== project.createdAt && (
-                      <div className="flex items-center text-sm text-gray-500">
-                        <span className="text-gray-300">•</span>
-                        <span className="ml-1.5">
-                          수정{" "}
-                          {new Date(project.updatedAt).toLocaleDateString(
-                            "ko-KR"
-                          )}
-                        </span>
-                      </div>
-                    )}
-                </div>
-
-                {/* 프롬프트 정보 */}
-                <div className="flex items-center space-x-4 mb-3">
-                  <div className="flex items-center text-sm text-gray-500">
-                    <DocumentTextIcon className="h-4 w-4 mr-1.5" />
-                    <span>프롬프트 클릭해 주세요</span>
-                  </div>
-                </div>
-
-                {/* 태그 */}
-                {project.tags && project.tags.length > 0 && (
-                  <div className="mb-4">
-                    <div className="flex items-center">
-                      <TagIcon className="h-4 w-4 mr-1.5 text-gray-400" />
-                      <div className="flex flex-wrap gap-1.5">
-                        {project.tags.slice(0, 3).map((tag, index) => (
-                          <span
-                            key={index}
-                            className="inline-flex items-center bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full text-xs font-medium"
-                          >
-                            {tag}
-                          </span>
-                        ))}
-                        {project.tags.length > 3 && (
-                          <span className="inline-flex items-center text-xs text-gray-400 px-2">
-                            +{project.tags.length - 3}개
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-3">
-              <div className="relative" ref={menuRef}>
-                <button
-                  onClick={() => setShowMenu(!showMenu)}
-                  className="text-gray-400 hover:text-gray-600 p-2 rounded-lg hover:bg-gray-100"
-                >
-                  <EllipsisHorizontalIcon className="h-5 w-5" />
-                </button>
-
-                {showMenu && (
-                  <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-10">
-                    <div className="py-1">
-                      <button
-                        onClick={() => {
-                          onEdit(project);
-                          setShowMenu(false);
-                        }}
-                        className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                      >
-                        <PencilIcon className="h-4 w-4 mr-3" />
-                        편집
-                      </button>
-                      <button
-                        onClick={() => {
-                          onDelete(project.projectId, project.name);
-                          setShowMenu(false);
-                        }}
-                        className="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50"
-                      >
-                        <TrashIcon className="h-4 w-4 mr-3" />
-                        삭제
-                      </button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div
-      onClick={handleCardClick}
-      onMouseEnter={onMouseEnter}
-      className="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 hover:shadow-md transition-all cursor-pointer h-[280px] flex flex-col"
-    >
-      <div className="p-6 flex flex-col flex-1">
-        <div className="flex justify-between items-start mb-4">
-          <div className="flex items-center space-x-3">
-            <div className="flex-shrink-0">
-              <DocumentTextIcon className="h-8 w-8 text-blue-600" />
-            </div>
+        {/* 필터링 바 */}
+        <div className="space-y-6">
+          {/* 헤더 */}
+          <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
             <div>
-              <h3 className="text-lg font-semibold text-gray-900 dark:text-white truncate">
-                {project.name}
-              </h3>
-              <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 line-clamp-2">
-                {project.description || "설명 없음"}
+              <h2 className="text-3xl font-bold text-gray-900 dark:text-white">
+                프로젝트 목록
+              </h2>
+              <p className="text-gray-600 dark:text-gray-300 mt-1">
+                AI 제목 생성 프로젝트를 관리하고 새로운 프로젝트를 생성하세요
               </p>
             </div>
           </div>
 
-          <div className="relative" ref={menuRef}>
-            <button
-              onClick={() => setShowMenu(!showMenu)}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
-              title="프로젝트 옵션"
-            >
-              <EllipsisHorizontalIcon className="h-5 w-5" />
-            </button>
-
-            {showMenu && (
-              <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-lg ring-1 ring-black ring-opacity-5 z-10">
-                <div className="py-1">
-                  <button
-                    onClick={() => {
-                      onEdit(project);
-                      setShowMenu(false);
-                    }}
-                    className="flex items-center w-full px-4 py-2 text-sm text-gray-700 hover:bg-gray-50"
-                  >
-                    <PencilIcon className="h-4 w-4 mr-3" />
-                    편집
-                  </button>
-                  <button
-                    onClick={() => {
-                      onDelete(project.projectId, project.name);
-                      setShowMenu(false);
-                    }}
-                    className="flex items-center w-full px-4 py-2 text-sm text-red-700 hover:bg-red-50"
-                  >
-                    <TrashIcon className="h-4 w-4 mr-3" />
-                    삭제
-                  </button>
-                </div>
+          {/* 필터링 바 */}
+          <div className="bg-white dark:bg-dark-secondary rounded-xl p-6 shadow-sm transition-colors duration-200">
+            <div className="flex flex-col sm:flex-row gap-4">
+              {/* 검색바 */}
+              <div className="flex-1 relative">
+                <MagnifyingGlassIcon className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <input
+                  type="text"
+                  placeholder="프로젝트 이름, 설명, 태그로 검색..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="w-full pl-10 pr-4 py-3 rounded-lg bg-white dark:bg-dark-tertiary text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-colors duration-200 border-0"
+                  style={{ border: "none", boxShadow: "none" }}
+                />
               </div>
-            )}
-          </div>
-        </div>
 
-        <div className="flex-1 overflow-y-auto">
-          {/* 날짜 */}
-          <div className="flex items-center space-x-4 mb-3">
-            <div className="flex items-center text-sm text-gray-500">
-              <CalendarIcon className="h-4 w-4 mr-1.5" />
-              <span>
-                생성 {new Date(project.createdAt).toLocaleDateString("ko-KR")}
-              </span>
-            </div>
-            {project.updatedAt && project.updatedAt !== project.createdAt && (
-              <div className="flex items-center text-sm text-gray-500">
-                <span className="text-gray-300">•</span>
-                <span className="ml-1.5">
-                  수정 {new Date(project.updatedAt).toLocaleDateString("ko-KR")}
-                </span>
-              </div>
-            )}
-          </div>
+              {/* 정렬 옵션 - 커스텀 드롭다운 */}
+              <div className="flex items-center space-x-3">
+                <FunnelIcon className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                <div className="relative" ref={sortDropdownRef}>
+                  <button
+                    onClick={() => setSortDropdownOpen(!sortDropdownOpen)}
+                    className="flex items-center justify-between pl-4 pr-3 py-3 bg-white dark:bg-dark-tertiary rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 min-w-[140px]"
+                  >
+                    <div className="flex items-center space-x-2">
+                      <span className="text-gray-700 dark:text-gray-300 font-medium">
+                        {currentSortOption?.label}
+                      </span>
+                    </div>
+                    <ChevronDownIcon
+                      className={`h-4 w-4 text-gray-400 transition-transform duration-200 ${
+                        sortDropdownOpen ? "rotate-180" : ""
+                      }`}
+                    />
+                  </button>
 
-          {/* 프롬프트 정보 */}
-          <div className="flex items-center space-x-4 mb-3">
-            <div className="flex items-center text-sm text-gray-500">
-              <DocumentTextIcon className="h-4 w-4 mr-1.5" />
-              <span>프롬프트 클릭해 주세요</span>
-            </div>
-          </div>
-
-          {/* 태그 */}
-          {project.tags && project.tags.length > 0 && (
-            <div className="mb-4">
-              <div className="flex items-center">
-                <TagIcon className="h-4 w-4 mr-1.5 text-gray-400" />
-                <div className="flex flex-wrap gap-1.5">
-                  {project.tags.slice(0, 3).map((tag, index) => (
-                    <span
-                      key={index}
-                      className="inline-flex items-center bg-gray-100 text-gray-600 px-2.5 py-1 rounded-full text-xs font-medium"
-                    >
-                      {tag}
-                    </span>
-                  ))}
-                  {project.tags.length > 3 && (
-                    <span className="inline-flex items-center text-xs text-gray-400 px-2">
-                      +{project.tags.length - 3}개
-                    </span>
+                  {/* 드롭다운 메뉴 */}
+                  {sortDropdownOpen && (
+                    <div className="absolute top-full left-0 mt-1 w-full bg-white dark:bg-dark-tertiary rounded-lg shadow-lg z-50 overflow-hidden">
+                      {sortOptions.map((option) => (
+                        <button
+                          key={option.value}
+                          onClick={() => {
+                            setSortBy(option.value);
+                            setSortDropdownOpen(false);
+                          }}
+                          className={`w-full flex items-center justify-between px-4 py-3 text-left hover:bg-gray-50 dark:hover:bg-dark-secondary transition-colors duration-150 ${
+                            sortBy === option.value
+                              ? "bg-blue-50 dark:bg-blue-900 text-blue-600 dark:text-blue-400"
+                              : "text-gray-700 dark:text-gray-300"
+                          }`}
+                        >
+                          <div className="flex items-center space-x-2">
+                            <span className="font-medium">{option.label}</span>
+                          </div>
+                          {sortBy === option.value && (
+                            <CheckIcon className="h-4 w-4 text-blue-600" />
+                          )}
+                        </button>
+                      ))}
+                    </div>
                   )}
                 </div>
               </div>
+
+              {/* 뷰 모드 */}
+              <div className="flex items-center space-x-1 bg-gray-100 dark:bg-dark-tertiary rounded-lg p-1">
+                <button
+                  onClick={() => setViewMode("grid")}
+                  className={`p-2 rounded-md transition-all duration-200 ${
+                    viewMode === "grid"
+                      ? "bg-white dark:bg-dark-secondary text-gray-900 dark:text-white shadow-sm"
+                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-secondary"
+                  }`}
+                >
+                  <Squares2X2Icon className="h-4 w-4" />
+                </button>
+                <button
+                  onClick={() => setViewMode("list")}
+                  className={`p-2 rounded-md transition-all duration-200 ${
+                    viewMode === "list"
+                      ? "bg-white dark:bg-dark-secondary text-gray-900 dark:text-white shadow-sm"
+                      : "text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-dark-secondary"
+                  }`}
+                >
+                  <ListBulletIcon className="h-4 w-4" />
+                </button>
+              </div>
+
+              {/* 새 프로젝트 버튼 */}
+              <button
+                onClick={() => setShowCreateModal(true)}
+                onMouseEnter={prefetchCreateProject}
+                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white dark:text-white rounded-lg hover:bg-blue-700 transition-colors font-medium"
+              >
+                <PlusIcon className="h-4 w-4 mr-2 text-white dark:text-white" />
+                새 프로젝트
+              </button>
+            </div>
+          </div>
+
+          {/* 프로젝트 목록 */}
+          {filteredProjects.length === 0 ? (
+            <div className="text-center py-16 bg-white dark:bg-dark-secondary rounded-xl transition-colors duration-200">
+              <FolderOpenIcon className="mx-auto h-16 w-16 text-gray-400 mb-4" />
+              <h3 className="text-xl font-medium text-gray-900 dark:text-white mb-2">
+                {searchQuery
+                  ? "조건에 맞는 프로젝트가 없습니다"
+                  : "프로젝트가 없습니다"}
+              </h3>
+              <p className="text-gray-500 dark:text-gray-300 mb-8">
+                {searchQuery
+                  ? "다른 조건으로 검색해보세요"
+                  : "첫 번째 프로젝트를 생성해보세요"}
+              </p>
+              <button
+                onClick={() => setShowCreateModal(true)}
+                onMouseEnter={prefetchCreateProject}
+                className="inline-flex items-center px-6 py-3 bg-blue-600 text-white dark:text-white rounded-lg hover:bg-blue-700 font-medium"
+              >
+                <PlusIcon className="h-4 w-4 mr-2 text-white dark:text-white" />
+                새 프로젝트 생성
+              </button>
+            </div>
+          ) : (
+            <div
+              className={
+                viewMode === "grid"
+                  ? "grid gap-6 md:grid-cols-2 lg:grid-cols-3"
+                  : "space-y-4"
+              }
+            >
+              {filteredProjects.map((project) => (
+                <AnimatedProjectCard
+                  key={project.projectId}
+                  project={project}
+                  onDelete={deleteProject}
+                  onEdit={handleEditProject}
+                  viewMode={viewMode}
+                  navigate={navigate}
+                  onMouseEnter={prefetchProjectDetail}
+                />
+              ))}
             </div>
           )}
+
+          {/* 새 프로젝트 생성 모달 */}
+          <CreateProject
+            isOpen={showCreateModal}
+            onClose={() => setShowCreateModal(false)}
+            onSuccess={handleCreateSuccess}
+          />
+
+          {/* 프로젝트 편집 모달 */}
+          <ProjectEditModal
+            project={editingProject}
+            isOpen={showEditModal}
+            onSave={handleUpdateProject}
+            onCancel={handleCancelEdit}
+          />
         </div>
       </div>
     </div>
@@ -696,122 +443,161 @@ const ProjectEditModal = ({ project, isOpen, onSave, onCancel }) => {
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-lg max-w-md w-full">
-        <div className="flex items-center justify-between p-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">프로젝트 편집</h3>
-          <button
-            onClick={handleModalClose}
-            className="text-gray-400 hover:text-gray-600"
-          >
-            <XMarkIcon className="h-5 w-5" />
-          </button>
-        </div>
+    <>
+      {/* 깔끔한 전체 화면 오버레이 */}
+      <div
+        className="fixed top-0 left-0 right-0 bottom-0 bg-black/50 backdrop-blur-sm transition-opacity"
+        style={{
+          zIndex: 9999,
+          position: "fixed",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: "100vw",
+          height: "100vh",
+        }}
+        onClick={handleModalClose}
+        aria-hidden="true"
+      />
 
-        <form onSubmit={handleSubmit} className="p-4 space-y-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              프로젝트 이름 *
-            </label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="프로젝트 이름을 입력하세요"
-            />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              설명
-            </label>
-            <textarea
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-              placeholder="프로젝트 설명을 입력하세요"
-            />
-          </div>
-
-          {/* 태그 관리 */}
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              태그 ({formData.tags.length}/10)
-            </label>
-
-            {/* 현재 태그들 */}
-            {formData.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mb-3">
-                {formData.tags.map((tag, index) => (
-                  <span
-                    key={index}
-                    className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 text-blue-800"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => removeTag(tag)}
-                      className="ml-2 text-blue-600 hover:text-blue-800"
-                    >
-                      <XMarkIcon className="h-3 w-3" />
-                    </button>
-                  </span>
-                ))}
+      {/* 모달 컨테이너 */}
+      <div
+        className="fixed inset-0 flex items-center justify-center p-4"
+        style={{ zIndex: 10000 }}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="modal-title"
+      >
+        <div className="bg-white dark:bg-dark-secondary rounded-2xl max-w-md w-full shadow-xl dark:shadow-none transform transition-all duration-300">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center space-x-3">
+                <PencilIcon className="h-6 w-6 text-gray-600 dark:text-gray-400" />
+                <h3
+                  id="modal-title"
+                  className="text-lg font-semibold text-gray-900 dark:text-white"
+                >
+                  프로젝트 편집
+                </h3>
               </div>
-            )}
-
-            {/* 태그 입력 */}
-            <div className="flex gap-2">
-              <input
-                type="text"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                onKeyPress={handleTagKeyPress}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
-                placeholder="태그를 입력하고 Enter를 누르세요"
-                maxLength={20}
-                disabled={formData.tags.length >= 10}
-              />
               <button
-                type="button"
-                onClick={addTag}
-                disabled={!tagInput.trim() || formData.tags.length >= 10}
-                className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                onClick={handleModalClose}
+                className="text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 transition-colors"
               >
-                추가
+                <XMarkIcon className="h-5 w-5" />
               </button>
             </div>
-            <p className="text-xs text-gray-500 mt-1">
-              태그는 최대 10개까지 추가할 수 있습니다. 각 태그는 20자 이내로
-              입력하세요.
-            </p>
-          </div>
 
-          <div className="flex justify-end space-x-3 pt-4">
-            <button
-              type="button"
-              onClick={handleModalClose}
-              className="px-4 py-2 text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50"
-            >
-              취소
-            </button>
-            <button
-              type="submit"
-              disabled={!formData.name.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              저장
-            </button>
+            <div className="overflow-y-auto max-h-[calc(90vh-80px)]">
+              <form onSubmit={handleSubmit} className="p-4 space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    프로젝트 이름 *
+                  </label>
+                  <input
+                    type="text"
+                    value={formData.name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, name: e.target.value })
+                    }
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-dark-tertiary text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 "
+                    placeholder="프로젝트 이름을 입력하세요"
+                    required
+                  />
+                </div>
+
+                {/* 프로젝트 설명 */}
+                <div className="space-y-2">
+                  <label className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                    프로젝트 설명
+                  </label>
+                  <textarea
+                    value={formData.description}
+                    onChange={(e) =>
+                      setFormData({ ...formData, description: e.target.value })
+                    }
+                    className="w-full px-4 py-3 rounded-xl bg-gray-50 dark:bg-dark-tertiary text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 resize-none "
+                    placeholder="프로젝트에 대한 간단한 설명을 입력하세요"
+                    rows={4}
+                  />
+                </div>
+
+                {/* 해시태그 */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+                    태그 ({formData.tags.length}/10)
+                  </label>
+
+                  {/* 현재 태그들 */}
+                  {formData.tags.length > 0 && (
+                    <div className="flex flex-wrap gap-2 mb-3">
+                      {formData.tags.map((tag, index) => (
+                        <span
+                          key={index}
+                          className="inline-flex items-center px-3 py-1 rounded-full text-sm bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200"
+                        >
+                          {tag}
+                          <button
+                            type="button"
+                            onClick={() => removeTag(tag)}
+                            className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
+                          >
+                            <XMarkIcon className="h-3 w-3" />
+                          </button>
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* 태그 입력 */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={tagInput}
+                      onChange={(e) => setTagInput(e.target.value)}
+                      onKeyPress={handleTagKeyPress}
+                      className="flex-1 px-4 py-3 rounded-xl bg-gray-50 dark:bg-dark-tertiary text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all duration-200 "
+                      placeholder="태그를 입력하세요"
+                      maxLength={20}
+                    />
+                    <button
+                      type="button"
+                      onClick={addTag}
+                      disabled={!tagInput.trim() || formData.tags.length >= 10}
+                      className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                    >
+                      추가
+                    </button>
+                  </div>
+                  <p className="text-xs text-gray-500 dark:text-gray-400 mt-1">
+                    태그는 최대 10개까지 추가할 수 있습니다. 각 태그는 20자
+                    이내로 입력하세요.
+                  </p>
+                </div>
+
+                <div className="flex justify-end space-x-3 pt-4">
+                  <button
+                    type="button"
+                    onClick={handleModalClose}
+                    className="px-6 py-2.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-dark-tertiary rounded-lg hover:bg-gray-200 dark:hover:bg-dark-primary transition-colors duration-200 font-medium"
+                  >
+                    취소
+                  </button>
+                  <button
+                    type="submit"
+                    disabled={!formData.name.trim()}
+                    className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
+                  >
+                    저장
+                  </button>
+                </div>
+              </form>
+            </div>
           </div>
-        </form>
+        </div>
       </div>
-    </div>
+    </>
   );
 };
 

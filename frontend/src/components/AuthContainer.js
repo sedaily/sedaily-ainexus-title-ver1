@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import Login from "./Login";
 import Signup from "./Signup";
 import EmailVerification from "./EmailVerification";
+import DarkModeToggle from "./DarkModeToggle";
 
 const AuthContainer = ({ onAuthSuccess }) => {
   const [currentView, setCurrentView] = useState("login"); // 'login', 'signup', 'verify'
@@ -62,7 +63,16 @@ const AuthContainer = ({ onAuthSuccess }) => {
     }
   };
 
-  return renderCurrentView();
+  return (
+    <div className="relative bg-gray-50 dark:bg-dark-primary min-h-screen transition-colors duration-300">
+      {/* 다크모드 토글 - 상단 우측에 고정 */}
+      <div className="absolute top-6 right-6 z-10">
+        <DarkModeToggle size="md" />
+      </div>
+
+      {renderCurrentView()}
+    </div>
+  );
 };
 
 export default AuthContainer;

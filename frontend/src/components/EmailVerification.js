@@ -17,9 +17,9 @@ const EmailVerification = ({ email, onVerificationSuccess, onBackToLogin }) => {
         email: email,
         code: code,
       });
-      
+
       console.log("이메일 인증 성공:", response);
-      
+
       if (onVerificationSuccess) {
         onVerificationSuccess(response);
       }
@@ -52,21 +52,24 @@ const EmailVerification = ({ email, onVerificationSuccess, onBackToLogin }) => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div className="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
       <div className="max-w-md w-full space-y-8">
         <div>
-          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+          <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900 dark:text-white">
             이메일 인증
           </h2>
-          <p className="mt-2 text-center text-sm text-gray-600">
+          <p className="mt-2 text-center text-sm text-gray-600 dark:text-gray-300">
             <span className="font-medium">{email}</span>로<br />
             인증 코드가 전송되었습니다.
           </p>
         </div>
-        
+
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           <div>
-            <label htmlFor="code" className="block text-sm font-medium text-gray-700">
+            <label
+              htmlFor="code"
+              className="block text-sm font-medium text-gray-700 dark:text-gray-300"
+            >
               인증 코드 (6자리)
             </label>
             <input
@@ -77,13 +80,13 @@ const EmailVerification = ({ email, onVerificationSuccess, onBackToLogin }) => {
               maxLength={6}
               value={code}
               onChange={(e) => setCode(e.target.value)}
-              className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-center text-2xl font-mono tracking-widest sm:text-sm"
+              className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 dark:border-gray-600 placeholder-gray-500 dark:placeholder-gray-400 text-gray-900 dark:text-white bg-white dark:bg-gray-700 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 text-center text-2xl font-mono tracking-widest sm:text-sm transition-colors duration-200"
               placeholder="000000"
             />
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded relative">
+            <div className="bg-red-50 dark:bg-red-900 border border-red-200 dark:border-red-700 text-red-700 dark:text-red-300 px-4 py-3 rounded relative">
               {error}
             </div>
           )}
@@ -96,12 +99,12 @@ const EmailVerification = ({ email, onVerificationSuccess, onBackToLogin }) => {
             >
               {loading ? "인증 중..." : "인증 완료"}
             </button>
-            
+
             <button
               type="button"
               onClick={handleResendCode}
               disabled={resendLoading}
-              className="w-full text-center py-2 px-4 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full text-center py-2 px-4 border border-gray-300 dark:border-gray-600 text-sm font-medium rounded-md text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
             >
               {resendLoading ? "전송 중..." : "인증 코드 다시 받기"}
             </button>
@@ -111,7 +114,7 @@ const EmailVerification = ({ email, onVerificationSuccess, onBackToLogin }) => {
             <button
               type="button"
               onClick={onBackToLogin}
-              className="text-blue-600 hover:text-blue-500 text-sm"
+              className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 text-sm transition-colors duration-200"
             >
               로그인으로 돌아가기
             </button>

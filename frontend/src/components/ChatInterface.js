@@ -10,6 +10,7 @@ import {
 } from "@heroicons/react/24/outline";
 import { useChat } from "../hooks/useChat";
 import AnimatedChatMessage from "./AnimatedChatMessage";
+import ModelSelector from "./ModelSelector";
 
 const ChatInterface = ({ projectId, projectName, promptCards = [] }) => {
   const navigate = useNavigate();
@@ -20,11 +21,13 @@ const ChatInterface = ({ projectId, projectName, promptCards = [] }) => {
     messages,
     inputValue,
     setInputValue,
+    handleInputChange,
     copiedMessage,
     isGenerating,
     canSendMessage,
     messagesEndRef,
     inputRef,
+    inputHeight,
     handleSendMessage,
     handleStopGeneration,
     handleKeyPress,
@@ -37,6 +40,9 @@ const ChatInterface = ({ projectId, projectName, promptCards = [] }) => {
     scrollContainerRef,
     handleScroll,
     isUserScrolling,
+    // 모델 선택 관련 추가
+    selectedModel,
+    setSelectedModel,
   } = useChat(projectId, projectName, promptCards);
 
   const handleFileUpload = (event) => {
@@ -44,7 +50,8 @@ const ChatInterface = ({ projectId, projectName, promptCards = [] }) => {
     if (file && file.type === "text/plain") {
       const reader = new FileReader();
       reader.onload = (e) => {
-        setInputValue(e.target?.result || "");
+        const content = e.target?.result || "";
+        handleInputChange(content); // 높이 자동 조절
         setUploadedFile(file);
       };
       reader.readAsText(file);
@@ -60,7 +67,8 @@ const ChatInterface = ({ projectId, projectName, promptCards = [] }) => {
       if (file.type === "text/plain") {
         const reader = new FileReader();
         reader.onload = (e) => {
-          setInputValue(e.target?.result || "");
+          const content = e.target?.result || "";
+          handleInputChange(content); // 높이 자동 조절
           setUploadedFile(file);
         };
         reader.readAsText(file);
@@ -79,23 +87,23 @@ const ChatInterface = ({ projectId, projectName, promptCards = [] }) => {
 
   const removeFile = () => {
     setUploadedFile(null);
-    setInputValue("");
+    handleInputChange(""); // 높이 초기화
   };
 
   return (
-    <div className="flex flex-col h-full bg-gray-50 dark:bg-gray-900 transition-colors duration-200">
+    <div className="flex flex-col h-full bg-gray-50 dark:bg-dark-primary transition-colors duration-300">
       {/* 메시지 영역 */}
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto px-6 py-6 min-h-0 bg-gray-50 dark:bg-gray-900"
+        className="flex-1 overflow-y-auto px-6 py-6 min-h-0 bg-gray-50 dark:bg-dark-primary"
       >
         <div className="max-w-4xl mx-auto space-y-6">
           {messages.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-24 mt-12">
-              <div className="bg-white dark:bg-gray-800 rounded-2xl shadow-md p-8 max-w-2xl w-full transition-colors duration-200">
+              <div className="bg-white dark:bg-dark-secondary card-dark rounded-2xl shadow-md p-8 max-w-2xl w-full transition-colors duration-300">
                 <div className="flex justify-center mb-6">
-                  <div className="bg-blue-100 dark:bg-blue-900 p-3 rounded-full">
+                  <div className="bg-blue-100 dark:bg-dark-tertiary p-3 rounded-full">
                     <ChatBubbleLeftRightIcon className="h-8 w-8 text-blue-600 dark:text-blue-400" />
                   </div>
                 </div>
@@ -107,7 +115,7 @@ const ChatInterface = ({ projectId, projectName, promptCards = [] }) => {
                 </p>
 
                 <div className="space-y-4">
-                  <div className="flex items-start p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-start p-3 bg-gray-50 dark:bg-dark-tertiary rounded-lg">
                     <div className="mr-3 mt-1">
                       <SparklesIcon className="h-5 w-5 text-blue-500 dark:text-blue-400" />
                     </div>
@@ -119,7 +127,7 @@ const ChatInterface = ({ projectId, projectName, promptCards = [] }) => {
                     </div>
                   </div>
 
-                  <div className="flex items-start p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-start p-3 bg-gray-50 dark:bg-dark-tertiary rounded-lg">
                     <div className="mr-3 mt-1">
                       <SparklesIcon className="h-5 w-5 text-blue-500 dark:text-blue-400" />
                     </div>
@@ -154,16 +162,16 @@ const ChatInterface = ({ projectId, projectName, promptCards = [] }) => {
         <div className="max-w-4xl mx-auto">
           {/* 업로드된 파일 표시 */}
           {uploadedFile && (
-            <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg flex items-center justify-between">
+            <div className="mb-3 p-3 bg-blue-50 dark:bg-dark-tertiary rounded-lg flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <DocumentPlusIcon className="h-4 w-4 text-blue-600" />
-                <span className="text-sm text-blue-700">
+                <DocumentPlusIcon className="h-4 w-4 text-blue-600 dark:text-blue-400" />
+                <span className="text-sm text-blue-700 dark:text-white">
                   {uploadedFile.name}
                 </span>
               </div>
               <button
                 onClick={removeFile}
-                className="text-blue-600 hover:text-blue-800 p-1"
+                className="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300 p-1"
               >
                 <XMarkIcon className="h-4 w-4" />
               </button>
@@ -171,57 +179,62 @@ const ChatInterface = ({ projectId, projectName, promptCards = [] }) => {
           )}
 
           <div
-            className="bg-white dark:bg-gray-800 rounded-[20px] shadow-md p-4 relative transition-colors duration-200"
+            className="bg-white dark:bg-dark-secondary rounded-[20px] p-4 relative transition-colors duration-300 flex flex-col gap-6"
             style={{
-              boxShadow: "rgba(0, 0, 0, 0.1) 0px 4px 12px 0px",
-              border: "1px solid rgba(112, 115, 124, 0.08)",
-              minHeight: "128px",
-              display: "flex",
-              flexDirection: "column",
-              gap: "24px",
+              minHeight: Math.max(128, inputHeight + 80),
+              transition: "min-height 0.2s ease-in-out",
+              boxShadow: "none",
             }}
             onDrop={handleDrop}
             onDragOver={handleDragOver}
             onDragLeave={handleDragLeave}
           >
-            <div className="flex-1 relative">
+            <div className="flex-1 relative focus:outline-none">
               <textarea
                 ref={inputRef}
                 value={inputValue}
-                onChange={(e) => setInputValue(e.target.value)}
+                onChange={(e) => handleInputChange(e.target.value)}
                 onKeyPress={handleKeyPress}
                 placeholder={
                   isGenerating
                     ? "생성 중입니다..."
                     : "기사 본문을 입력하세요..."
                 }
-                className={`w-full pr-14 pl-2 py-2 border-0 focus:outline-none resize-none transition-colors ${
+                className={`w-full pr-14 pl-2 border-0 focus:outline-none resize-none transition-all duration-300 ${
                   dragOver
-                    ? "bg-blue-50 dark:bg-blue-900"
+                    ? "bg-blue-50 dark:bg-dark-tertiary"
                     : isGenerating
-                    ? "bg-gray-50 dark:bg-gray-700"
-                    : "bg-white dark:bg-gray-800 text-gray-900 dark:text-white"
+                    ? "bg-gray-50 dark:bg-dark-primary"
+                    : "bg-white dark:bg-dark-secondary text-gray-900 dark:text-white"
                 }`}
                 rows={1}
                 style={{
+                  height: `${inputHeight}px`,
                   minHeight: "24px",
-                  maxHeight: "150px",
+                  maxHeight: "400px",
                   lineHeight: "1.4",
-                  overflowY: "auto",
+                  paddingTop: "0px",
+                  paddingBottom: "6px",
+                  overflowY: inputHeight > 200 ? "auto" : "hidden",
                   whiteSpace: "pre-wrap",
                   fontSize: "16px",
                   fontWeight: "400",
-                  color: isGenerating ? "#9CA3AF" : "#171719",
+                  color: isGenerating ? "var(--text-muted)" : "inherit",
+                  outline: "none",
+                  boxShadow: "none",
                 }}
                 disabled={isGenerating}
               />
 
               {/* 전송/중단 버튼 - 입력창 내부에 위치 */}
-              <div className="absolute right-3 bottom-3 flex items-center gap-2">
+              <div
+                className="absolute right-3 bottom-0 flex items-center gap-2"
+                style={{ bottom: "2px" }}
+              >
                 {isGenerating && (
                   <button
                     onClick={handleStopGeneration}
-                    className="flex-shrink-0 bg-red-600 text-white p-2 rounded-full hover:bg-red-700 transition-colors flex items-center justify-center"
+                    className="flex-shrink-0 bg-red-600 hover:bg-red-700 text-white p-2 rounded-full transition-colors flex items-center justify-center"
                     style={{ width: "32px", height: "32px" }}
                     title="생성 중단"
                   >
@@ -231,7 +244,7 @@ const ChatInterface = ({ projectId, projectName, promptCards = [] }) => {
                 <button
                   onClick={handleSendMessage}
                   disabled={!inputValue.trim() || isGenerating}
-                  className="flex-shrink-0 bg-blue-600 text-white p-2 rounded-full hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                  className="flex-shrink-0 bg-blue-600 dark:bg-blue-600 hover:bg-blue-700 dark:hover:bg-blue-700 text-white p-2 rounded-full disabled:opacity-70 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
                   style={{ width: "32px", height: "32px" }}
                   title={
                     isGenerating
@@ -251,9 +264,19 @@ const ChatInterface = ({ projectId, projectName, promptCards = [] }) => {
             </div>
 
             <div className="flex items-center justify-between">
-              <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-gray-500">
-                <span>{inputValue.length}자</span>
-                {inputValue.length < 50 && <span>📝 50자 이상 권장</span>}
+              <div className="flex items-center gap-4">
+                {/* 글자 수 표시 */}
+                <div className="flex items-center gap-2 text-xs text-gray-400 dark:text-dark-muted">
+                  <span>{inputValue.length}자</span>
+                </div>
+
+                {/* 모델 선택기 */}
+                <div className="flex items-center gap-2">
+                  <ModelSelector
+                    selectedModel={selectedModel}
+                    onModelChange={setSelectedModel}
+                  />
+                </div>
               </div>
 
               {/* WebSocket 연결 상태 및 스크롤 상태 표시 */}
@@ -278,8 +301,8 @@ const ChatInterface = ({ projectId, projectName, promptCards = [] }) => {
                     <span>실시간 스트리밍</span>
                   </div>
                 ) : (
-                  <div className="flex items-center gap-1 text-gray-500 dark:text-gray-400">
-                    <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+                  <div className="flex items-center gap-1 text-gray-500 dark:text-dark-muted">
+                    <div className="w-2 h-2 bg-gray-400 dark:bg-gray-500 rounded-full"></div>
                     <span>일반 모드</span>
                   </div>
                 )}

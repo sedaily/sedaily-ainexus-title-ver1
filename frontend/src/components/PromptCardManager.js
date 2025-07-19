@@ -147,7 +147,7 @@ const PromptCardManager = ({ projectId, projectName }) => {
   }
 
   return (
-    <div className="flex h-full bg-gray-50 dark:bg-gray-900">
+    <div className="flex h-full bg-gray-50 dark:bg-dark-primary">
       {/* 채팅 인터페이스 */}
       <div className="flex-1 min-w-0">
         <ChatInterface
@@ -158,8 +158,8 @@ const PromptCardManager = ({ projectId, projectName }) => {
       </div>
 
       {/* 프롬프트 관리 사이드바 (우측) */}
-      <div className="w-80 bg-white dark:bg-gray-800 border-l border-gray-100 dark:border-gray-700 flex flex-col shadow-sm flex-shrink-0">
-        <div className="flex-shrink-0 p-4 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800">
+      <div className="w-80 bg-white dark:bg-dark-primary flex flex-col shadow-lg border-l border-gray-200 dark:border-gray-700 flex-shrink-0">
+        <div className="flex-shrink-0 p-4 bg-gray-50 dark:bg-dark-primary">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
               프롬프트 카드
@@ -168,23 +168,23 @@ const PromptCardManager = ({ projectId, projectName }) => {
               onClick={handleNewCard}
               className="inline-flex items-center px-4 py-2 text-sm bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-md hover:shadow-lg font-medium"
             >
-              <PlusIcon className="h-4 w-4 mr-1.5" />
-              새 추가
+              <PlusIcon className="h-4 w-4 mr-1.5" />새 추가
             </button>
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0 bg-gray-50 dark:bg-dark-secondary">
           {promptCards.length === 0 ? (
             <div className="text-center py-8">
               <SparklesIcon className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
-              <p className="text-gray-500 dark:text-gray-400 mb-4">프롬프트 카드가 없습니다</p>
+              <p className="text-gray-500 dark:text-gray-400 mb-4">
+                프롬프트 카드가 없습니다
+              </p>
               <button
                 onClick={handleNewCard}
                 className="inline-flex items-center px-4 py-2 bg-blue-600 dark:bg-blue-500 text-white rounded-lg hover:bg-blue-700 dark:hover:bg-blue-600 transition-colors shadow-sm font-medium"
               >
-                <PlusIcon className="h-4 w-4 mr-1.5" />
-                첫 번째 카드 만들기
+                <PlusIcon className="h-4 w-4 mr-1.5" />첫 번째 카드 만들기
               </button>
             </div>
           ) : (
@@ -218,10 +218,10 @@ const PromptCardManager = ({ projectId, projectName }) => {
 // 간단한 프롬프트 카드 컴포넌트
 const PromptCard = ({ card, onEdit, onDelete }) => {
   return (
-    <div className="bg-white dark:bg-gray-700 rounded-xl p-4 flex flex-col space-y-3 border border-gray-200 dark:border-gray-600 hover:shadow-lg hover:border-blue-400 dark:hover:border-blue-500 transition-all duration-200">
+    <div className="bg-white dark:bg-gray-600 rounded-xl p-4 flex flex-col space-y-3 shadow-md dark:shadow-lg hover:shadow-lg dark:hover:shadow-xl transition-all duration-200 hover:bg-blue-50 dark:hover:bg-gray-500">
       {/* Header: Title and Actions */}
       <div className="flex items-start justify-between">
-        <h3 className="font-semibold text-sm text-gray-800 dark:text-gray-200 leading-tight pr-2 flex-1">
+        <h3 className="font-semibold text-sm text-gray-800 dark:text-white leading-tight pr-2 flex-1">
           {card.title || `프롬프트 ${card.promptId || card.prompt_id}`}
         </h3>
         <div className="flex items-center flex-shrink-0">
@@ -231,13 +231,13 @@ const PromptCard = ({ card, onEdit, onDelete }) => {
               e.stopPropagation();
               await onEdit();
             }}
-            className="p-1 text-gray-500 dark:text-gray-400 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+            className="p-1 text-gray-500 dark:text-gray-400 rounded-full hover:bg-gray-100 dark:hover:bg-dark-secondary hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
           >
             <PencilIcon className="h-4 w-4" />
           </button>
           <button
             onClick={onDelete}
-            className="p-1 text-gray-500 dark:text-gray-400 rounded-full hover:bg-gray-100 dark:hover:bg-gray-600 hover:text-red-600 dark:hover:text-red-400 transition-colors"
+            className="p-1 text-gray-500 dark:text-gray-400 rounded-full hover:bg-gray-100 dark:hover:bg-dark-secondary hover:text-red-600 dark:hover:text-red-400 transition-colors"
           >
             <TrashIcon className="h-4 w-4" />
           </button>
@@ -250,7 +250,7 @@ const PromptCard = ({ card, onEdit, onDelete }) => {
           {card.tags.slice(0, 3).map((tag) => (
             <span
               key={tag}
-              className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-gray-600 text-gray-700 dark:text-gray-300 rounded-full"
+              className="px-2 py-0.5 text-xs bg-gray-100 dark:bg-dark-secondary text-gray-700 dark:text-gray-300 rounded-full"
             >
               #{tag}
             </span>
@@ -357,24 +357,24 @@ const PromptFormModal = ({ isOpen, onSubmit, onCancel, initialData }) => {
   }
 
   return (
-    <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-      <div className="bg-white rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden shadow-2xl">
+    <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+      <div className="bg-white dark:bg-dark-secondary rounded-2xl max-w-3xl w-full max-h-[90vh] overflow-hidden shadow-xl dark:shadow-none transition-colors duration-300 ">
         {/* 헤더 */}
-        <div className="border-b border-gray-200 p-6 bg-white">
+        <div className=" p-6 bg-white dark:bg-dark-secondary">
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <div className="w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center">
+              <div className="w-10 h-10 bg-gray-100 dark:bg-dark-tertiary rounded-lg flex items-center justify-center">
                 {initialData ? (
-                  <PencilIcon className="h-6 w-6 text-gray-600" />
+                  <PencilIcon className="h-6 w-6 text-gray-600 dark:text-gray-300" />
                 ) : (
-                  <PencilIcon className="h-6 w-6 text-gray-600" />
+                  <PencilIcon className="h-6 w-6 text-gray-600 dark:text-gray-300" />
                 )}
               </div>
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">
+                <h3 className="text-lg font-semibold text-gray-900 dark:text-white">
                   {initialData ? "프롬프트 편집" : "새 프롬프트"}
                 </h3>
-                <p className="text-sm text-gray-500">
+                <p className="text-sm text-gray-500 dark:text-gray-400">
                   {initialData
                     ? "프롬프트 내용을 수정하세요"
                     : "새로운 프롬프트를 작성하세요"}
@@ -384,7 +384,7 @@ const PromptFormModal = ({ isOpen, onSubmit, onCancel, initialData }) => {
             <button
               type="button"
               onClick={onCancel}
-              className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100 transition-colors"
+              className="p-2 text-gray-400 dark:text-gray-500 hover:text-gray-600 dark:hover:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-dark-tertiary transition-colors"
             >
               <XMarkIcon className="h-5 w-5" />
             </button>
@@ -397,22 +397,22 @@ const PromptFormModal = ({ isOpen, onSubmit, onCancel, initialData }) => {
         >
           {/* 제목 필드 */}
           <div className="space-y-2">
-            <label className="flex items-center text-sm font-semibold text-gray-800">
+            <label className="flex items-center text-sm font-semibold text-gray-800 dark:text-gray-200">
               프롬프트 제목
             </label>
             <input
               type="text"
               value={formData.title}
               onChange={(e) => handleChange("title", e.target.value)}
-              className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200 text-gray-800 placeholder-gray-400"
+              className="w-full px-4 py-3  rounded-xl bg-gray-50 dark:bg-dark-tertiary text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-500/30 transition-all duration-200"
               placeholder="프롬프트 제목을 입력하세요"
             />
           </div>
 
           {/* 해시태그 */}
           <div className="space-y-2">
-            <label className="flex items-center text-sm font-semibold text-gray-800">
-              <HashtagIcon className="h-4 w-4 mr-2 text-gray-500" />
+            <label className="flex items-center text-sm font-semibold text-gray-800 dark:text-gray-200">
+              <HashtagIcon className="h-4 w-4 mr-2 text-gray-500 dark:text-gray-400" />
               태그
             </label>
             <div className="space-y-3">
@@ -422,7 +422,7 @@ const PromptFormModal = ({ isOpen, onSubmit, onCancel, initialData }) => {
                 value={tagInput}
                 onChange={(e) => setTagInput(e.target.value)}
                 onKeyPress={handleTagAdd}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-blue-500 focus:ring-4 focus:ring-blue-100 transition-all duration-200"
+                className="w-full px-4 py-3  rounded-xl bg-gray-50 dark:bg-dark-tertiary text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 dark:focus:ring-blue-500/30 transition-all duration-200"
                 placeholder="태그를 입력하고 Enter를 누르세요 (최대 5개)"
                 maxLength={20}
                 disabled={formData.tags.length >= 5}
@@ -434,13 +434,13 @@ const PromptFormModal = ({ isOpen, onSubmit, onCancel, initialData }) => {
                   {formData.tags.map((tag, index) => (
                     <span
                       key={index}
-                      className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full"
+                      className="inline-flex items-center px-3 py-1 bg-blue-100 dark:bg-blue-900 text-blue-800 dark:text-blue-200 text-sm rounded-full"
                     >
                       #{tag}
                       <button
                         type="button"
                         onClick={() => handleTagRemove(tag)}
-                        className="ml-2 text-blue-600 hover:text-blue-800"
+                        className="ml-2 text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-200"
                       >
                         <XMarkIcon className="h-3 w-3" />
                       </button>
@@ -450,7 +450,7 @@ const PromptFormModal = ({ isOpen, onSubmit, onCancel, initialData }) => {
               )}
 
               {/* 도움말 텍스트 */}
-              <p className="text-xs text-gray-500">
+              <p className="text-xs text-gray-500 dark:text-gray-400">
                 태그는 프롬프트를 분류하고 검색하는 데 도움이 됩니다. 각 태그는
                 20자 이내로 입력하세요.
               </p>
@@ -459,21 +459,23 @@ const PromptFormModal = ({ isOpen, onSubmit, onCancel, initialData }) => {
 
           {/* 프롬프트 내용 */}
           <div className="space-y-2">
-            <label className="flex items-center text-sm font-semibold text-gray-800">
+            <label className="flex items-center text-sm font-semibold text-gray-800 dark:text-gray-200">
               프롬프트 내용 <span className="text-red-500 ml-1">*</span>
             </label>
             <div className="relative">
               <textarea
                 value={formData.prompt_text}
                 onChange={(e) => handleChange("prompt_text", e.target.value)}
-                rows={10}
-                className="w-full px-4 py-3 border-2 border-gray-200 rounded-xl focus:outline-none focus:border-green-500 focus:ring-4 focus:ring-green-100 transition-all duration-200 text-gray-800 placeholder-gray-400 resize-none"
+                rows={12}
+                className="w-full px-4 py-3  rounded-xl bg-gray-50 dark:bg-dark-tertiary text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none focus:border-green-500 focus:ring-2 focus:ring-green-500/20 dark:focus:ring-green-500/30 transition-all duration-200 resize-none"
                 placeholder="프롬프트 내용을 입력하세요"
                 required
               />
-              <div className="absolute bottom-3 right-3 text-xs text-gray-500 flex items-center space-x-2">
+              <div className="absolute bottom-3 right-3 text-xs text-gray-500 dark:text-gray-400 flex items-center space-x-2">
                 <span>{formData.prompt_text.length} 자</span>
-                <span className="text-gray-400">/ 📝 50자 이상 권장</span>
+                <span className="text-gray-400 dark:text-gray-500">
+                  / 📝 50자 이상 권장
+                </span>
               </div>
             </div>
           </div>
@@ -485,26 +487,29 @@ const PromptFormModal = ({ isOpen, onSubmit, onCancel, initialData }) => {
               id="enabled"
               checked={formData.enabled}
               onChange={(e) => handleChange("enabled", e.target.checked)}
-              className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+              className="h-4 w-4 text-blue-600 focus:ring-blue-500 rounded"
             />
-            <label htmlFor="enabled" className="ml-2 text-sm text-gray-700">
+            <label
+              htmlFor="enabled"
+              className="ml-2 text-sm text-gray-700 dark:text-gray-300"
+            >
               활성화
             </label>
           </div>
 
           {/* 버튼 영역 */}
-          <div className="flex justify-end space-x-3 pt-6 border-t border-gray-200">
+          <div className="flex justify-end space-x-3 pt-6 ">
             <button
               type="button"
               onClick={onCancel}
-              className="px-4 py-2 text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors font-medium"
+              className="px-6 py-2.5 text-gray-700 dark:text-gray-300 bg-gray-100 dark:bg-gray-700  rounded-lg hover:bg-gray-200 dark:hover:bg-gray-600 transition-colors font-medium"
             >
               취소
             </button>
             <button
               type="submit"
               disabled={!formData.prompt_text.trim()}
-              className="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors font-medium"
+              className="px-6 py-2.5 bg-gradient-to-r from-blue-600 to-blue-700 hover:from-blue-700 hover:to-blue-800 text-white rounded-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 font-medium shadow-lg hover:shadow-xl"
             >
               {initialData ? "수정" : "생성"}
             </button>

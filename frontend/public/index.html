@@ -4,35 +4,103 @@
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
+    <meta name="theme-color" content="#000000" id="theme-color" />
     <meta
       name="description"
       content="AI 기반 기사 제목 생성 도구 - 서울경제신문"
     />
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    
+
+    <!-- 다크모드 깜빡임 방지 스크립트 (최우선 실행) -->
+    <script>
+      (function () {
+        // 시스템 테마 감지
+        function getSystemTheme() {
+          return window.matchMedia("(prefers-color-scheme: dark)").matches;
+        }
+
+        // 저장된 테마 설정 확인
+        function getInitialTheme() {
+          const saved = localStorage.getItem("theme");
+          if (saved === "dark") return true;
+          if (saved === "light") return false;
+          if (saved === "system") return getSystemTheme();
+          return getSystemTheme(); // 기본값: 시스템 설정
+        }
+
+        // 즉시 다크모드 적용 (깜빡임 방지)
+        const isDark = getInitialTheme();
+        if (isDark) {
+          document.documentElement.classList.add("dark");
+          document
+            .getElementById("theme-color")
+            .setAttribute("content", "#1a1d29");
+        } else {
+          document
+            .getElementById("theme-color")
+            .setAttribute("content", "#ffffff");
+        }
+
+        // CSS 변수로 초기 테마 설정
+        document.documentElement.style.setProperty(
+          "--initial-theme",
+          isDark ? "dark" : "light"
+        );
+      })();
+    </script>
+
     <!-- Bootstrap CSS for better styling -->
-    <link 
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" 
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
       rel="stylesheet"
-    >
-    
+    />
+
     <!-- Font Awesome for icons -->
-    <link 
-      rel="stylesheet" 
+    <link
+      rel="stylesheet"
       href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
-    >
-    
+    />
+
     <title>AI 제목 생성기 - 서울경제신문</title>
+
+    <style>
+      /* 깜빡임 방지를 위한 기본 스타일 */
+      html {
+        color-scheme: light dark;
+      }
+
+      html.dark {
+        color-scheme: dark;
+      }
+
+      /* 초기 로딩 시 부드러운 전환 */
+      body {
+        transition: background-color 0.3s ease, color 0.3s ease;
+      }
+
+      /* 다크모드 기본 배경 - NOVA 스타일 */
+      html.dark body {
+        background-color: #1a1d29;
+        color: #ffffff;
+      }
+
+      html.dark #root {
+        background-color: #1a1d29;
+        min-height: 100vh;
+      }
+
+      #root {
+        background-color: #f9fafb;
+        min-height: 100vh;
+      }
+    </style>
   </head>
   <body>
     <noscript>이 앱을 실행하려면 JavaScript를 활성화해야 합니다.</noscript>
     <div id="root"></div>
-    
+
     <!-- Bootstrap JS -->
-    <script 
-      src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js">
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
   </body>
 </html>

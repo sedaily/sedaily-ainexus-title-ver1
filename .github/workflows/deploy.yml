@@ -170,8 +170,6 @@ jobs:
           echo "WEBSOCKET_URL: $WEBSOCKET_URL"
 
       - name: 🏗️ Build frontend (ignore CRA warnings)
-        env:
-          # Build script already sets CI=false via cross-env
         run: |
           cd frontend
           npm run build

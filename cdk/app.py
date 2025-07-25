@@ -16,8 +16,8 @@ env = cdk.Environment(
 )
 
 # 🔧 환경별 배포 설정
-# GitHub Actions에서 STACK_SUFFIX를 통해 환경 구분
-environments = ['', 'Prod', 'Dev']  # 기본(로컬), 프로덕션, 개발
+# 로컬 개발 스택('')은 CI/CD에서 중복 리소스 충돌을 일으키므로 제외
+environments = ['Prod', 'Dev']  # 프로덕션, 개발
 
 for suffix in environments:
     if suffix == '':

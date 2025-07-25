@@ -170,10 +170,11 @@ jobs:
           echo "WEBSOCKET_URL: $WEBSOCKET_URL"
 
       - name: 🏗️ Build frontend (ignore CRA warnings)
+        env:
+          CI: "" # CRA 경고를 오류로 처리하지 않도록 비활성화
         run: |
           cd frontend
-          # CRA에서 CI 환경에서는 경고를 오류로 처리하므로, 경고만으로 빌드 실패를 막기 위해 CI=false 설정
-          CI=false npm run build
+          npm run build
 
           echo "📊 Build statistics:"
           du -sh build/

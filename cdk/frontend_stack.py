@@ -24,7 +24,7 @@ class FrontendStack(Stack):
         super().__init__(scope, construct_id, **kwargs)
         
         # 환경별 설정
-        self.environment = stage
+        self.stage = stage
         self.domain_name = domain_name
         
         # 환경별 버킷 이름 생성

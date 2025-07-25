@@ -171,7 +171,7 @@ jobs:
 
       - name: 🏗️ Build frontend (ignore CRA warnings)
         env:
-          CI: "" # CRA 경고를 오류로 처리하지 않도록 비활성화
+          CI: "false" # CRA 경고를 오류로 처리하지 않도록 비활성화
           DISABLE_ESLINT_PLUGIN: "true"
         run: |
           cd frontend

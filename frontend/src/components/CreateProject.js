@@ -1,5 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+import React, { useState } from "react";
 import { toast } from "react-hot-toast";
 import {
   PlusIcon,

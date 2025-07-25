@@ -6,11 +6,10 @@ import {
   TrashIcon,
   XMarkIcon,
   SparklesIcon,
-  DocumentTextIcon,
   HashtagIcon,
 } from "@heroicons/react/24/outline";
 import { promptCardAPI, handleAPIError } from "../services/api";
-import ChatInterface from "./ChatInterface";
+import ChatWindow from "./chat/ChatWindow";
 
 const PromptCardManager = ({ projectId, projectName }) => {
   const [promptCards, setPromptCards] = useState([]);
@@ -147,18 +146,19 @@ const PromptCardManager = ({ projectId, projectName }) => {
   }
 
   return (
-    <div className="flex h-full bg-gray-50 dark:bg-dark-primary">
+    <div className="flex h-screen w-full bg-gray-50 dark:bg-dark-primary">
       {/* 채팅 인터페이스 */}
-      <div className="flex-1 min-w-0">
-        <ChatInterface
+      <div className="flex-1 min-w-0 h-full overflow-hidden">
+        <ChatWindow
           projectId={projectId}
           projectName={projectName}
           promptCards={promptCards}
+          isAdminMode={true}
         />
       </div>
 
       {/* 프롬프트 관리 사이드바 (우측) */}
-      <div className="w-80 bg-white dark:bg-dark-primary flex flex-col shadow-lg border-l border-gray-200 dark:border-gray-700 flex-shrink-0">
+      <div className="w-80 h-full bg-white dark:bg-dark-primary flex flex-col shadow-lg border-l border-gray-200 dark:border-gray-700 flex-shrink-0">
         <div className="flex-shrink-0 p-4 bg-gray-50 dark:bg-dark-primary">
           <div className="flex items-center justify-between">
             <h2 className="text-lg font-semibold text-gray-800 dark:text-white">
@@ -173,7 +173,7 @@ const PromptCardManager = ({ projectId, projectName }) => {
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0 bg-gray-50 dark:bg-dark-secondary">
+        <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0 bg-gray-50 dark:bg-dark-secondary custom-scrollbar">
           {promptCards.length === 0 ? (
             <div className="text-center py-8">
               <SparklesIcon className="h-12 w-12 text-gray-300 dark:text-gray-600 mx-auto mb-4" />
@@ -211,6 +211,39 @@ const PromptCardManager = ({ projectId, projectName }) => {
           initialData={editingCard}
         />
       )}
+      
+      {/* 스크롤바 스타일 */}
+      <style jsx>{`
+        .custom-scrollbar::-webkit-scrollbar {
+          width: 8px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+          background: transparent;
+          border-radius: 4px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #d1d5db;
+          border-radius: 4px;
+          border: 1px solid #f3f4f6;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #9ca3af;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb:active {
+          background: #6b7280;
+        }
+        /* 다크모드 스크롤바 */
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb {
+          background: #4b5563;
+          border: 1px solid #374151;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:hover {
+          background: #6b7280;
+        }
+        .dark .custom-scrollbar::-webkit-scrollbar-thumb:active {
+          background: #9ca3af;
+        }
+      `}</style>
     </div>
   );
 };

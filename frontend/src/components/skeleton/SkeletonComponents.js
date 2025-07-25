@@ -1,40 +1,60 @@
 import React from "react";
 
-// 기본 스켈레톤 박스
+// Shimmer 애니메이션을 위한 CSS 클래스
+const shimmerEffect =
+  "relative overflow-hidden before:absolute before:inset-0 before:-translate-x-full before:animate-[shimmer_1.5s_infinite] before:bg-gradient-to-r before:from-transparent before:via-white/20 before:to-transparent";
+
+// 기본 스켈레톤 박스 - Soft-Glass 스타일
 export const SkeletonBox = ({
   width = "w-full",
   height = "h-4",
   className = "",
 }) => (
   <div
-    className={`bg-gray-200 dark:bg-gray-700 rounded animate-pulse ${width} ${height} ${className}`}
+    className={`bg-gray-200/80 dark:bg-gray-600/60 rounded-lg animate-pulse backdrop-blur-sm border border-gray-300/40 dark:border-gray-500/40 ${shimmerEffect} ${width} ${height} ${className}`}
   ></div>
 );
 
-// 원형 스켈레톤 (아바타용)
+// 원형 스켈레톤 (아바타용) - Soft-Glass 스타일
 export const SkeletonCircle = ({ size = "w-10 h-10", className = "" }) => (
   <div
-    className={`bg-gray-200 dark:bg-gray-700 rounded-full animate-pulse ${size} ${className}`}
+    className={`bg-gray-200/80 dark:bg-gray-600/60 rounded-full animate-pulse backdrop-blur-sm border border-gray-300/40 dark:border-gray-500/40 ${shimmerEffect} ${size} ${className}`}
   ></div>
 );
 
-// 채팅 메시지 스켈레톤
+// 채팅 메시지 스켈레톤 - 개선된 스타일
 export const ChatMessageSkeleton = ({ isUser = false }) => (
   <div className={`group relative ${isUser ? "ml-8" : "mr-8"} mb-6`}>
     <div className={`flex ${isUser ? "justify-end" : "justify-start"}`}>
       {isUser ? (
-        // 사용자 메시지 스켈레톤
-        <div className="max-w-[85%] rounded-lg px-6 py-4 bg-gray-200 dark:bg-gray-700 animate-pulse">
+        // 사용자 메시지 스켈레톤 - 블루 톤
+        <div className="max-w-[85%] rounded-xl px-6 py-4 bg-blue-100/80 dark:bg-blue-900/30 animate-pulse backdrop-blur-sm border border-blue-200/60 dark:border-blue-700/50">
           <div className="space-y-2">
-            <SkeletonBox width="w-3/4" height="h-4" />
-            <SkeletonBox width="w-full" height="h-4" />
-            <SkeletonBox width="w-1/2" height="h-4" />
+            <SkeletonBox
+              width="w-3/4"
+              height="h-4"
+              className="bg-blue-200/60 dark:bg-blue-800/40"
+            />
+            <SkeletonBox
+              width="w-full"
+              height="h-4"
+              className="bg-blue-200/60 dark:bg-blue-800/40"
+            />
+            <SkeletonBox
+              width="w-1/2"
+              height="h-4"
+              className="bg-blue-200/60 dark:bg-blue-800/40"
+            />
           </div>
-          <SkeletonBox width="w-16" height="h-3" className="mt-3" />
+          <SkeletonBox
+            width="w-16"
+            height="h-3"
+            className="mt-3 bg-blue-200/40 dark:bg-blue-800/30"
+          />
         </div>
       ) : (
-        // AI 메시지 스켈레톤
-        <div className="max-w-[85%] w-full">
+        // AI 메시지 스켈레톤 - Soft-Glass 스타일
+        <div className="max-w-[85%] w-full backdrop-blur-sm bg-white/70 dark:bg-gray-800/60 rounded-xl p-4 border border-white/40 dark:border-gray-700/50">
           <div className="space-y-3">
             <SkeletonBox width="w-full" height="h-4" />
             <SkeletonBox width="w-5/6" height="h-4" />
@@ -46,8 +66,8 @@ export const ChatMessageSkeleton = ({ isUser = false }) => (
           {/* 복사 버튼 영역 스켈레톤 */}
           <div className="mt-4 flex items-center justify-between">
             <div className="flex items-center space-x-3">
-              <SkeletonBox width="w-20" height="h-8" className="rounded-lg" />
-              <SkeletonBox width="w-16" height="h-6" className="rounded" />
+              <SkeletonBox width="w-20" height="h-8" className="rounded-xl" />
+              <SkeletonBox width="w-16" height="h-6" className="rounded-lg" />
             </div>
             <SkeletonBox width="w-12" height="h-3" />
           </div>

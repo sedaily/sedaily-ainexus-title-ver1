@@ -20,8 +20,11 @@ import os
 import urllib.parse
 
 class FrontendStack(Stack):
-    def __init__(self, scope: Construct, construct_id: str, api_gateway_url: str | None = None, rest_api: apigateway.RestApi | None = None, **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, api_gateway_url: str | None = None, rest_api: apigateway.RestApi | None = None, domain_name: str | None = None, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
+        
+        # 도메인 설정
+        self.domain_name = domain_name
         
         # S3 버킷 생성 (정적 웹사이트 호스팅)
         self.website_bucket = s3.Bucket(
@@ -116,10 +119,9 @@ class FrontendStack(Stack):
             )
         }
         
-        # CloudFront 배포
-        self.distribution = cloudfront.Distribution(
-            self, "Distribution",
-            default_behavior=cloudfront.BehaviorOptions(
+        # SSL 인증서 및 도메인 설정
+        distribution_props = {
+            "default_behavior": cloudfront.BehaviorOptions(
                 origin=origins.S3BucketOrigin.with_origin_access_control(
                     self.website_bucket,
                     origin_access_control=origin_access_control
@@ -130,9 +132,9 @@ class FrontendStack(Stack):
                 response_headers_policy=cloudfront.ResponseHeadersPolicy.SECURITY_HEADERS,
                 compress=True
             ),
-            additional_behaviors=behaviors,
-            default_root_object="index.html",
-            error_responses=[
+            "additional_behaviors": behaviors,
+            "default_root_object": "index.html",
+            "error_responses": [
                 cloudfront.ErrorResponse(
                     http_status=403,
                     response_http_status=200,
@@ -146,10 +148,35 @@ class FrontendStack(Stack):
                     ttl=Duration.minutes(30)
                 )
             ],
-            price_class=cloudfront.PriceClass.PRICE_CLASS_100,  # 비용 최적화
-            enabled=True,
-            comment="Dynamic Prompt System Frontend Distribution",
-            minimum_protocol_version=cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021
+            "price_class": cloudfront.PriceClass.PRICE_CLASS_100,
+            "enabled": True,
+            "comment": "Dynamic Prompt System Frontend Distribution",
+            "minimum_protocol_version": cloudfront.SecurityPolicyProtocol.TLS_V1_2_2021
+        }
+        
+        # 커스텀 도메인이 설정된 경우 인증서와 도메인 추가
+        if self.domain_name:
+            try:
+                # DNS 검증 인증서 생성
+                certificate = acm.Certificate(
+                    self, "Certificate",
+                    domain_name=self.domain_name,
+                    validation=acm.CertificateValidation.from_dns()
+                )
+                
+                # CloudFront에 도메인과 인증서 설정
+                distribution_props["certificate"] = certificate
+                distribution_props["domain_names"] = [self.domain_name]
+                
+                print(f"커스텀 도메인 설정: {self.domain_name}")
+                
+            except Exception as e:
+                print(f"도메인 설정 실패, 기본 CloudFront 도메인 사용: {e}")
+        
+        # CloudFront 배포
+        self.distribution = cloudfront.Distribution(
+            self, "Distribution",
+            **distribution_props
         )
         
         # 프론트엔드 빌드 파일이 있을 때만 배포
@@ -167,12 +194,22 @@ class FrontendStack(Stack):
             )
         
         # 출력값
+        website_url = f"https://{self.domain_name}" if self.domain_name else f"https://{self.distribution.distribution_domain_name}"
         CfnOutput(
             self, "WebsiteURL",
-            value=f"https://{self.distribution.distribution_domain_name}",
-            description="Frontend CloudFront URL",
+            value=website_url,
+            description="Frontend Website URL",
             export_name="FrontendURL"
         )
+        
+        # 커스텀 도메인이 있는 경우 추가 출력
+        if self.domain_name:
+            CfnOutput(
+                self, "CustomDomain",
+                value=self.domain_name,
+                description="Custom Domain Name",
+                export_name="CustomDomain"
+            )
         
         CfnOutput(
             self, "BucketName",

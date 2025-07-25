@@ -1,1 +1,12 @@
-{}
+{
+  "BedrockDiyTitleGeneratorStack": {
+    "WebSocketApiUrl": "wss://qc2865b7d2.execute-api.us-east-1.amazonaws.com/prod",
+    "ApiGatewayUrl": "https://nq5qrt16lb.execute-api.us-east-1.amazonaws.com/prod/",
+    "UserPoolClientId": "4efnvdfsb9unau5gcok7eojgp0",
+    "UserPoolId": "us-east-1_S4Bfb1oKK",
+    "ExportsOutputRefBedrockDiyApi1AA2182A3686DE39": "nq5qrt16lb",
+    "BedrockDiyApiEndpoint902C0108": "https://nq5qrt16lb.execute-api.us-east-1.amazonaws.com/prod/",
+    "PromptBucketName": "title-generator-prompts-887078546492-us-east-1",
+    "ExportsOutputRefBedrockDiyApiDeploymentStageprod6FFD6E4934FCC1BA": "prod"
+  }
+}

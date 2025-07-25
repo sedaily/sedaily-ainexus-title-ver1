@@ -1,0 +1,51 @@
+{
+  "version": "45.0.0",
+  "files": {
+    "90b024cef0d72ef6c175def3fa250e37b85f723362cf5f7cbdeb77a424380141": {
+      "displayName": "ConversationFunction/Code",
+      "source": {
+        "path": "asset.90b024cef0d72ef6c175def3fa250e37b85f723362cf5f7cbdeb77a424380141",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "887078546492-us-east-1": {
+          "bucketName": "cdk-hnb659fds-assets-887078546492-us-east-1",
+          "objectKey": "90b024cef0d72ef6c175def3fa250e37b85f723362cf5f7cbdeb77a424380141.zip",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::887078546492:role/cdk-hnb659fds-file-publishing-role-887078546492-us-east-1"
+        }
+      }
+    },
+    "bb73adf6fda4e5bfb43cec9b88292e78775a7330a8804f3edf14b0fb4393a195": {
+      "displayName": "MessageFunction/Code",
+      "source": {
+        "path": "asset.bb73adf6fda4e5bfb43cec9b88292e78775a7330a8804f3edf14b0fb4393a195",
+        "packaging": "zip"
+      },
+      "destinations": {
+        "887078546492-us-east-1": {
+          "bucketName": "cdk-hnb659fds-assets-887078546492-us-east-1",
+          "objectKey": "bb73adf6fda4e5bfb43cec9b88292e78775a7330a8804f3edf14b0fb4393a195.zip",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::887078546492:role/cdk-hnb659fds-file-publishing-role-887078546492-us-east-1"
+        }
+      }
+    },
+    "e1683789e82403aef3b17142afa066ba63ba9161c213acda09732a56856e400f": {
+      "displayName": "ConversationStack Template",
+      "source": {
+        "path": "ConversationStack.template.json",
+        "packaging": "file"
+      },
+      "destinations": {
+        "887078546492-us-east-1": {
+          "bucketName": "cdk-hnb659fds-assets-887078546492-us-east-1",
+          "objectKey": "e1683789e82403aef3b17142afa066ba63ba9161c213acda09732a56856e400f.json",
+          "region": "us-east-1",
+          "assumeRoleArn": "arn:${AWS::Partition}:iam::887078546492:role/cdk-hnb659fds-file-publishing-role-887078546492-us-east-1"
+        }
+      }
+    }
+  },
+  "dockerImages": {}
+}

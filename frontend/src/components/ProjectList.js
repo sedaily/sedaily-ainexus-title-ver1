@@ -1,19 +1,14 @@
 import React, { useState, useEffect, useMemo, useRef } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { toast } from "react-hot-toast";
 import {
   FolderOpenIcon,
   PlusIcon,
-  EllipsisHorizontalIcon,
-  TrashIcon,
   PencilIcon,
-  CalendarIcon,
-  DocumentTextIcon,
   MagnifyingGlassIcon,
   FunnelIcon,
   Squares2X2Icon,
   ListBulletIcon,
-  TagIcon,
   XMarkIcon,
   ChevronDownIcon,
   CheckIcon,

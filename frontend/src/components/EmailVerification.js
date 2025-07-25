@@ -1,11 +1,22 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { authAPI, handleAPIError } from "../services/api";
 
-const EmailVerification = ({ email, onVerificationSuccess, onBackToLogin }) => {
+const EmailVerification = ({ email: propEmail, onVerificationSuccess, onBackToLogin }) => {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+  const emailFromUrl = searchParams.get('email');
+  const email = propEmail || emailFromUrl;
   const [code, setCode] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [resendLoading, setResendLoading] = useState(false);
+
+  useEffect(() => {
+    if (!email) {
+      navigate('/login');
+    }
+  }, [email, navigate]);
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -22,6 +33,9 @@ const EmailVerification = ({ email, onVerificationSuccess, onBackToLogin }) => {
 
       if (onVerificationSuccess) {
         onVerificationSuccess(response);
+      } else {
+        // URL 파라미터로 접근한 경우 로그인 페이지로 이동
+        navigate('/login');
       }
     } catch (error) {
       const apiError = handleAPIError(error);
@@ -113,7 +127,7 @@ const EmailVerification = ({ email, onVerificationSuccess, onBackToLogin }) => {
           <div className="text-center">
             <button
               type="button"
-              onClick={onBackToLogin}
+              onClick={onBackToLogin || (() => navigate('/login'))}
               className="text-blue-600 hover:text-blue-500 dark:text-blue-400 dark:hover:text-blue-300 text-sm transition-colors duration-200"
             >
               로그인으로 돌아가기

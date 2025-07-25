@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { promptCardAPI } from "../services/api";
-import ChatInterface from "./ChatInterface";
-import LoadingSpinner from "./LoadingSpinner";
+import ChatWindow from "./chat/ChatWindow";
 import { ChatInterfaceSkeleton } from "./skeleton/SkeletonComponents";
 
 const UserView = ({ projectId, projectName }) => {
@@ -32,8 +31,8 @@ const UserView = ({ projectId, projectName }) => {
   }
 
   return (
-    <div className="h-full bg-white dark:bg-dark-primary transition-colors duration-300">
-      <ChatInterface
+    <div className="h-screen bg-white dark:bg-dark-primary transition-colors duration-300">
+      <ChatWindow
         projectId={projectId}
         projectName={projectName}
         promptCards={promptCards}

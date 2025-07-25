@@ -2,6 +2,91 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 전체 스크롤바 숨기기 */
+html, body {
+  overflow: hidden;
+}
+
+/* 기본 스크롤바 숨기기 */
+::-webkit-scrollbar {
+  width: 0px;
+  background: transparent;
+}
+
+body::-webkit-scrollbar {
+  display: none;
+}
+
+/* 채팅 메시지 영역에서만 스크롤바 표시 */
+.chat-messages::-webkit-scrollbar {
+  width: 6px;
+  background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.chat-messages::-webkit-scrollbar-thumb {
+  background-color: rgba(156, 163, 175, 0.3);
+  border-radius: 3px;
+}
+
+.chat-messages::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(156, 163, 175, 0.5);
+}
+
+/* 다크 모드에서 스크롤바 색상 */
+.dark .chat-messages::-webkit-scrollbar-thumb {
+  background-color: rgba(107, 114, 128, 0.3);
+}
+
+.dark .chat-messages::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(107, 114, 128, 0.5);
+}
+
+/* 채팅 입력창 스타일 */
+.chat-input-container textarea {
+  background: transparent !important;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+  color: #374151 !important; /* 라이트 모드 텍스트 색상 */
+}
+
+.dark .chat-input-container textarea {
+  color: #f3f4f6 !important; /* 다크 모드 텍스트 색상 */
+}
+
+.chat-input-container textarea::placeholder {
+  color: #9ca3af !important; /* 라이트 모드 placeholder */
+  opacity: 0.7 !important;
+}
+
+.dark .chat-input-container textarea::placeholder {
+  color: #6b7280 !important; /* 다크 모드 placeholder */
+  opacity: 0.7 !important;
+}
+
+/* textarea 포커스 시 스타일 제거 */
+.chat-input-container textarea:focus {
+  outline: none !important;
+  box-shadow: none !important;
+  border: none !important;
+}
+
+/* 페이드인 애니메이션 */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 /* =================================================================== */
 /* 🎨 NEUMORPHISM DESIGN SYSTEM - CLEAN & MODERN */
 /* =================================================================== */

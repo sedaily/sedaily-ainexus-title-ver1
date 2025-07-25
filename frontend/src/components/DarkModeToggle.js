@@ -2,8 +2,8 @@ import React from "react";
 import { useTheme } from "../contexts/ThemeContext";
 import { SunIcon, MoonIcon } from "@heroicons/react/24/outline";
 
-const DarkModeToggle = ({ size = "md" }) => {
-  const { theme, isDark, toggleTheme } = useTheme();
+const DarkModeToggle = ({ size = "lg" }) => {
+  const { isDark, toggleTheme } = useTheme();
 
   const sizeClasses = {
     sm: "w-10 h-10",

@@ -171,8 +171,7 @@ jobs:
 
       - name: 🏗️ Build frontend (ignore CRA warnings)
         env:
-          CI: "false" # CRA 경고를 오류로 처리하지 않도록 비활성화
-          DISABLE_ESLINT_PLUGIN: "true"
+          # Build script already sets CI=false via cross-env
         run: |
           cd frontend
           npm run build

@@ -14,6 +14,7 @@ import {
 import awsConfig from "../aws-config";
 
 // Amplify 설정
+console.log("AWS Config loaded:", awsConfig);
 Amplify.configure(awsConfig);
 
 const AuthContext = createContext();
@@ -82,7 +83,12 @@ export const AuthProvider = ({ children }) => {
         groups: groups,
       });
     } catch (error) {
-      console.log("사용자가 인증되지 않음:", error);
+      console.error("Authentication check failed:", error);
+      console.error("Error details:", {
+        message: error.message,
+        name: error.name,
+        stack: error.stack
+      });
       setIsAuthenticated(false);
       setUser(null);
     } finally {

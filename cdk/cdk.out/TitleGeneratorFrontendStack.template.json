@@ -492,7 +492,7 @@
      "cdk-hnb659fds-assets-887078546492-us-east-1"
     ],
     "SourceObjectKeys": [
-     "ab9ac3bd484ae62e71ae5e594f7c5a56c2fd0ff8afc9c18a3e54a1521226d3be.zip"
+     "14749b906d4da1d0cae0ab427ce2d00e07dfb956a7f17c6f08473c7a62e1d494.zip"
     ],
     "DestinationBucketName": {
      "Ref": "WebsiteBucket75C24D94"
@@ -699,7 +699,7 @@
  },
  "Outputs": {
   "WebsiteURL": {
-   "Description": "Frontend CloudFront URL",
+   "Description": "Frontend Website URL",
    "Value": {
     "Fn::Join": [
      "",

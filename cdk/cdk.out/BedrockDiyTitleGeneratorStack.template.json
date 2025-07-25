@@ -1025,7 +1025,7 @@
   "DynamicPromptAgent": {
    "Type": "AWS::Bedrock::Agent",
    "Properties": {
-    "AgentName": "dynamic-prompt-agent-1753457924",
+    "AgentName": "dynamic-prompt-agent-1753459964",
     "AgentResourceRoleArn": {
      "Fn::GetAtt": [
       "BedrockAgentRole7C982E0C",
@@ -1882,7 +1882,7 @@
     "aws:cdk:path": "BedrockDiyTitleGeneratorStack/BedrockDiyApi/Account"
    }
   },
-  "BedrockDiyApiDeployment43E7B7E5a26d2591794041a1d3ea4510c5b74e49": {
+  "BedrockDiyApiDeployment43E7B7E546852c99d4590145cf778cdd68c028bf": {
    "Type": "AWS::ApiGateway::Deployment",
    "Properties": {
     "Description": "동적 프롬프트 시스템 - 완전한 빈깡통 AI",
@@ -1998,7 +1998,7 @@
    "Type": "AWS::ApiGateway::Stage",
    "Properties": {
     "DeploymentId": {
-     "Ref": "BedrockDiyApiDeployment43E7B7E5a26d2591794041a1d3ea4510c5b74e49"
+     "Ref": "BedrockDiyApiDeployment43E7B7E546852c99d4590145cf778cdd68c028bf"
     },
     "RestApiId": {
      "Ref": "BedrockDiyApi1AA2182A"
@@ -6739,7 +6739,10 @@
   "BedrockDiyApiconversationsGET67619678": {
    "Type": "AWS::ApiGateway::Method",
    "Properties": {
-    "AuthorizationType": "NONE",
+    "AuthorizationType": "CUSTOM",
+    "AuthorizerId": {
+     "Ref": "BedrockDiyApiAuthorizer2BB71853"
+    },
     "HttpMethod": "GET",
     "Integration": {
      "IntegrationHttpMethod": "POST",
@@ -6837,7 +6840,10 @@
   "BedrockDiyApiconversationsPOST45088F95": {
    "Type": "AWS::ApiGateway::Method",
    "Properties": {
-    "AuthorizationType": "NONE",
+    "AuthorizationType": "CUSTOM",
+    "AuthorizerId": {
+     "Ref": "BedrockDiyApiAuthorizer2BB71853"
+    },
     "HttpMethod": "POST",
     "Integration": {
      "IntegrationHttpMethod": "POST",
@@ -6950,7 +6956,10 @@
   "BedrockDiyApiconversationsidDELETE987AAAA5": {
    "Type": "AWS::ApiGateway::Method",
    "Properties": {
-    "AuthorizationType": "NONE",
+    "AuthorizationType": "CUSTOM",
+    "AuthorizerId": {
+     "Ref": "BedrockDiyApiAuthorizer2BB71853"
+    },
     "HttpMethod": "DELETE",
     "Integration": {
      "IntegrationHttpMethod": "POST",
@@ -7048,7 +7057,10 @@
   "BedrockDiyApiconversationsidPUT9BF25223": {
    "Type": "AWS::ApiGateway::Method",
    "Properties": {
-    "AuthorizationType": "NONE",
+    "AuthorizationType": "CUSTOM",
+    "AuthorizerId": {
+     "Ref": "BedrockDiyApiAuthorizer2BB71853"
+    },
     "HttpMethod": "PUT",
     "Integration": {
      "IntegrationHttpMethod": "POST",
@@ -7248,7 +7260,10 @@
   "BedrockDiyApimessagesGET352C2E07": {
    "Type": "AWS::ApiGateway::Method",
    "Properties": {
-    "AuthorizationType": "NONE",
+    "AuthorizationType": "CUSTOM",
+    "AuthorizerId": {
+     "Ref": "BedrockDiyApiAuthorizer2BB71853"
+    },
     "HttpMethod": "GET",
     "Integration": {
      "IntegrationHttpMethod": "POST",

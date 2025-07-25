@@ -151,7 +151,7 @@
         }
       }
     },
-    "0a0507c3c4391743873a0d83ad5312dd2a0a28d3e023afa92ba32bb56e1569fb": {
+    "467b3fd3eb5036e0f3da115ea112f1c950dd28df6f8a4cf27def93622dbb4ac3": {
       "displayName": "BedrockDiyTitleGeneratorStack Template",
       "source": {
         "path": "BedrockDiyTitleGeneratorStack.template.json",
@@ -160,7 +160,7 @@
       "destinations": {
         "887078546492-us-east-1": {
           "bucketName": "cdk-hnb659fds-assets-887078546492-us-east-1",
-          "objectKey": "0a0507c3c4391743873a0d83ad5312dd2a0a28d3e023afa92ba32bb56e1569fb.json",
+          "objectKey": "467b3fd3eb5036e0f3da115ea112f1c950dd28df6f8a4cf27def93622dbb4ac3.json",
           "region": "us-east-1",
           "assumeRoleArn": "arn:${AWS::Partition}:iam::887078546492:role/cdk-hnb659fds-file-publishing-role-887078546492-us-east-1"
         }

@@ -192,12 +192,12 @@ class ConversationStack(Stack):
         conversations_resource.add_method(
             "GET",
             apigateway.LambdaIntegration(self.conversation_lambda),
-            authorization_type=apigateway.AuthorizationType.NONE
+            authorizer=authorizer
         )
         conversations_resource.add_method(
             "POST", 
             apigateway.LambdaIntegration(self.conversation_lambda),
-            authorization_type=apigateway.AuthorizationType.NONE
+            authorizer=authorizer
         )
         
         # /conversations/{id} endpoint for individual conversation operations
@@ -205,12 +205,12 @@ class ConversationStack(Stack):
         conversation_id_resource.add_method(
             "DELETE",
             apigateway.LambdaIntegration(self.conversation_lambda),
-            authorization_type=apigateway.AuthorizationType.NONE
+            authorizer=authorizer
         )
         conversation_id_resource.add_method(
             "PUT",
             apigateway.LambdaIntegration(self.conversation_lambda),
-            authorization_type=apigateway.AuthorizationType.NONE
+            authorizer=authorizer
         )
         
         # CORS 옵션 추가
@@ -222,7 +222,7 @@ class ConversationStack(Stack):
         messages_resource.add_method(
             "GET",
             apigateway.LambdaIntegration(self.message_lambda),
-            authorization_type=apigateway.AuthorizationType.NONE
+            authorizer=authorizer
         )
         
         # CORS 옵션 추가

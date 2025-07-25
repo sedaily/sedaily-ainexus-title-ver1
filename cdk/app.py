@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import aws_cdk as cdk
+import os
 from bedrock_stack import BedrockDiyStack
 from frontend_stack import FrontendStack
 from conversation_stack import ConversationStack
@@ -14,52 +15,83 @@ env = cdk.Environment(
     region=app.node.try_get_context("region") or "us-east-1"
 )
 
-# 1. 백엔드 스택 생성 (단순화된 "빈깡통" 시스템)
-backend_stack = BedrockDiyStack(app, "BedrockDiyTitleGeneratorStack",
-    description="AWS Bedrock DIY 제목 생성기 시스템 - 인증 포함",
-    env=env
-)
+# 🔧 환경별 배포 설정
+# GitHub Actions에서 STACK_SUFFIX를 통해 환경 구분
+environments = ['', 'Prod', 'Dev']  # 기본(로컬), 프로덕션, 개발
 
-# 1.5. 대화 기록 스택 생성
-conversation_stack = ConversationStack(app, "ConversationStack",
-    description="대화 기록 관리 시스템 - DynamoDB 및 Lambda",
-    env=env
-)
+for suffix in environments:
+    if suffix == '':
+        # 로컬 개발용 (기본)
+        stack_suffix = ''
+        domain_suffix = 'local'
+        print("🏠 Creating LOCAL development stacks")
+    elif suffix == 'Prod':
+        # 프로덕션 환경
+        stack_suffix = suffix
+        domain_suffix = 'prod'
+        print("🚀 Creating PRODUCTION stacks")
+    elif suffix == 'Dev':
+        # 개발 환경
+        stack_suffix = suffix
+        domain_suffix = 'dev'
+        print("🧪 Creating DEVELOPMENT stacks")
+    else:
+        continue
 
-# 대화 API를 기존 API Gateway에 추가
-conversation_stack.add_api_endpoints(backend_stack.api, backend_stack.api_authorizer)
+    # 1. 백엔드 스택 생성
+    backend_stack = BedrockDiyStack(
+        app, 
+        f"BedrockDiyTitleGeneratorStack{stack_suffix}",
+        stack_name=f"BedrockDiyTitleGeneratorStack{stack_suffix}",
+        description=f"AWS Bedrock DIY 제목 생성기 시스템 - {domain_suffix.upper()} 환경",
+        env=env,
+        tags={
+            "Environment": domain_suffix,
+            "Project": "TitleGenerator",
+            "Owner": "CI/CD"
+        }
+    )
 
-# 2. 성능 최적화 스택 생성 (필요시 활성화)
-# performance_stack = PerformanceOptimizationStack(app, "PerformanceOptimizationStack",
-#     existing_lambdas={
-#         "generate": backend_stack.generate_lambda,
-#         "project": backend_stack.project_lambda,
-#         "auth": backend_stack.auth_lambda,
-#         "save_prompt": backend_stack.save_prompt_lambda
-#     },
-#     existing_api=backend_stack.api,
-#     description="동적 프롬프트 시스템 성능 최적화 및 모니터링 스택",
-#     env=env
-# )
+    # 2. 대화 기록 스택 생성
+    conversation_stack = ConversationStack(
+        app, 
+        f"ConversationStack{stack_suffix}",
+        stack_name=f"ConversationStack{stack_suffix}",
+        description=f"대화 기록 관리 시스템 - {domain_suffix.upper()} 환경",
+        env=env,
+        tags={
+            "Environment": domain_suffix,
+            "Project": "TitleGenerator",
+            "Owner": "CI/CD"
+        }
+    )
 
-# 3. CI/CD 스택 생성 (필요시 활성화)
-# cicd_stack = CICDStack(app, "CICDStack",
-#     api_gateway_url=backend_stack.api.url,
-#     description="동적 프롬프트 시스템 CI/CD 파이프라인 스택",
-#     env=env
-# )
+    # 대화 API를 기존 API Gateway에 추가
+    conversation_stack.add_api_endpoints(backend_stack.api, backend_stack.api_authorizer)
 
-# 4. 프론트엔드 스택 활성화 - S3 + CloudFront 정적 호스팅
-frontend_stack = FrontendStack(app, "TitleGeneratorFrontendStack", 
-    api_gateway_url=backend_stack.api.url,
-    rest_api=backend_stack.api,
-    # domain_name="titlenomics.com",  # 추후 도메인 구매 시 활성화
-    env=env
-)
+    # 3. 프론트엔드 스택 생성
+    frontend_stack = FrontendStack(
+        app, 
+        f"TitleGeneratorFrontendStack{stack_suffix}",
+        stack_name=f"TitleGeneratorFrontendStack{stack_suffix}",
+        api_gateway_url=backend_stack.api.url,
+        rest_api=backend_stack.api,
+        environment=domain_suffix,  # 환경 정보 전달
+        env=env,
+        tags={
+            "Environment": domain_suffix,
+            "Project": "TitleGenerator",
+            "Owner": "CI/CD"
+        }
+    )
 
-# 스택 간 의존성 설정
-# conversation_stack.add_dependency(backend_stack)  # 순환 참조 제거
-frontend_stack.add_dependency(backend_stack)
-frontend_stack.add_dependency(conversation_stack)
+    # 스택 간 의존성 설정
+    frontend_stack.add_dependency(backend_stack)
+    frontend_stack.add_dependency(conversation_stack)
+
+    print(f"✅ {domain_suffix.upper()} stacks configured:")
+    print(f"   - Backend: BedrockDiyTitleGeneratorStack{stack_suffix}")
+    print(f"   - Conversation: ConversationStack{stack_suffix}")
+    print(f"   - Frontend: TitleGeneratorFrontendStack{stack_suffix}")
 
 app.synth() 

@@ -26,9 +26,17 @@ def handler(event, context):
                 raise ValueError("User sub not found in claims")
         except Exception as e:
             print(f"Authentication error: {str(e)}")
-            # 개발 중에는 임시 사용자로 진행 (실제 배포 시에는 인증 필요)
-            user_sub = "development-user"
-            print(f"WARNING: Using development fallback user_sub: {user_sub}")
+            print(f"Event requestContext: {event.get('requestContext', {})}")
+            return {
+                'statusCode': 401,
+                'headers': {
+                    'Content-Type': 'application/json',
+                    'Access-Control-Allow-Origin': '*',
+                    'Access-Control-Allow-Headers': 'Content-Type,Authorization',
+                    'Access-Control-Allow-Methods': 'GET,OPTIONS'
+                },
+                'body': json.dumps({'error': 'Authentication required'})
+            }
         
         if http_method == 'GET' and path == '/messages':
             return get_messages(user_sub, event.get('queryStringParameters') or {})

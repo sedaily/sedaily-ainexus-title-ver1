@@ -76,7 +76,7 @@ for suffix in environments:
         stack_name=f"TitleGeneratorFrontendStack{stack_suffix}",
         api_gateway_url=backend_stack.api.url,
         rest_api=backend_stack.api,
-        environment=domain_suffix,  # 환경 정보 전달
+        stage=domain_suffix,  # 환경 정보 전달
         env=env,
         tags={
             "Environment": domain_suffix,

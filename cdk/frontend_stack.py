@@ -20,18 +20,18 @@ import os
 import urllib.parse
 
 class FrontendStack(Stack):
-    def __init__(self, scope: Construct, construct_id: str, api_gateway_url: str | None = None, rest_api: apigateway.RestApi | None = None, domain_name: str | None = None, environment: str = "local", **kwargs) -> None:
+    def __init__(self, scope: Construct, construct_id: str, api_gateway_url: str | None = None, rest_api: apigateway.RestApi | None = None, domain_name: str | None = None, stage: str = "local", **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
         
         # 환경별 설정
-        self.environment = environment
+        self.environment = stage
         self.domain_name = domain_name
         
         # 환경별 버킷 이름 생성
-        if environment == "prod":
+        if stage == "prod":
             bucket_name = f"title-generator-frontend-prod"
             bucket_description = "Title Generator 프로덕션 프론트엔드"
-        elif environment == "dev":
+        elif stage == "dev":
             bucket_name = f"title-generator-frontend-dev"
             bucket_description = "Title Generator 개발 프론트엔드"
         else:
@@ -39,7 +39,7 @@ class FrontendStack(Stack):
             bucket_name = f"title-generator-frontend-local-{self.account}-{self.region}"
             bucket_description = "Title Generator 로컬 개발 프론트엔드"
         
-        print(f"🪣 Creating S3 bucket: {bucket_name} for {environment.upper()} environment")
+        print(f"🪣 Creating S3 bucket: {bucket_name} for {stage.upper()} environment")
         
         # S3 버킷 생성 (정적 웹사이트 호스팅)
         self.website_bucket = s3.Bucket(
@@ -47,14 +47,14 @@ class FrontendStack(Stack):
             bucket_name=bucket_name,
             public_read_access=False,  # CloudFront OAI 사용
             block_public_access=s3.BlockPublicAccess.BLOCK_ALL,
-            removal_policy=RemovalPolicy.DESTROY if environment != "prod" else RemovalPolicy.RETAIN,
-            auto_delete_objects=True if environment != "prod" else False,
-            versioned=environment == "prod",  # 프로덕션에서만 버전 관리
+            removal_policy=RemovalPolicy.DESTROY if stage != "prod" else RemovalPolicy.RETAIN,
+            auto_delete_objects=True if stage != "prod" else False,
+            versioned=stage == "prod",  # 프로덕션에서만 버전 관리
             lifecycle_rules=[
                 s3.LifecycleRule(
                     enabled=True,
                     abort_incomplete_multipart_upload_after=Duration.days(7),
-                    noncurrent_version_expiration=Duration.days(30) if environment == "prod" else Duration.days(7)
+                    noncurrent_version_expiration=Duration.days(30) if stage == "prod" else Duration.days(7)
                 )
             ]
         )

@@ -15,7 +15,7 @@ bedrock_client = boto3.client("bedrock-runtime", region_name=os.environ.get("REG
 dynamodb_client = boto3.client("dynamodb", region_name=os.environ.get("REGION", "us-east-1"))
 PROMPT_META_TABLE = os.environ.get("PROMPT_META_TABLE", "BedrockDiyPrompts")
 # 기본 모델 ID (프론트엔드에서 지정하지 않을 때 사용)
-DEFAULT_MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0"
+DEFAULT_MODEL_ID = "apac.anthropic.claude-sonnet-4-20250514-v1:0"
 
 # 지원되는 모델 목록
 SUPPORTED_MODELS = {
@@ -24,11 +24,11 @@ SUPPORTED_MODELS = {
     "anthropic.claude-sonnet-4-v1:0": {"name": "Claude Sonnet 4", "provider": "Anthropic"},
     "anthropic.claude-3-7-sonnet-v1:0": {"name": "Claude 3.7 Sonnet", "provider": "Anthropic"},
     "anthropic.claude-3-5-haiku-20241022-v1:0": {"name": "Claude 3.5 Haiku", "provider": "Anthropic"},
-    "anthropic.claude-3-5-sonnet-20241022-v2:0": {"name": "Claude 3.5 Sonnet v2", "provider": "Anthropic"},
+    "apac.anthropic.claude-sonnet-4-20250514-v1:0": {"name": "Claude 3.5 Sonnet v2", "provider": "Anthropic"},
     "anthropic.claude-3-5-sonnet-20240620-v1:0": {"name": "Claude 3.5 Sonnet", "provider": "Anthropic"},
     "anthropic.claude-3-opus-20240229-v1:0": {"name": "Claude 3 Opus", "provider": "Anthropic"},
     "anthropic.claude-3-haiku-20240307-v1:0": {"name": "Claude 3 Haiku", "provider": "Anthropic"},
-    "anthropic.claude-3-sonnet-20240229-v1:0": {"name": "Claude 3 Sonnet", "provider": "Anthropic"},
+    "apac.anthropic.claude-sonnet-4-20250514-v1:0": {"name": "Claude 3 Sonnet", "provider": "Anthropic"},
     
     # Meta Llama 모델들
     "meta.llama4-scout-17b-instruct-v4:0": {"name": "Llama 4 Scout 17B", "provider": "Meta"},
@@ -55,10 +55,6 @@ def handler(event, context):
         print(f"이벤트 수신: {json.dumps(event)}")
         http_method = event.get("httpMethod", "POST")
         path = event.get("path", "")
-        project_id = event.get("pathParameters", {}).get("projectId")
-
-        if not project_id:
-            return _create_error_response(400, "프로젝트 ID가 필요합니다.")
 
         # 요청 본문(body) 파싱
         if http_method == 'GET':
@@ -91,9 +87,9 @@ def handler(event, context):
         
         # 스트리밍 또는 일반 생성 분기
         if "/stream" in path:
-            return _handle_streaming_generation(project_id, user_input, chat_history, prompt_cards, model_id)
+            return _handle_streaming_generation(user_input, chat_history, prompt_cards, model_id)
         else:
-            return _handle_standard_generation(project_id, user_input, chat_history, prompt_cards, model_id)
+            return _handle_standard_generation(user_input, chat_history, prompt_cards, model_id)
 
     except json.JSONDecodeError:
         print("JSON 파싱 오류 발생")
@@ -102,20 +98,20 @@ def handler(event, context):
         print(f"오류 발생: {traceback.format_exc()}")
         return _create_error_response(500, f"서버 내부 오류: {e}")
 
-def _handle_streaming_generation(project_id, user_input, chat_history, prompt_cards, model_id):
+def _handle_streaming_generation(user_input, chat_history, prompt_cards, model_id):
     """
     Bedrock에서 스트리밍 응답을 받아 실시간으로 반환합니다.
     청크별로 즉시 SSE 형식으로 구성하여 반환합니다.
     """
     try:
-        print(f"스트리밍 생성 시작: 프로젝트 ID={project_id}, 모델={model_id}")
-        final_prompt = _build_final_prompt(project_id, user_input, chat_history, prompt_cards)
+        print(f"스트리밍 생성 시작: 모델={model_id}")
+        final_prompt = _build_final_prompt(user_input, chat_history, prompt_cards)
         
         # 모델에 따른 요청 본문 구성
         if model_id.startswith("anthropic."):
             request_body = {
                 "anthropic_version": "bedrock-2023-05-31",
-                "max_tokens": 4096,
+                "max_tokens": 65536,
                 "messages": [{"role": "user", "content": final_prompt}],
                 "temperature": 0.1,
                 "top_p": 0.9,
@@ -141,7 +137,7 @@ def _handle_streaming_generation(project_id, user_input, chat_history, prompt_ca
         # 시작 이벤트
         start_data = {
             "response": "",
-            "sessionId": project_id,
+            "sessionId": "default",
             "type": "start"
         }
         sse_chunks.append(f"data: {json.dumps(start_data)}\n\n")
@@ -169,7 +165,7 @@ def _handle_streaming_generation(project_id, user_input, chat_history, prompt_ca
                 # 즉시 청크 전송 (버퍼링 없음)
                 sse_data = {
                     "response": text,
-                    "sessionId": project_id,
+                    "sessionId": "default",
                     "type": "chunk"
                 }
                 sse_chunks.append(f"data: {json.dumps(sse_data)}\n\n")
@@ -177,7 +173,7 @@ def _handle_streaming_generation(project_id, user_input, chat_history, prompt_ca
         # 완료 이벤트 전송
         completion_data = {
             "response": "",
-            "sessionId": project_id,
+            "sessionId": "default",
             "type": "complete",
             "fullResponse": full_response
         }
@@ -195,7 +191,7 @@ def _handle_streaming_generation(project_id, user_input, chat_history, prompt_ca
         print(f"스트리밍 오류: {traceback.format_exc()}")
         error_data = {
             "error": str(e),
-            "sessionId": project_id,
+            "sessionId": "default",
             "type": "error"
         }
         return {
@@ -205,17 +201,17 @@ def _handle_streaming_generation(project_id, user_input, chat_history, prompt_ca
             "isBase64Encoded": False
         }
 
-def _handle_standard_generation(project_id, user_input, chat_history, prompt_cards, model_id):
+def _handle_standard_generation(user_input, chat_history, prompt_cards, model_id):
     """일반(non-streaming) Bedrock 응답을 처리합니다."""
     try:
-        print(f"일반 생성 시작: 프로젝트 ID={project_id}, 모델={model_id}")
-        final_prompt = _build_final_prompt(project_id, user_input, chat_history, prompt_cards)
+        print(f"일반 생성 시작: 모델={model_id}")
+        final_prompt = _build_final_prompt(user_input, chat_history, prompt_cards)
         
         # 모델에 따른 요청 본문 구성
         if model_id.startswith("anthropic."):
             request_body = {
                 "anthropic_version": "bedrock-2023-05-31",
-                "max_tokens": 4096,
+                "max_tokens": 65536,
                 "messages": [{"role": "user", "content": final_prompt}],
                 "temperature": 0.1,
                 "top_p": 0.9
@@ -259,17 +255,50 @@ def _handle_standard_generation(project_id, user_input, chat_history, prompt_car
         print(f"일반 생성 오류: {traceback.format_exc()}")
         return _create_error_response(500, f"Bedrock 호출 오류: {e}")
 
-def _build_final_prompt(project_id, user_input, chat_history, prompt_cards):
+def _build_final_prompt(user_input, chat_history, prompt_cards):
     """프론트엔드에서 전송된 프롬프트 카드와 채팅 히스토리를 사용하여 최종 프롬프트를 구성합니다."""
     try:
-        print(f"프롬프트 구성 시작: 프로젝트 ID={project_id}")
+        print(f"프롬프트 구성 시작")
         print(f"전달받은 프롬프트 카드 수: {len(prompt_cards)}")
         print(f"전달받은 채팅 히스토리 수: {len(chat_history)}")
         
-        # 프론트엔드에서 전송된 프롬프트 카드 사용 (이미 활성화된 것만 필터링되어 전송됨)
+        # 프롬프트 카드가 없으면 데이터베이스에서 로드
+        if not prompt_cards:
+            try:
+                from prompt_manager import SimplePromptManager
+                
+                # 환경 변수에서 설정 가져오기
+                prompt_bucket = os.environ.get('PROMPT_BUCKET', 'title-generator-prompts')
+                prompt_meta_table = os.environ.get('PROMPT_META_TABLE', 'title-generator-prompt-meta')
+                region = os.environ.get('REGION', 'us-east-1')
+                
+                # 프롬프트 매니저 초기화
+                prompt_manager = SimplePromptManager(prompt_bucket, prompt_meta_table, region)
+                
+                # 모든 활성화된 프롬프트 로드
+                loaded_prompts = prompt_manager.load_all_active_prompts()
+                print(f"데이터베이스에서 {len(loaded_prompts)}개 프롬프트 로드됨")
+                
+                # 프롬프트 카드 형식으로 변환
+                prompt_cards = []
+                for prompt in loaded_prompts:
+                    prompt_cards.append({
+                        'promptId': prompt['promptId'],
+                        'title': prompt['title'],
+                        'prompt_text': prompt['content'],
+                        'content': prompt['content'],
+                        'isActive': prompt['isActive'],
+                        'threshold': prompt['threshold']
+                    })
+                
+            except Exception as e:
+                print(f"데이터베이스에서 프롬프트 로드 실패: {str(e)}")
+                prompt_cards = []
+        
+        # 프롬프트 카드 처리
         system_prompt_parts = []
         for card in prompt_cards:
-            prompt_text = card.get('prompt_text', '').strip()
+            prompt_text = card.get('prompt_text', card.get('content', '')).strip()
             if prompt_text:
                 title = card.get('title', 'Untitled')
                 print(f"프롬프트 카드 적용: '{title}' ({len(prompt_text)}자)")

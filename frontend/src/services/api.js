@@ -3,37 +3,7 @@ import axios from "axios";
 // API 기본 설정
 const API_BASE_URL =
   process.env.REACT_APP_API_URL ||
-  "https://nq5qrt16lb.execute-api.us-east-1.amazonaws.com/prod";
-
-// Mock data for development
-const mockUsageData = {
-  todayRequests: 127,
-  todayTokens: 45320,
-  monthlyLimit: 1000000,
-  monthlyUsed: 523400,
-  plan: {
-    name: "Professional",
-    expiresAt: "2025-02-28",
-    features: ["월 100만 토큰", "우선 지원", "API 액세스"],
-  },
-  chartData: Array.from({ length: 30 }, (_, i) => ({
-    date: new Date(Date.now() - (29 - i) * 24 * 60 * 60 * 1000)
-      .toISOString()
-      .split("T")[0],
-    tokens: Math.floor(Math.random() * 30000) + 10000,
-    requests: Math.floor(Math.random() * 100) + 50,
-  })),
-  recentLogs: Array.from({ length: 20 }, (_, i) => ({
-    id: `log-${i}`,
-    timestamp: new Date(Date.now() - i * 60 * 60 * 1000).toISOString(),
-    model: ["Claude 3 Sonnet", "Claude 3.5 Haiku", "Claude 3 Opus"][
-      Math.floor(Math.random() * 3)
-    ],
-    tokens: Math.floor(Math.random() * 5000) + 1000,
-    duration: Math.floor(Math.random() * 3000) + 500,
-    status: Math.random() > 0.1 ? "success" : "error",
-  })),
-};
+  "https://bu1n1ihwo4.execute-api.us-east-1.amazonaws.com/prod";
 
 // Axios 인스턴스
 const api = axios.create({
@@ -45,6 +15,8 @@ const api = axios.create({
 // 요청 인터셉터 - 인증 토큰 자동 추가
 api.interceptors.request.use(async (config) => {
   console.log("API 요청:", config.method?.toUpperCase(), config.url);
+  console.log("전체 URL:", config.baseURL + config.url);
+  console.log("요청 헤더:", config.headers);
 
   // 개발 모드에서 인증 스킵
   if (process.env.REACT_APP_SKIP_AUTH === "true") {
@@ -130,23 +102,13 @@ const mapFrontendToBackend = {
 
   // 프롬프트 카드 데이터 변환
   promptCard: (frontendData) => ({
+    adminId: frontendData.adminId || 'ai@sedaily.com', // adminId 추가
     title: frontendData.title,
-    prompt_text: frontendData.prompt_text || frontendData.content,
+    content: frontendData.prompt_text || frontendData.content, // Lambda는 content 필드 사용
     tags: frontendData.tags || [],
     isActive: frontendData.enabled !== false && frontendData.isActive !== false,
     stepOrder: frontendData.stepOrder || 1,
-  }),
-
-  // 프로젝트 데이터 변환
-  project: (frontendData) => ({
-    name: frontendData.name,
-    description: frontendData.description || "",
-    tags: frontendData.tags || [],
-    aiRole: frontendData.aiRole || "",
-    aiInstructions: frontendData.aiInstructions || "",
-    targetAudience: frontendData.targetAudience || "일반독자",
-    outputFormat: frontendData.outputFormat || "multiple",
-    styleGuidelines: frontendData.styleGuidelines || "",
+    threshold: frontendData.threshold || 0.7,
   }),
 };
 
@@ -179,24 +141,6 @@ const mapBackendToFrontend = {
     updatedAt: backendData.updatedAt,
   }),
 
-  // 프로젝트 변환
-  project: (backendData) => ({
-    projectId: backendData.projectId,
-    name: backendData.name,
-    description: backendData.description || "",
-    status: backendData.status,
-    tags: backendData.tags || [],
-    aiRole: backendData.aiRole || "",
-    aiInstructions: backendData.aiInstructions || "",
-    targetAudience: backendData.targetAudience || "일반독자",
-    outputFormat: backendData.outputFormat || "multiple",
-    styleGuidelines: backendData.styleGuidelines || "",
-    createdAt: backendData.createdAt,
-    updatedAt: backendData.updatedAt,
-    promptCount: backendData.promptCount || 0,
-    conversationCount: backendData.conversationCount || 0,
-  }),
-
   // 대화 목록 변환
   conversation: (backendData) => ({
     id: backendData.id || backendData.conversationId,
@@ -208,17 +152,11 @@ const mapBackendToFrontend = {
 };
 
 /**
- * Mock 데이터와 실제 API 간 전환을 위한 플래그
- */
-const USE_MOCK_DATA = process.env.REACT_APP_USE_MOCK_DATA === "true";
-
-/**
  * 🔍 API 연결 상태 확인 함수
  */
 export const testApiConnection = async () => {
   console.log("🔍 API 연결 상태 확인 중...");
   console.log("- API Base URL:", API_BASE_URL);
-  console.log("- Use Mock Data:", USE_MOCK_DATA);
   console.log("- Node Env:", process.env.NODE_ENV);
 
   try {
@@ -240,107 +178,22 @@ export const testApiConnection = async () => {
 };
 
 // =============================================================================
-// 프로젝트 API (기존 유지)
-// =============================================================================
-
-export const projectAPI = {
-  getProjects: async () => {
-    try {
-      const response = await api.get("/projects");
-      // 백엔드 데이터를 프론트엔드 형식으로 변환
-      const projects = response.data.projects || response.data;
-      return {
-        projects: Array.isArray(projects)
-          ? projects.map(mapBackendToFrontend.project)
-          : [],
-        count: response.data.count || projects.length,
-        hasMore: response.data.hasMore || false,
-        nextKey: response.data.nextKey,
-      };
-    } catch (error) {
-      console.error("프로젝트 목록 조회 실패:", error);
-      throw error;
-    }
-  },
-
-  getProject: async (projectId) => {
-    try {
-      const response = await api.get(`/projects/${projectId}`);
-      // 백엔드 데이터를 프론트엔드 형식으로 변환
-      return mapBackendToFrontend.project(response.data);
-    } catch (error) {
-      console.error("프로젝트 상세 조회 실패:", error);
-      throw error;
-    }
-  },
-
-  createProject: async (projectData) => {
-    try {
-      // 프론트엔드 데이터를 백엔드 형식으로 변환
-      const backendData = mapFrontendToBackend.project(projectData);
-      const response = await api.post("/projects", backendData);
-      // 응답을 프론트엔드 형식으로 변환
-      return mapBackendToFrontend.project(response.data);
-    } catch (error) {
-      console.error("프로젝트 생성 실패:", error);
-      throw error;
-    }
-  },
-
-  updateProject: async (projectId, projectData) => {
-    try {
-      // 프론트엔드 데이터를 백엔드 형식으로 변환
-      const backendData = mapFrontendToBackend.project(projectData);
-      const response = await api.put(`/projects/${projectId}`, backendData);
-      // 응답을 프론트엔드 형식으로 변환
-      return mapBackendToFrontend.project(response.data);
-    } catch (error) {
-      console.error("프로젝트 업데이트 실패:", error);
-      throw error;
-    }
-  },
-
-  deleteProject: async (projectId) => {
-    try {
-      const response = await api.delete(`/projects/${projectId}`);
-      return response.data;
-    } catch (error) {
-      console.error("프로젝트 삭제 실패:", error);
-      throw error;
-    }
-  },
-
-  getUploadUrl: async (projectId, fileName) => {
-    try {
-      const response = await api.get(`/projects/${projectId}/upload-url`, {
-        params: { fileName },
-      });
-      return response.data;
-    } catch (error) {
-      console.error("업로드 URL 생성 실패:", error);
-      throw error;
-    }
-  },
-};
-
-// =============================================================================
 // 프롬프트 카드 API (기존 유지)
 // =============================================================================
 
 export const promptCardAPI = {
-  getPromptCards: async (
-    projectId,
-    includeContent = false,
-    includeStats = false
-  ) => {
+  getPromptCards: async (includeContent = false, includeStats = false) => {
     try {
-      const response = await api.get(`/prompts/${projectId}`, {
+      const response = await api.get(`/prompts`, {
         params: { includeContent, includeStats },
       });
 
       // 백엔드 응답을 프론트엔드 형식으로 변환
       const promptCards =
-        response.data.promptCards || response.data.prompts || response.data;
+        response.data.cards ||
+        response.data.promptCards ||
+        response.data.prompts ||
+        response.data;
       return {
         promptCards: Array.isArray(promptCards)
           ? promptCards.map(mapBackendToFrontend.promptCard)
@@ -353,11 +206,15 @@ export const promptCardAPI = {
     }
   },
 
-  createPromptCard: async (projectId, promptData) => {
+  createPromptCard: async (promptData) => {
     try {
+      console.log("프롬프트 카드 생성 요청:", promptData);
+
       // 프론트엔드 데이터를 백엔드 형식으로 변환
       const backendData = mapFrontendToBackend.promptCard(promptData);
-      const response = await api.post(`/prompts/${projectId}`, backendData);
+      const response = await api.post(`/prompts`, backendData);
+      console.log("프롬프트 카드 생성 응답:", response.data);
+
       // 응답을 프론트엔드 형식으로 변환
       return mapBackendToFrontend.promptCard(response.data);
     } catch (error) {
@@ -366,14 +223,11 @@ export const promptCardAPI = {
     }
   },
 
-  updatePromptCard: async (projectId, promptId, promptData) => {
+  updatePromptCard: async (promptId, promptData) => {
     try {
       // 프론트엔드 데이터를 백엔드 형식으로 변환
       const backendData = mapFrontendToBackend.promptCard(promptData);
-      const response = await api.put(
-        `/prompts/${projectId}/${promptId}`,
-        backendData
-      );
+      const response = await api.put(`/prompts/${promptId}`, backendData);
       // 응답을 프론트엔드 형식으로 변환
       return mapBackendToFrontend.promptCard(response.data);
     } catch (error) {
@@ -382,11 +236,9 @@ export const promptCardAPI = {
     }
   },
 
-  getPromptContent: async (projectId, promptId) => {
+  getPromptContent: async (promptId) => {
     try {
-      const response = await api.get(
-        `/prompts/${projectId}/${promptId}/content`
-      );
+      const response = await api.get(`/prompts/${promptId}`);
       return response.data;
     } catch (error) {
       console.error("프롬프트 내용 조회 실패:", error);
@@ -394,9 +246,13 @@ export const promptCardAPI = {
     }
   },
 
-  deletePromptCard: async (projectId, promptId) => {
+  deletePromptCard: async (promptId) => {
     try {
-      const response = await api.delete(`/prompts/${projectId}/${promptId}`);
+      const response = await api.delete(`/prompts/${promptId}`, {
+        data: {
+          adminId: "143834d8-70e1-704d-2f1e-974c63817a67"
+        }
+      });
       return response.data;
     } catch (error) {
       console.error("프롬프트 카드 삭제 실패:", error);
@@ -404,10 +260,10 @@ export const promptCardAPI = {
     }
   },
 
-  reorderPromptCards: async (projectId, reorderData) => {
+  reorderPromptCards: async (reorderData) => {
     try {
       const updatePromises = reorderData.map(({ promptId, stepOrder }) =>
-        api.put(`/prompts/${projectId}/${promptId}`, { stepOrder })
+        api.put(`/prompts/${promptId}`, { stepOrder })
       );
 
       const responses = await Promise.all(updatePromises);
@@ -429,9 +285,8 @@ export const promptCardAPI = {
 // =============================================================================
 
 export const generateAPI = {
-  generateTitle: async (projectId, data) => {
+  generateTitle: async (data) => {
     console.log("대화 생성 요청 시작:", {
-      projectId,
       inputLength: data.userInput?.length || 0,
       historyLength: data.chat_history?.length || 0,
       timestamp: new Date().toISOString(),
@@ -443,10 +298,7 @@ export const generateAPI = {
 
       console.log("🔄 변환된 백엔드 데이터:", backendData);
 
-      const response = await api.post(
-        `/projects/${projectId}/generate`,
-        backendData
-      );
+      const response = await api.post(`/generate`, backendData);
 
       console.log("대화 생성 성공:", {
         status: response.status,
@@ -469,15 +321,8 @@ export const generateAPI = {
   },
 
   // 🔧 실제 스트리밍 구현 - Server-Sent Events 사용
-  generateTitleStream: async (
-    projectId,
-    data,
-    onChunk,
-    onError,
-    onComplete
-  ) => {
+  generateTitleStream: async (data, onChunk, onError, onComplete) => {
     console.log("스트리밍 대화 생성 요청 시작:", {
-      projectId,
       inputLength: data.userInput?.length || 0,
       historyLength: data.chat_history?.length || 0,
       timestamp: new Date().toISOString(),
@@ -489,7 +334,7 @@ export const generateAPI = {
 
     try {
       // 1. 먼저 실제 스트리밍 API 시도
-      const streamingUrl = `${API_BASE_URL}/projects/${projectId}/generate/stream`;
+      const streamingUrl = `${API_BASE_URL}/generate/stream`;
 
       console.log("🚀 실제 스트리밍 API 시도:", streamingUrl);
 
@@ -585,7 +430,7 @@ export const generateAPI = {
       // 4. 폴백: 일반 API 호출
       try {
         const fallbackResponse = await api.post(
-          `/projects/${projectId}/generate`,
+          `/generate`,
           backendData // 변환된 데이터 사용
         );
 
@@ -638,91 +483,6 @@ export const generateAPI = {
 };
 
 // =============================================================================
-// 🆕 CrewAI 멀티-에이전트 API (새로 추가)
-// =============================================================================
-
-export const crewAPI = {
-  // 프롬프트 인스턴스 생성 (프롬프트 카드들을 에이전트로 변환)
-  createCrewInstance: async (projectId, promptCards) => {
-    console.log("크루 인스턴스 생성 요청:", {
-      projectId,
-      promptCardsCount: promptCards.length,
-    });
-
-    const response = await api.post("/crew/instances", {
-      projectId,
-      promptCards: promptCards.map((card) => ({
-        promptId: card.promptId,
-        prompt_text: card.prompt_text,
-        stepOrder: card.stepOrder,
-        isActive: card.isActive,
-      })),
-    });
-
-    console.log("크루 인스턴스 생성 완료:", response.data);
-    return response.data;
-  },
-
-  // 프로젝트의 크루 인스턴스 조회
-  getCrewInstances: async (projectId) => {
-    console.log("크루 인스턴스 조회:", { projectId });
-
-    const response = await api.get(`/crew/instances/${projectId}`);
-    return response.data;
-  },
-
-  // 크루 설정 조회
-  getCrewConfig: async (projectId) => {
-    console.log("크루 설정 조회:", { projectId });
-
-    const response = await api.get(`/crew/config/${projectId}`);
-    return response.data;
-  },
-
-  // 🌟 멀티-에이전트 병렬 실행 (핵심 기능)
-  executeMultiAgent: async (projectId, userInput, onProgress = null) => {
-    console.log("멀티-에이전트 실행 시작:", {
-      projectId,
-      inputLength: userInput.length,
-      timestamp: new Date().toISOString(),
-    });
-
-    try {
-      const response = await api.post("/crew/execute", {
-        projectId,
-        userInput,
-        mode: "parallel", // 병렬 처리 모드 명시
-      });
-
-      console.log("멀티-에이전트 실행 완료:", {
-        agentCount: Object.keys(response.data.agentResults || {}).length,
-        titleCount: Object.keys(response.data.finalTitles || {}).length,
-        tokenUsage: response.data.tokenUsage,
-        timestamp: new Date().toISOString(),
-      });
-
-      return response.data;
-    } catch (error) {
-      console.error("멀티-에이전트 실행 실패:", {
-        error: error.message,
-        status: error.response?.status,
-        data: error.response?.data,
-        timestamp: new Date().toISOString(),
-      });
-      throw error;
-    }
-  },
-
-  // 에이전트별 상세 결과 조회
-  getAgentResults: async (projectId, executionId) => {
-    console.log("에이전트 결과 조회:", { projectId, executionId });
-
-    const response = await api.get(`/crew/results/${projectId}/${executionId}`);
-    return response.data;
-  },
-};
-
-// =============================================================================
 // 채팅 API (기존 유지)
 // =============================================================================
 
@@ -736,7 +496,7 @@ export const chatAPI = {
     });
 
     try {
-      const response = await generateAPI.generateTitle(projectId, {
+      const response = await generateAPI.generateTitle({
         userInput: message,
         userRequest: "",
         chat_history: [],
@@ -1176,22 +936,13 @@ export const calculatePromptStats = (promptCards) => {
 export const getUsage = async (range = "month") => {
   console.log("사용량 데이터 조회 요청:", { range });
 
-  // Mock 데이터 사용 모드이거나 개발 모드일 때
-  if (USE_MOCK_DATA || process.env.NODE_ENV === "development") {
-    console.log("🔄 Mock 사용량 데이터 반환");
-    // Simulate API delay
-    await new Promise((resolve) => setTimeout(resolve, 500));
-    return mockUsageData;
-  }
-
   try {
     const response = await api.get(`/usage?range=${range}`);
     console.log("✅ 사용량 API 호출 성공");
     return response.data;
   } catch (error) {
-    console.warn("⚠️ 사용량 API 호출 실패, Mock 데이터로 폴백:", error.message);
-    // Fallback to mock data
-    return mockUsageData;
+    console.warn("⚠️ 사용량 API 호출 실패:", error.message);
+    throw error;
   }
 };
 
@@ -1228,15 +979,6 @@ export const conversationAPI = {
       };
     } catch (error) {
       console.error("대화 목록 조회 실패:", error);
-      // Mock 데이터로 폴백 (개발 시)
-      if (USE_MOCK_DATA || process.env.NODE_ENV === "development") {
-        console.log("🔄 Mock 데이터로 폴백");
-        return {
-          conversations: mockConversations,
-          hasMore: false,
-          nextCursor: null,
-        };
-      }
       throw error;
     }
   },
@@ -1281,16 +1023,6 @@ export const conversationAPI = {
       };
     } catch (error) {
       console.error("메시지 조회 실패:", error);
-      // Mock 데이터로 폴백 (개발 시)
-      if (USE_MOCK_DATA || process.env.NODE_ENV === "development") {
-        console.log("🔄 Mock 메시지 데이터로 폴백");
-        const mockMessageData = mockMessages[conversationId] || [];
-        return {
-          messages: mockMessageData,
-          hasMore: false,
-          nextCursor: null,
-        };
-      }
       throw error;
     }
   },
@@ -1325,68 +1057,6 @@ export const conversationAPI = {
       throw error;
     }
   },
-};
-
-// Mock data for conversation development
-export const mockConversations = [
-  {
-    id: "1",
-    title: "서울경제신문 AI 제목 생성 테스트",
-    startedAt: "2025-01-20T10:30:00Z",
-    lastActivityAt: "2025-01-20T15:45:00Z",
-    tokenSum: 1250,
-  },
-  {
-    id: "2",
-    title: "경제 뉴스 헤드라인 최적화",
-    startedAt: "2025-01-19T14:20:00Z",
-    lastActivityAt: "2025-01-19T16:30:00Z",
-    tokenSum: 890,
-  },
-  {
-    id: "3",
-    title: "부동산 시장 분석 제목 생성",
-    startedAt: "2025-01-18T09:15:00Z",
-    lastActivityAt: "2025-01-18T11:45:00Z",
-    tokenSum: 2150,
-  },
-];
-
-export const mockMessages = {
-  1: [
-    {
-      id: "2025-01-20T10:30:00.000Z",
-      role: "user",
-      content: "오늘 서울 부동산 시장 현황에 대한 기사 제목을 만들어주세요.",
-      tokenCount: 25,
-      timestamp: "2025-01-20T10:30:00.000Z",
-    },
-    {
-      id: "2025-01-20T10:30:05.000Z",
-      role: "assistant",
-      content:
-        '서울 부동산 시장 현황에 대한 몇 가지 제목 옵션을 제안해드리겠습니다:\n\n1. "서울 아파트값 3개월 연속 하락세... 매수심리 위축"\n2. "강남·서초구 고가 아파트 거래 급감, 시장 관망세 지속"\n3. "서울 부동산 시장 \'관망론\' 확산... 전세시장은 여전히 불안"',
-      tokenCount: 95,
-      timestamp: "2025-01-20T10:30:05.000Z",
-    },
-  ],
-  2: [
-    {
-      id: "2025-01-19T14:20:00.000Z",
-      role: "user",
-      content: "반도체 산업 관련 경제 뉴스 제목을 생성해주세요.",
-      tokenCount: 20,
-      timestamp: "2025-01-19T14:20:00.000Z",
-    },
-    {
-      id: "2025-01-19T14:20:03.000Z",
-      role: "assistant",
-      content:
-        '반도체 산업 관련 경제 뉴스 제목들을 제안드립니다:\n\n1. "삼성전자 메모리 반도체 수요 회복 기대감... 주가 상승세"\n2. "AI 칩 수요 급증에 SK하이닉스 4분기 실적 개선 전망"\n3. "중국 반도체 굴기 vs 한국 기술력... 글로벌 경쟁 심화"',
-      tokenCount: 78,
-      timestamp: "2025-01-19T14:20:03.000Z",
-    },
-  ],
 };
 
 // =============================================================================

@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback, memo } from "react";
 import { useConversations } from "../../hooks/useConversations";
 import { useConversationContext } from "../../contexts/ConversationContext";
 import { conversationAPI } from "../../services/api";
+import { toast } from "react-hot-toast";
 
 const ConversationDrawer = memo(({
   isOpen,
@@ -23,7 +24,6 @@ const ConversationDrawer = memo(({
     error,
     hasMore,
     loadMore,
-    createConversation,
     deleteConversation,
     updateConversation,
   } = useConversations();
@@ -100,7 +100,7 @@ const ConversationDrawer = memo(({
       setIsCreating(false);
       console.log("⚡ [FAST] 새 대화 준비 완료 - 사용자 입력 대기");
     }, 100);
-  }, [setCurrentConversation, onClose]);
+  }, [setCurrentConversation, onClose, isCreating]);
 
   // 대화 선택 - 최적화된 버전
   const handleSelectConversation = useCallback((conversationId) => {
@@ -256,20 +256,20 @@ const ConversationDrawer = memo(({
         className={`
         conversation-drawer
         fixed top-0 left-0 h-full z-[9999]
-        bg-[#0d1117]
-        border-r border-[#21262d] shadow-[inset_0_0_16px_rgba(0,0,0,0.4)]
+        bg-gray-50 dark:bg-[#0d1117]
+        border-r border-gray-200 dark:border-[#21262d] shadow-[inset_0_0_16px_rgba(0,0,0,0.4)]
         transform transition-all duration-300 ease-out will-change-transform
         ${isOpen ? "translate-x-0" : "-translate-x-full"}
         md:translate-x-0
-        ${isCollapsed ? "w-14" : "w-full md:w-64"}
+        ${isCollapsed ? "w-12" : "w-full md:w-72"}
         ${className}
       `}
         style={{ overscrollBehavior: "contain" }}
       >
         {/* 헤더 - 접힌 상태에서는 숨김 */}
         {!isCollapsed && (
-          <div className="flex items-center justify-between p-5 border-b border-[#21262d] relative transition-opacity duration-200 ease-in-out will-change-transform">
-            <h1 className="text-xl font-semibold tracking-tight text-[#e6edf3]">
+          <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-[#21262d] relative transition-opacity duration-200 ease-in-out will-change-transform">
+            <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-[#e6edf3]">
               TITLE-NOMICS
             </h1>
 
@@ -282,7 +282,7 @@ const ConversationDrawer = memo(({
                   onCollapsedChange(newCollapsed);
                 }
               }}
-              className="w-10 h-10 py-2 rounded-full bg-transparent hover:bg-[#11161f] transition-colors duration-200 flex items-center justify-center group"
+              className="w-10 h-10 py-2 rounded-full bg-transparent hover:bg-gray-100 dark:hover:bg-[#11161f] transition-colors duration-200 flex items-center justify-center group"
               title="사이드바 접기"
             >
               <svg
@@ -291,7 +291,7 @@ const ConversationDrawer = memo(({
                 viewBox="0 0 24 24"
                 strokeWidth="1.5"
                 stroke="currentColor"
-                className="w-6 h-6 text-[#88929d] group-hover:text-[#e6edf3] transition-colors duration-200"
+                className="w-6 h-6 text-gray-500 dark:text-[#88929d] group-hover:text-gray-900 dark:group-hover:text-[#e6edf3] transition-colors duration-200"
               >
                 <path
                   strokeLinecap="round"
@@ -305,7 +305,7 @@ const ConversationDrawer = memo(({
 
         {/* 접힌 상태 전용 토글 버튼 */}
         {isCollapsed && (
-          <div className="p-2 flex justify-center border-b border-[#21262d]">
+          <div className="p-2 flex justify-center border-b border-gray-200 dark:border-[#21262d]">
             <button
               onClick={() => {
                 const newCollapsed = !isCollapsed;
@@ -314,7 +314,7 @@ const ConversationDrawer = memo(({
                   onCollapsedChange(newCollapsed);
                 }
               }}
-              className="w-10 h-10 py-2 rounded-full bg-transparent hover:bg-[#11161f] transition-colors duration-200 flex items-center justify-center group"
+              className="w-10 h-10 py-2 rounded-full bg-transparent hover:bg-gray-100 dark:hover:bg-[#11161f] transition-colors duration-200 flex items-center justify-center group"
               title="사이드바 펼치기"
             >
               <svg
@@ -323,7 +323,7 @@ const ConversationDrawer = memo(({
                 viewBox="0 0 24 24"
                 strokeWidth="1.5"
                 stroke="currentColor"
-                className="w-6 h-6 text-[#88929d] group-hover:text-[#e6edf3] transition-colors duration-200 rotate-180"
+                className="w-6 h-6 text-gray-500 dark:text-[#88929d] group-hover:text-gray-900 dark:group-hover:text-[#e6edf3] transition-colors duration-200 rotate-180"
               >
                 <path
                   strokeLinecap="round"
@@ -337,17 +337,17 @@ const ConversationDrawer = memo(({
 
         {/* 새 대화 버튼 */}
         {!isCollapsed && (
-          <div className="p-4 border-b border-[#21262d] transition-opacity duration-200 ease-in-out will-change-transform">
+          <div className="p-4 border-b border-gray-200 dark:border-[#21262d] transition-opacity duration-200 ease-in-out will-change-transform">
             <button
               onClick={handleNewChat}
               disabled={isCreating}
-              className="group w-full flex items-center justify-start gap-3 px-3 py-2.5 text-[#e6edf3] hover:bg-[#21262d] disabled:bg-[#374151] rounded-lg text-sm transition-all duration-200 focus:outline-none border border-[#6e7681] hover:border-[#8b949e]"
+              className="group w-full flex items-center justify-start gap-3 px-3 py-2.5 text-gray-900 dark:text-[#e6edf3] hover:bg-gray-100 dark:hover:bg-[#21262d] disabled:bg-gray-300 dark:disabled:bg-[#374151] rounded-lg text-sm transition-all duration-200 focus:outline-none border border-gray-300 dark:border-[#6e7681] hover:border-gray-400 dark:hover:border-[#8b949e]"
               title="새 채팅"
             >
               {isCreating ? (
                 <>
                   <div className="flex-shrink-0 w-5 h-5 flex items-center justify-center">
-                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-[#e6edf3]"></div>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 dark:border-[#e6edf3]"></div>
                   </div>
                   <span className="font-medium">생성 중...</span>
                 </>
@@ -442,14 +442,14 @@ const ConversationDrawer = memo(({
 
           {conversations.length === 0 && !loading && !error && !isCollapsed && (
             <div className="p-6 text-center">
-              <div className="w-12 h-12 mx-auto mb-4 bg-gradient-to-br from-gray-800/50 to-gray-900/50 rounded-2xl flex items-center justify-center shadow-lg border border-gray-700/30">
+              <div className="w-12 h-12 mx-auto mb-4 bg-blue-100 dark:bg-dark-tertiary rounded-full flex items-center justify-center">
                 <svg
                   xmlns="http://www.w3.org/2000/svg"
                   fill="none"
                   viewBox="0 0 24 24"
                   strokeWidth="1.5"
                   stroke="currentColor"
-                  className="h-6 w-6 text-gray-400"
+                  className="h-6 w-6 text-blue-600 dark:text-blue-400"
                 >
                   <path
                     strokeLinecap="round"
@@ -458,10 +458,10 @@ const ConversationDrawer = memo(({
                   />
                 </svg>
               </div>
-              <h3 className="text-sm font-medium text-white mb-2 drop-shadow">
+              <h3 className="text-sm font-medium text-gray-800 dark:text-white mb-2 drop-shadow">
                 아직 대화가 없습니다
               </h3>
-              <p className="text-xs text-gray-400 leading-snug opacity-80">
+              <p className="text-xs text-gray-600 dark:text-gray-400 leading-snug opacity-80">
                 새 대화를 시작해서 AI와 대화해보세요!
               </p>
             </div>
@@ -488,7 +488,7 @@ const ConversationDrawer = memo(({
                 ([groupTitle, groupConversations]) => (
                   <div key={groupTitle}>
                     {/* 날짜 그룹 헤더 */}
-                    <div className="text-xs text-white/40 uppercase tracking-wide py-2 px-3 font-medium">
+                    <div className="text-xs text-gray-500 dark:text-white/40 uppercase tracking-wide py-2 px-3 font-medium">
                       {groupTitle}
                     </div>
 
@@ -500,8 +500,8 @@ const ConversationDrawer = memo(({
                         flex items-center justify-between h-10 px-3 py-2 text-sm transition-colors duration-200 relative
                         ${
                           currentConversationId === conversation.id
-                            ? "bg-[#161b22] text-[#e6edf3] relative before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[2px] before:bg-[#10b981]"
-                            : "text-[#88929d] hover:bg-[#11161f] hover:text-[#e6edf3]"
+                            ? "bg-gray-100 dark:bg-[#161b22] text-gray-900 dark:text-[#e6edf3] relative before:absolute before:left-0 before:top-0 before:bottom-0 before:w-[2px] before:bg-blue-600 dark:before:bg-[#10b981]"
+                            : "text-gray-700 dark:text-[#88929d] hover:bg-gray-100 dark:hover:bg-[#11161f] hover:text-gray-900 dark:hover:text-[#e6edf3]"
                         }
                       `}
                       >
@@ -519,12 +519,12 @@ const ConversationDrawer = memo(({
                                   handleCancelEdit();
                                 }
                               }}
-                              className="flex-1 bg-[#0d1117] border border-[#21262d] rounded px-2 py-1 text-sm text-[#e6edf3] focus:outline-none focus:border-[#10b981]"
+                              className="flex-1 bg-white dark:bg-[#0d1117] border border-gray-300 dark:border-[#21262d] rounded px-2 py-1 text-sm text-gray-900 dark:text-[#e6edf3] focus:outline-none focus:border-blue-500 dark:focus:border-[#10b981]"
                               autoFocus
                             />
                             <button
                               onClick={() => handleSaveEdit(conversation.id)}
-                              className="p-1 text-[#10b981] hover:bg-[#161b22] rounded"
+                              className="p-1 text-green-600 dark:text-[#10b981] hover:bg-gray-100 dark:hover:bg-[#161b22] rounded"
                               title="저장"
                             >
                               <svg
@@ -544,7 +544,7 @@ const ConversationDrawer = memo(({
                             </button>
                             <button
                               onClick={handleCancelEdit}
-                              className="p-1 text-[#88929d] hover:text-[#f85149] hover:bg-[#161b22] rounded"
+                              className="p-1 text-gray-500 dark:text-[#88929d] hover:text-red-600 dark:hover:text-[#f85149] hover:bg-gray-100 dark:hover:bg-[#161b22] rounded"
                               title="취소"
                             >
                               <svg
@@ -584,7 +584,7 @@ const ConversationDrawer = memo(({
                                 onClick={(e) =>
                                   handleToggleMenu(conversation.id, e)
                                 }
-                                className="ml-2 py-2 px-2 text-[#88929d] hover:text-[#e6edf3] transition-colors duration-200 flex-shrink-0 rounded-md hover:bg-[#161b22]"
+                                className="ml-2 py-2 px-2 text-gray-500 dark:text-[#88929d] hover:text-gray-700 dark:hover:text-[#e6edf3] transition-colors duration-200 flex-shrink-0 rounded-md hover:bg-gray-100 dark:hover:bg-[#161b22]"
                                 title="메뉴"
                               >
                                 <svg
@@ -605,7 +605,7 @@ const ConversationDrawer = memo(({
 
                               {/* 드롭다운 메뉴 */}
                               {activeMenuId === conversation.id && (
-                                <div className="absolute right-0 top-full mt-1 bg-[#21262d] border border-[#30363d] rounded-md shadow-lg z-50 min-w-[120px]">
+                                <div className="absolute right-0 top-full mt-1 bg-white dark:bg-[#21262d] border border-gray-200 dark:border-[#30363d] rounded-md shadow-lg z-50 min-w-[120px]">
                                   <button
                                     onClick={(e) =>
                                       handleStartEdit(
@@ -614,7 +614,7 @@ const ConversationDrawer = memo(({
                                         e
                                       )
                                     }
-                                    className="w-full px-3 py-2 text-sm text-[#e6edf3] hover:bg-[#30363d] flex items-center gap-2 transition-colors duration-200"
+                                    className="w-full px-3 py-2 text-sm text-gray-700 dark:text-[#e6edf3] hover:bg-gray-100 dark:hover:bg-[#30363d] flex items-center gap-2 transition-colors duration-200"
                                   >
                                     <svg
                                       xmlns="http://www.w3.org/2000/svg"
@@ -640,7 +640,7 @@ const ConversationDrawer = memo(({
                                       )
                                     }
                                     disabled={deletingId === conversation.id}
-                                    className="w-full px-3 py-2 text-sm text-[#f85149] hover:bg-[#30363d] flex items-center gap-2 transition-colors duration-200 disabled:opacity-50"
+                                    className="w-full px-3 py-2 text-sm text-red-600 dark:text-[#f85149] hover:bg-gray-100 dark:hover:bg-[#30363d] flex items-center gap-2 transition-colors duration-200 disabled:opacity-50"
                                   >
                                     {deletingId === conversation.id ? (
                                       <div className="animate-spin rounded-full h-4 w-4 border-b border-[#f85149]"></div>
@@ -681,11 +681,11 @@ const ConversationDrawer = memo(({
               <button
                 onClick={handleNewChat}
                 disabled={isCreating}
-                className="w-10 h-10 bg-[#21262d] hover:bg-[#30363d] disabled:bg-[#374151] text-white rounded-full flex items-center justify-center transition-colors duration-200 focus:outline-none border border-[#30363d] hover:border-[#444c56]"
+                className="w-10 h-10 bg-gray-200 dark:bg-[#21262d] hover:bg-gray-300 dark:hover:bg-[#30363d] disabled:bg-gray-300 dark:disabled:bg-[#374151] text-gray-900 dark:text-white rounded-full flex items-center justify-center transition-colors duration-200 focus:outline-none border border-gray-300 dark:border-[#30363d] hover:border-gray-400 dark:hover:border-[#444c56]"
                 title="새 대화"
               >
                 {isCreating ? (
-                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                  <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-gray-900 dark:border-white"></div>
                 ) : (
                   <svg
                     xmlns="http://www.w3.org/2000/svg"

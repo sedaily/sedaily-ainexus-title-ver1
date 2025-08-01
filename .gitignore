@@ -150,3 +150,15 @@ temp/
 .env.development.local
 .env.test.local
 .env.production.local
+
+# Lambda zip files
+lambda/**/*.zip
+
+# Backup files
+*.backup
+*.bak
+*_old.*
+*.old
+
+# CDK outputs
+cdk/outputs.json

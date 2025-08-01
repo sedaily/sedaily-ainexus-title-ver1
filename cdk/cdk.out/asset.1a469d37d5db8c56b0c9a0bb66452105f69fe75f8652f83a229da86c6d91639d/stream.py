@@ -86,7 +86,7 @@ def handle_stream_request(connection_id, data):
         # Bedrock 스트리밍 요청
         request_body = {
             "anthropic_version": "bedrock-2023-05-31",
-            "max_tokens": 4096,
+            "max_tokens": 200000,
             "messages": [{"role": "user", "content": final_prompt}],
             "temperature": 0.3,
             "top_p": 0.9,

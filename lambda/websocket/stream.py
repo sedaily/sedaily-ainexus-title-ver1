@@ -60,45 +60,43 @@ def handler(event, context):
 
 def handle_stream_request(connection_id, data):
     """
-    실시간 스트리밍 요청 처리
+    실시간 스트리밍 요청 처리 - 단계별 실행 및 사고과정 포함
     """
     try:
-        project_id = data.get('projectId')
         user_input = data.get('userInput')
         chat_history = data.get('chat_history', [])
         prompt_cards = data.get('prompt_cards', [])
-        conversation_id = data.get('conversationId')  # New field for conversation tracking
-        user_sub = data.get('userSub')  # User ID from frontend
+        conversation_id = data.get('conversationId')
+        user_sub = data.get('userSub')
+        enable_stepwise = data.get('enableStepwise', False)  # 단계별 실행 옵션
         
         print(f"🔍 [DEBUG] WebSocket 스트림 요청 받음:")
-        print(f"  - project_id: {project_id}")
         print(f"  - user_input: {user_input[:50]}..." if user_input else "  - user_input: None")
-        print(f"  - conversation_id: {conversation_id}")
-        print(f"  - conversation_id type: {type(conversation_id)}")
-        print(f"  - conversation_id is None: {conversation_id is None}")
-        print(f"  - user_sub: {user_sub}")
-        print(f"  - chat_history length: {len(chat_history)}")
+        print(f"  - enable_stepwise: {enable_stepwise}")
+        print(f"  - prompt_cards count: {len(prompt_cards)}")
         
-        if not project_id or not user_input:
-            return send_error(connection_id, "프로젝트 ID와 사용자 입력이 필요합니다")
+        if not user_input:
+            return send_error(connection_id, "사용자 입력이 필요합니다")
+        
+        # 단계별 실행 모드
+        if enable_stepwise and prompt_cards and len(prompt_cards) > 0:
+            return handle_stepwise_execution(connection_id, user_input, prompt_cards, chat_history, conversation_id, user_sub)
         
         # 1단계: 프롬프트 구성 시작
         send_message(connection_id, {
             "type": "progress",
             "step": "🔧 프롬프트 카드를 분석하고 있습니다...",
-            "progress": 10,
-            "sessionId": project_id
+            "progress": 10
         })
         
         # 프롬프트 구성
-        final_prompt = build_final_prompt(project_id, user_input, chat_history, prompt_cards)
+        final_prompt = build_final_prompt(user_input, chat_history, prompt_cards)
         
         # 2단계: AI 모델 준비
         send_message(connection_id, {
             "type": "progress", 
             "step": "🤖 AI 모델을 준비하고 있습니다...",
-            "progress": 25,
-            "sessionId": project_id
+            "progress": 25
         })
         
         # Bedrock 스트리밍 요청
@@ -114,8 +112,7 @@ def handle_stream_request(connection_id, data):
         send_message(connection_id, {
             "type": "progress",
             "step": "✍️ AI가 응답을 실시간으로 생성하고 있습니다...",
-            "progress": 40,
-            "sessionId": project_id
+            "progress": 40
         })
         
         # Bedrock 스트리밍 응답 처리
@@ -137,23 +134,20 @@ def handle_stream_request(connection_id, data):
                 # 즉시 클라이언트로 전송
                 send_message(connection_id, {
                     "type": "stream_chunk",
-                    "content": text,
-                    "sessionId": project_id
+                    "content": text
                 })
         
         # 4단계: 스트리밍 완료
         send_message(connection_id, {
             "type": "progress",
             "step": "✅ 응답 생성이 완료되었습니다!",
-            "progress": 100,
-            "sessionId": project_id
+            "progress": 100
         })
         
         # 최종 완료 알림
         send_message(connection_id, {
             "type": "stream_complete", 
-            "fullContent": full_response,
-            "sessionId": project_id
+            "fullContent": full_response
         })
         
         # 메시지 저장 (conversation_id와 user_sub가 있는 경우)
@@ -183,12 +177,170 @@ def handle_stream_request(connection_id, data):
             'body': json.dumps({'error': str(e)})
         }
 
-def build_final_prompt(project_id, user_input, chat_history, prompt_cards):
+def handle_stepwise_execution(connection_id, user_input, prompt_cards, chat_history, conversation_id, user_sub):
+    """
+    단계별 프롬프트 실행 및 사고과정 스트리밍
+    """
+    try:
+        # 시작 메시지
+        send_message(connection_id, {
+            "type": "start",
+            "message": "단계별 프롬프트 실행을 시작합니다."
+        })
+        
+        full_response = ""
+        current_context = {
+            'chat_history': chat_history
+        }
+        
+        # 각 프롬프트 카드를 단계별로 실행
+        for idx, card in enumerate(prompt_cards):
+            step_name = card.get('title', f'Step {idx + 1}')
+            threshold = float(card.get('threshold', 0.7))
+            
+            # 사고과정 시작
+            send_message(connection_id, {
+                "type": "thought_process",
+                "step": step_name,
+                "thought": f"{step_name} 단계를 시작합니다.",
+                "reasoning": "프롬프트 카드의 내용을 기반으로 응답을 생성합니다.",
+                "confidence": 1.0,
+                "decision": "PROCEED"
+            })
+            
+            # 프롬프트 구성
+            step_prompt = build_step_prompt(card, user_input, current_context)
+            
+            # Bedrock 호출
+            request_body = {
+                "anthropic_version": "bedrock-2023-05-31",
+                "max_tokens": 2048,
+                "messages": [{"role": "user", "content": step_prompt}],
+                "temperature": 0.1,
+                "top_p": 0.9,
+            }
+            
+            response = bedrock_client.invoke_model(
+                modelId=MODEL_ID,
+                body=json.dumps(request_body)
+            )
+            
+            response_body = json.loads(response['body'].read())
+            step_response = response_body.get('content', [{}])[0].get('text', '')
+            
+            # 응답 분석 및 신뢰도 계산
+            confidence = analyze_response_confidence(step_response, card)
+            
+            # 단계 결과 스트리밍
+            send_message(connection_id, {
+                "type": "step_result",
+                "step": step_name,
+                "response": step_response,
+                "confidence": confidence,
+                "threshold": threshold
+            })
+            
+            # 임계값 평가
+            if confidence < threshold:
+                # 사고과정: 임계값 미달
+                send_message(connection_id, {
+                    "type": "thought_process",
+                    "step": step_name,
+                    "thought": f"신뢰도({confidence:.2f})가 임계값({threshold:.2f})보다 낮습니다.",
+                    "reasoning": "응답의 품질이 기준에 미달하여 다음 단계로 진행하지 않습니다.",
+                    "confidence": confidence,
+                    "decision": "STOP"
+                })
+                break
+            else:
+                # 사고과정: 다음 단계 진행
+                send_message(connection_id, {
+                    "type": "thought_process", 
+                    "step": step_name,
+                    "thought": f"신뢰도({confidence:.2f})가 임계값({threshold:.2f})을 충족합니다.",
+                    "reasoning": "응답이 충분히 신뢰할 수 있으므로 다음 단계로 진행합니다.",
+                    "confidence": confidence,
+                    "decision": "CONTINUE"
+                })
+            
+            # 컨텍스트 업데이트
+            current_context[f'step_{idx}_result'] = step_response
+            full_response = step_response  # 마지막 응답을 최종 응답으로
+        
+        # 완료 메시지
+        send_message(connection_id, {
+            "type": "complete",
+            "response": full_response
+        })
+        
+        # 대화 저장
+        if conversation_id and user_sub:
+            save_conversation_messages(conversation_id, user_sub, user_input, full_response)
+        
+        return {
+            'statusCode': 200,
+            'body': json.dumps({'message': '단계별 실행 완료'})
+        }
+        
+    except Exception as e:
+        print(f"단계별 실행 오류: {traceback.format_exc()}")
+        send_error(connection_id, f"단계별 실행 오류: {str(e)}")
+        return {
+            'statusCode': 500,
+            'body': json.dumps({'error': str(e)})
+        }
+
+def build_step_prompt(card, user_input, context):
+    """단계별 프롬프트 구성"""
+    base_prompt = card.get('content', '')
+    
+    # 이전 단계 결과 추가
+    context_parts = []
+    for key, value in context.items():
+        if key.startswith('step_') and key.endswith('_result'):
+            step_num = key.split('_')[1]
+            context_parts.append(f"[이전 단계 {int(step_num)+1} 결과]\n{value}")
+    
+    if context_parts:
+        base_prompt += "\n\n" + "\n\n".join(context_parts)
+    
+    # 사용자 입력 추가
+    base_prompt += f"\n\n사용자 요청: {user_input}"
+    
+    return base_prompt
+
+def analyze_response_confidence(response, card):
+    """응답 신뢰도 분석"""
+    # 기본 신뢰도
+    confidence = 0.8
+    
+    # 응답 길이 기반 조정
+    if len(response) < 50:
+        confidence -= 0.2
+    elif len(response) > 500:
+        confidence += 0.1
+    
+    # 긍정/부정 키워드 체크
+    positive_keywords = card.get('positive_keywords', ['완료', '성공', '확인'])
+    negative_keywords = card.get('negative_keywords', ['실패', '오류', '불가능'])
+    
+    for keyword in positive_keywords:
+        if keyword in response:
+            confidence += 0.05
+    
+    for keyword in negative_keywords:
+        if keyword in response:
+            confidence -= 0.1
+    
+    # 범위 제한
+    return max(0.0, min(1.0, confidence))
+
+def build_final_prompt(user_input, chat_history, prompt_cards):
     """
     프론트엔드에서 전송된 프롬프트 카드와 채팅 히스토리를 사용하여 최종 프롬프트 구성
     """
     try:
-        print(f"WebSocket 프롬프트 구성 시작: 프로젝트 ID={project_id}")
+        print(f"WebSocket 프롬프트 구성 시작")
         print(f"전달받은 프롬프트 카드 수: {len(prompt_cards)}")
         print(f"전달받은 채팅 히스토리 수: {len(chat_history)}")
         
@@ -358,6 +510,7 @@ def update_conversation_activity(conversation_id, user_sub, token_count):
             UpdateExpression='SET lastActivityAt = :activity, tokenSum = tokenSum + :tokens',
             ExpressionAttributeValues={
                 ':activity': now,
+                
                 ':tokens': token_count
             }
         )

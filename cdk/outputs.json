@@ -1,11 +1,11 @@
 {
   "BedrockDiyTitleGeneratorStack": {
-    "WebSocketApiUrl": "wss://qc2865b7d2.execute-api.us-east-1.amazonaws.com/prod",
-    "ApiGatewayUrl": "https://nq5qrt16lb.execute-api.us-east-1.amazonaws.com/prod/",
-    "UserPoolClientId": "4efnvdfsb9unau5gcok7eojgp0",
-    "UserPoolId": "us-east-1_S4Bfb1oKK",
-    "ExportsOutputRefBedrockDiyApi1AA2182A3686DE39": "nq5qrt16lb",
-    "BedrockDiyApiEndpoint902C0108": "https://nq5qrt16lb.execute-api.us-east-1.amazonaws.com/prod/",
+    "WebSocketApiUrl": "wss://ywr78t0cge.execute-api.us-east-1.amazonaws.com/prod",
+    "ApiGatewayUrl": "https://6324x0a3fb.execute-api.us-east-1.amazonaws.com/prod/",
+    "UserPoolClientId": "2v6gj4b20htl7jrav83kgsc0on",
+    "UserPoolId": "us-east-1_YxiQvs7I9",
+    "ExportsOutputRefBedrockDiyApi1AA2182A3686DE39": "6324x0a3fb",
+    "BedrockDiyApiEndpoint902C0108": "https://6324x0a3fb.execute-api.us-east-1.amazonaws.com/prod/",
     "PromptBucketName": "title-generator-prompts-887078546492-us-east-1",
     "ExportsOutputRefBedrockDiyApiDeploymentStageprod6FFD6E4934FCC1BA": "prod"
   }

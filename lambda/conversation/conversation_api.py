@@ -71,16 +71,18 @@ def handler(event, context):
             }
             
     except Exception as e:
+        import traceback
         print(f"Error in conversation handler: {str(e)}")
+        print(f"Error traceback: {traceback.format_exc()}")
         return {
             'statusCode': 500,
             'headers': {
                 'Content-Type': 'application/json',
                 'Access-Control-Allow-Origin': '*',
                 'Access-Control-Allow-Headers': 'Content-Type,Authorization',
-                'Access-Control-Allow-Methods': 'GET,POST,OPTIONS'
+                'Access-Control-Allow-Methods': 'GET,POST,DELETE,PUT,OPTIONS'
             },
-            'body': json.dumps({'error': 'Internal server error'})
+            'body': json.dumps({'error': 'Internal server error', 'details': str(e)})
         }
 
 def get_conversations(user_sub: str, query_params: Dict) -> Dict:

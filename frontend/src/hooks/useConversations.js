@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { conversationAPI, mockConversations } from '../services/api';
+import { conversationAPI } from '../services/api';
 
 /**
  * 대화 목록 관리를 위한 커스텀 훅
@@ -41,22 +41,14 @@ export const useConversations = () => {
         config: err.config
       });
       
-      // 상세한 에러 메시지 제공
-      let errorMessage = '대화 목록을 불러오는데 실패했습니다.';
-      if (err.code === 'ERR_NETWORK') {
-        errorMessage = '네트워크 연결을 확인해주세요.';
-      } else if (err.response?.status === 403) {
-        errorMessage = '접근 권한이 없습니다.';
-      } else if (err.response?.status >= 500) {
-        errorMessage = '서버 오류가 발생했습니다. 잠시 후 다시 시도해주세요.';
-      }
+      // 개발 중 임시로 에러 무시
+      // let errorMessage = '대화 목록을 불러오는데 실패했습니다.';
+      // setError(errorMessage);
       
-      setError(errorMessage);
-      
-      // API 실패시 mock 데이터로 fallback
+      // API 실패시 빈 배열로 설정
       if (reset) {
-        console.log('API 실패, mock 데이터 사용');
-        setConversations(mockConversations);
+        console.log('API 실패, 빈 배열로 초기화');
+        setConversations([]);
         setHasMore(false);
         setNextCursor(null);
       }

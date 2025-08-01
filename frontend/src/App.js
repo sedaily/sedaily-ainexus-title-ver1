@@ -21,12 +21,13 @@ const ForgotPassword = React.lazy(() => import("./components/ForgotPassword"));
 const EmailVerification = React.lazy(() =>
   import("./components/EmailVerification")
 );
-const ProjectList = React.lazy(() => import("./components/ProjectList"));
-const ProjectDetail = React.lazy(() => import("./components/ProjectDetail"));
-const CreateProject = React.lazy(() => import("./components/CreateProject"));
+
 const Dashboard = React.lazy(() => import("./pages/Dashboard"));
 const Profile = React.lazy(() => import("./pages/Dashboard/Profile"));
 const Plan = React.lazy(() => import("./pages/Dashboard/Plan"));
+const ChatWindow = React.lazy(() => import("./components/chat/ChatWindow"));
+const AdminView = React.lazy(() => import("./components/AdminView"));
+const UserView = React.lazy(() => import("./components/UserView"));
 
 // 빠른 로딩을 위한 미니멀 스켈레톤 컴포넌트
 const PageSkeleton = () => (
@@ -61,7 +62,7 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
   if (requiredRole && user?.role !== requiredRole) {
     // 권한이 없으면 해당 역할의 기본 페이지로 리다이렉트
     if (user?.role === "admin") {
-      return <Navigate to="/projects" replace />;
+      return <Navigate to="/admin" replace />;
     } else {
       return <Navigate to="/dashboard" replace />;
     }
@@ -79,7 +80,7 @@ const RoleBasedRedirect = () => {
   }
 
   if (user?.role === "admin") {
-    return <Navigate to="/projects" replace />;
+    return <Navigate to="/admin" replace />;
   } else {
     return <Navigate to="/chat" replace />;
   }
@@ -92,15 +93,24 @@ function AppContent() {
   // Header를 숨길 경로들: 로그인 관련 페이지만
   const hideHeaderPaths = ["/login", "/signup", "/forgot-password", "/verify"];
   const isHeaderHidden = hideHeaderPaths.includes(location.pathname);
-  
+
   // 전체 화면을 사용하는 페이지들 (padding 없음)
-  const fullScreenPaths = location.pathname.startsWith("/projects/") || location.pathname === "/chat";
+  const fullScreenPaths = location.pathname === "/chat";
   const isFullScreen = fullScreenPaths;
 
-  const needsScroll = ['/dashboard', '/dashboard/profile', '/dashboard/plan', '/admin'].includes(location.pathname);
-  
+  const needsScroll = [
+    "/dashboard",
+    "/dashboard/profile",
+    "/dashboard/plan",
+    "/admin",
+  ].includes(location.pathname);
+
   return (
-    <div className={`h-screen bg-gray-50 dark:bg-dark-primary transition-colors duration-300 ${needsScroll ? 'overflow-y-auto' : 'overflow-hidden'}`}>
+    <div
+      className={`h-screen bg-gray-50 dark:bg-dark-primary transition-colors duration-300 ${
+        needsScroll ? "overflow-y-auto" : "overflow-hidden"
+      }`}
+    >
       {isAuthenticated && !isHeaderHidden && <Header />}
       <main
         className={
@@ -124,32 +134,20 @@ function AppContent() {
             />
             <Route
               path="/forgot-password"
-              element={isAuthenticated ? <RoleBasedRedirect /> : <ForgotPassword />}
+              element={
+                isAuthenticated ? <RoleBasedRedirect /> : <ForgotPassword />
+              }
             />
             <Route path="/verify" element={<EmailVerification />} />
 
             {/* 보호된 라우트 */}
+
+            {/* 관리자 라우트 */}
             <Route
-              path="/projects"
+              path="/admin"
               element={
                 <ProtectedRoute requiredRole="admin">
-                  <ProjectList />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/create"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <CreateProject />
-                </ProtectedRoute>
-              }
-            />
-            <Route
-              path="/projects/:projectId"
-              element={
-                <ProtectedRoute requiredRole="admin">
-                  <ProjectDetail />
+                  <AdminView />
                 </ProtectedRoute>
               }
             />
@@ -159,7 +157,7 @@ function AppContent() {
               path="/chat"
               element={
                 <ProtectedRoute>
-                  <ProjectDetail />
+                  <UserView />
                 </ProtectedRoute>
               }
             />
@@ -226,37 +224,38 @@ function App() {
           <AppProvider>
             <Router>
               <AppContent />
-            <Toaster
-              position="top-right"
-              toastOptions={{
-                duration: 4000,
-                className: "dark:bg-gray-800 dark:text-white",
-                style: {
-                  background: "var(--toaster-bg, #ffffff)",
-                  color: "var(--toaster-color, #374151)",
-                  border: "1px solid var(--toaster-border, #e5e7eb)",
-                },
-                success: {
-                  className: "dark:bg-gray-800 dark:text-green-400",
+              <Toaster
+                position="top-right"
+                toastOptions={{
+                  duration: 4000,
+                  className: "dark:bg-gray-800 dark:text-white",
                   style: {
-                    background: "var(--toaster-success-bg, #f0fdf4)",
-                    color: "var(--toaster-success-color, #15803d)",
-                    border: "1px solid var(--toaster-success-border, #bbf7d0)",
+                    background: "var(--toaster-bg, #ffffff)",
+                    color: "var(--toaster-color, #374151)",
+                    border: "1px solid var(--toaster-border, #e5e7eb)",
                   },
-                },
-                error: {
-                  className: "dark:bg-gray-800 dark:text-red-400",
-                  style: {
-                    background: "var(--toaster-error-bg, #fef2f2)",
-                    color: "var(--toaster-error-color, #dc2626)",
-                    border: "1px solid var(--toaster-error-border, #fecaca)",
+                  success: {
+                    className: "dark:bg-gray-800 dark:text-green-400",
+                    style: {
+                      background: "var(--toaster-success-bg, #f0fdf4)",
+                      color: "var(--toaster-success-color, #15803d)",
+                      border:
+                        "1px solid var(--toaster-success-border, #bbf7d0)",
+                    },
                   },
-                },
-              }}
-            />
-          </Router>
-        </AppProvider>
-      </ConversationProvider>
+                  error: {
+                    className: "dark:bg-gray-800 dark:text-red-400",
+                    style: {
+                      background: "var(--toaster-error-bg, #fef2f2)",
+                      color: "var(--toaster-error-color, #dc2626)",
+                      border: "1px solid var(--toaster-error-border, #fecaca)",
+                    },
+                  },
+                }}
+              />
+            </Router>
+          </AppProvider>
+        </ConversationProvider>
       </AuthProvider>
     </ThemeProvider>
   );

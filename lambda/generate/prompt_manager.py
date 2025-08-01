@@ -26,8 +26,53 @@ class SimplePromptManager:
         self.prompt_meta_table = prompt_meta_table
         self.prompt_table = self.dynamodb.Table(prompt_meta_table)
     
+    def load_all_active_prompts(self) -> List[Dict[str, Any]]:
+        """모든 활성화된 프롬프트 카드 로드 (projectId 없이)"""
+        try:
+            # DynamoDB에서 활성화된 프롬프트 메타데이터 조회
+            response = self.prompt_table.scan(
+                FilterExpression=boto3.dynamodb.conditions.Attr('isActive').eq(True)
+            )
+            
+            prompt_metas = response.get('Items', [])
+            
+            if not prompt_metas:
+                logger.info("활성화된 프롬프트 카드가 없습니다.")
+                return []
+            
+            # S3에서 실제 프롬프트 내용 로드
+            prompts = []
+            for meta in prompt_metas:
+                try:
+                    content = self._load_prompt_content_by_s3key(meta.get('s3Key'))
+                    
+                    if content:
+                        prompts.append({
+                            'promptId': meta['promptId'],
+                            'title': meta.get('title', ''),
+                            'content': content,
+                            'isActive': meta.get('isActive', True),
+                            'threshold': float(meta.get('threshold', 0.7)),
+                            'createdAt': meta.get('createdAt', ''),
+                            'updatedAt': meta.get('updatedAt', '')
+                        })
+                        
+                except Exception as e:
+                    logger.warning(f"프롬프트 {meta['promptId']} 로드 실패: {str(e)}")
+                    continue
+            
+            # createdAt으로 정렬
+            prompts.sort(key=lambda x: x.get('createdAt', ''))
+            
+            logger.info(f"{len(prompts)}개 프롬프트 로드 완료")
+            return prompts
+            
+        except Exception as e:
+            logger.error(f"프롬프트 로드 오류: {str(e)}")
+            return []
+
     def load_project_prompts(self, project_id: str) -> List[Dict[str, Any]]:
-        """프로젝트의 모든 활성화된 프롬프트 카드 로드"""
+        """프로젝트의 모든 활성화된 프롬프트 카드 로드 (레거시 메서드)"""
         try:
             # DynamoDB에서 프로젝트의 활성화된 프롬프트 메타데이터 조회
             response = self.prompt_table.scan(
@@ -57,6 +102,7 @@ class SimplePromptManager:
                             'title': meta.get('title', ''),
                             'content': content,
                             'isActive': meta.get('isActive', True),
+                            'threshold': float(meta.get('threshold', 0.7)),  # 임계값 추가
                             'createdAt': meta.get('createdAt', ''),
                             'updatedAt': meta.get('updatedAt', '')
                         })
@@ -75,8 +121,26 @@ class SimplePromptManager:
             logger.error(f"프롬프트 로드 오류 (프로젝트: {project_id}): {str(e)}")
             return []
     
+    def _load_prompt_content_by_s3key(self, s3_key: str) -> str:
+        """S3에서 s3Key로 프롬프트 내용 로드"""
+        try:
+            if not s3_key:
+                return ""
+                
+            response = self.s3_client.get_object(
+                Bucket=self.prompt_bucket,
+                Key=s3_key
+            )
+            
+            content = response['Body'].read().decode('utf-8').strip()
+            return content
+            
+        except Exception as e:
+            logger.warning(f"S3에서 프롬프트 로드 실패 ({s3_key}): {str(e)}")
+            return ""
+    
     def _load_prompt_content(self, project_id: str, prompt_id: str, s3_key: Optional[str] = None) -> str:
-        """S3에서 개별 프롬프트 내용 로드"""
+        """S3에서 개별 프롬프트 내용 로드 (레거시 메서드)"""
         try:
             # s3Key가 없으면 기본 경로 사용
             if not s3_key:

@@ -1,5 +1,5 @@
 {
- "Description": "대화 기록 관리 시스템 - DynamoDB 및 Lambda",
+ "Description": "대화 기록 관리 시스템 - PROD 환경",
  "Resources": {
   "ConversationsTableCD91EB96": {
    "Type": "AWS::DynamoDB::Table",
@@ -54,7 +54,7 @@
     "PointInTimeRecoverySpecification": {
      "PointInTimeRecoveryEnabled": true
     },
-    "TableName": "Conversations",
+    "TableName": "nexus-title-generator-conversations-prod",
     "TimeToLiveSpecification": {
      "AttributeName": "ttl",
      "Enabled": true
@@ -93,7 +93,7 @@
     "PointInTimeRecoverySpecification": {
      "PointInTimeRecoveryEnabled": true
     },
-    "TableName": "Messages",
+    "TableName": "nexus-title-generator-messages-prod",
     "TimeToLiveSpecification": {
      "AttributeName": "ttl",
      "Enabled": true
@@ -103,6 +103,225 @@
    "DeletionPolicy": "Retain",
    "Metadata": {
     "aws:cdk:path": "ConversationStack/MessagesTable/Resource"
+   }
+  },
+  "AdminPromptCardsTable10AAD911": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "PK",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "SK",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "GSI1PK",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "updatedAt",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "GSI1-CardStatus",
+      "KeySchema": [
+       {
+        "AttributeName": "GSI1PK",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "updatedAt",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "PK",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "SK",
+      "KeyType": "RANGE"
+     }
+    ],
+    "PointInTimeRecoverySpecification": {
+     "PointInTimeRecoveryEnabled": true
+    },
+    "TableName": "nexus-title-generator-admin-prompt-cards-prod"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "ConversationStack/AdminPromptCardsTable/Resource"
+   }
+  },
+  "GlobalPromptLibraryTableB24FFE1D": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "PK",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "SK",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "GSI1PK",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "approvedAt",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "GlobalSecondaryIndexes": [
+     {
+      "IndexName": "GSI1-Category",
+      "KeySchema": [
+       {
+        "AttributeName": "GSI1PK",
+        "KeyType": "HASH"
+       },
+       {
+        "AttributeName": "approvedAt",
+        "KeyType": "RANGE"
+       }
+      ],
+      "Projection": {
+       "ProjectionType": "ALL"
+      }
+     }
+    ],
+    "KeySchema": [
+     {
+      "AttributeName": "PK",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "SK",
+      "KeyType": "RANGE"
+     }
+    ],
+    "TableName": "nexus-title-generator-global-prompt-library-prod"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "ConversationStack/GlobalPromptLibraryTable/Resource"
+   }
+  },
+  "PromptEvaluationsTableD710C7C2": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "PK",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "SK",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "PK",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "SK",
+      "KeyType": "RANGE"
+     }
+    ],
+    "TableName": "nexus-title-generator-prompt-evaluations-prod"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "ConversationStack/PromptEvaluationsTable/Resource"
+   }
+  },
+  "AgentThoughtsTableD41729B7": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "PK",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "SK",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "PK",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "SK",
+      "KeyType": "RANGE"
+     }
+    ],
+    "TableName": "nexus-title-generator-agent-thoughts-prod",
+    "TimeToLiveSpecification": {
+     "AttributeName": "ttl",
+     "Enabled": true
+    }
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "ConversationStack/AgentThoughtsTable/Resource"
+   }
+  },
+  "StepConfigurationsTableC53F757F": {
+   "Type": "AWS::DynamoDB::Table",
+   "Properties": {
+    "AttributeDefinitions": [
+     {
+      "AttributeName": "PK",
+      "AttributeType": "S"
+     },
+     {
+      "AttributeName": "SK",
+      "AttributeType": "S"
+     }
+    ],
+    "BillingMode": "PAY_PER_REQUEST",
+    "KeySchema": [
+     {
+      "AttributeName": "PK",
+      "KeyType": "HASH"
+     },
+     {
+      "AttributeName": "SK",
+      "KeyType": "RANGE"
+     }
+    ],
+    "TableName": "nexus-title-generator-step-configurations-prod"
+   },
+   "UpdateReplacePolicy": "Retain",
+   "DeletionPolicy": "Retain",
+   "Metadata": {
+    "aws:cdk:path": "ConversationStack/StepConfigurationsTable/Resource"
    }
   },
   "ConversationFunctionServiceRoleBBAB46E1": {
@@ -230,7 +449,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "7d00ce9f4f635d9d503e5639c1757e619bab4345578da5d1b1f3d407d0318240.zip"
+     "S3Key": "2ff24686eb50aa80b0ad2f79e3d582f5c66bda49d2a8fe0476993a068b13e83c.zip"
     },
     "Environment": {
      "Variables": {
@@ -259,7 +478,7 @@
    ],
    "Metadata": {
     "aws:cdk:path": "ConversationStack/ConversationFunction/Resource",
-    "aws:asset:path": "asset.7d00ce9f4f635d9d503e5639c1757e619bab4345578da5d1b1f3d407d0318240",
+    "aws:asset:path": "asset.2ff24686eb50aa80b0ad2f79e3d582f5c66bda49d2a8fe0476993a068b13e83c",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -389,7 +608,7 @@
    "Properties": {
     "Code": {
      "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
-     "S3Key": "1ffe6133cd1c2137d933ac2c8bc0723cbf7abc913505a4e8d28d990597f4e7a2.zip"
+     "S3Key": "985f465c2cf4e612b5c6210c44eb5e1549844287ba4120318ed6c076d6d94b1d.zip"
     },
     "Environment": {
      "Variables": {
@@ -418,7 +637,554 @@
    ],
    "Metadata": {
     "aws:cdk:path": "ConversationStack/MessageFunction/Resource",
-    "aws:asset:path": "asset.1ffe6133cd1c2137d933ac2c8bc0723cbf7abc913505a4e8d28d990597f4e7a2",
+    "aws:asset:path": "asset.985f465c2cf4e612b5c6210c44eb5e1549844287ba4120318ed6c076d6d94b1d",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "PromptEvaluationFunctionServiceRole360DDDD0": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ConversationStack/PromptEvaluationFunction/ServiceRole/Resource"
+   }
+  },
+  "PromptEvaluationFunctionServiceRoleDefaultPolicyBA8C4F29": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "AdminPromptCardsTable10AAD911",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "AdminPromptCardsTable10AAD911",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "GlobalPromptLibraryTableB24FFE1D",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "GlobalPromptLibraryTableB24FFE1D",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "PromptEvaluationsTableD710C7C2",
+          "Arn"
+         ]
+        },
+        {
+         "Ref": "AWS::NoValue"
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "AgentThoughtsTableD41729B7",
+          "Arn"
+         ]
+        },
+        {
+         "Ref": "AWS::NoValue"
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "StepConfigurationsTableC53F757F",
+          "Arn"
+         ]
+        },
+        {
+         "Ref": "AWS::NoValue"
+        }
+       ]
+      },
+      {
+       "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "PromptEvaluationFunctionServiceRoleDefaultPolicyBA8C4F29",
+    "Roles": [
+     {
+      "Ref": "PromptEvaluationFunctionServiceRole360DDDD0"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ConversationStack/PromptEvaluationFunction/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "PromptEvaluationFunctionC4D212FF": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
+     "S3Key": "840b041435d9a6a201a24e0a1424d21a69dc7711c030a051987afa1b7f24f4af.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "ADMIN_PROMPT_CARDS_TABLE": {
+       "Ref": "AdminPromptCardsTable10AAD911"
+      },
+      "GLOBAL_PROMPT_LIBRARY_TABLE": {
+       "Ref": "GlobalPromptLibraryTableB24FFE1D"
+      },
+      "PROMPT_EVALUATIONS_TABLE": {
+       "Ref": "PromptEvaluationsTableD710C7C2"
+      },
+      "AGENT_THOUGHTS_TABLE": {
+       "Ref": "AgentThoughtsTableD41729B7"
+      },
+      "STEP_CONFIGURATIONS_TABLE": {
+       "Ref": "StepConfigurationsTableC53F757F"
+      }
+     }
+    },
+    "Handler": "evaluation_workflow.handler",
+    "MemorySize": 2048,
+    "Role": {
+     "Fn::GetAtt": [
+      "PromptEvaluationFunctionServiceRole360DDDD0",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.11",
+    "Timeout": 300
+   },
+   "DependsOn": [
+    "PromptEvaluationFunctionServiceRoleDefaultPolicyBA8C4F29",
+    "PromptEvaluationFunctionServiceRole360DDDD0"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "ConversationStack/PromptEvaluationFunction/Resource",
+    "aws:asset:path": "asset.840b041435d9a6a201a24e0a1424d21a69dc7711c030a051987afa1b7f24f4af",
+    "aws:asset:is-bundled": false,
+    "aws:asset:property": "Code"
+   }
+  },
+  "SavePromptFunctionServiceRole2B7D93AE": {
+   "Type": "AWS::IAM::Role",
+   "Properties": {
+    "AssumeRolePolicyDocument": {
+     "Statement": [
+      {
+       "Action": "sts:AssumeRole",
+       "Effect": "Allow",
+       "Principal": {
+        "Service": "lambda.amazonaws.com"
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "ManagedPolicyArns": [
+     {
+      "Fn::Join": [
+       "",
+       [
+        "arn:",
+        {
+         "Ref": "AWS::Partition"
+        },
+        ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+       ]
+      ]
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ConversationStack/SavePromptFunction/ServiceRole/Resource"
+   }
+  },
+  "SavePromptFunctionServiceRoleDefaultPolicyAF0618A8": {
+   "Type": "AWS::IAM::Policy",
+   "Properties": {
+    "PolicyDocument": {
+     "Statement": [
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "AdminPromptCardsTable10AAD911",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "AdminPromptCardsTable10AAD911",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "GlobalPromptLibraryTableB24FFE1D",
+          "Arn"
+         ]
+        },
+        {
+         "Fn::Join": [
+          "",
+          [
+           {
+            "Fn::GetAtt": [
+             "GlobalPromptLibraryTableB24FFE1D",
+             "Arn"
+            ]
+           },
+           "/index/*"
+          ]
+         ]
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "PromptEvaluationsTableD710C7C2",
+          "Arn"
+         ]
+        },
+        {
+         "Ref": "AWS::NoValue"
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:BatchWriteItem",
+        "dynamodb:PutItem",
+        "dynamodb:UpdateItem",
+        "dynamodb:DeleteItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "AgentThoughtsTableD41729B7",
+          "Arn"
+         ]
+        },
+        {
+         "Ref": "AWS::NoValue"
+        }
+       ]
+      },
+      {
+       "Action": [
+        "dynamodb:BatchGetItem",
+        "dynamodb:GetRecords",
+        "dynamodb:GetShardIterator",
+        "dynamodb:Query",
+        "dynamodb:GetItem",
+        "dynamodb:Scan",
+        "dynamodb:ConditionCheckItem",
+        "dynamodb:DescribeTable"
+       ],
+       "Effect": "Allow",
+       "Resource": [
+        {
+         "Fn::GetAtt": [
+          "StepConfigurationsTableC53F757F",
+          "Arn"
+         ]
+        },
+        {
+         "Ref": "AWS::NoValue"
+        }
+       ]
+      },
+      {
+       "Action": [
+        "bedrock:InvokeModel",
+        "bedrock:InvokeModelWithResponseStream"
+       ],
+       "Effect": "Allow",
+       "Resource": "*"
+      },
+      {
+       "Action": "lambda:InvokeFunction",
+       "Effect": "Allow",
+       "Resource": {
+        "Fn::GetAtt": [
+         "PromptEvaluationFunctionC4D212FF",
+         "Arn"
+        ]
+       }
+      }
+     ],
+     "Version": "2012-10-17"
+    },
+    "PolicyName": "SavePromptFunctionServiceRoleDefaultPolicyAF0618A8",
+    "Roles": [
+     {
+      "Ref": "SavePromptFunctionServiceRole2B7D93AE"
+     }
+    ]
+   },
+   "Metadata": {
+    "aws:cdk:path": "ConversationStack/SavePromptFunction/ServiceRole/DefaultPolicy/Resource"
+   }
+  },
+  "SavePromptFunction071F515F": {
+   "Type": "AWS::Lambda::Function",
+   "Properties": {
+    "Code": {
+     "S3Bucket": "cdk-hnb659fds-assets-887078546492-us-east-1",
+     "S3Key": "56108b57629407e942b820fb895849512a677188cdae7125d9ea710d9cfd031d.zip"
+    },
+    "Environment": {
+     "Variables": {
+      "ADMIN_PROMPT_CARDS_TABLE": {
+       "Ref": "AdminPromptCardsTable10AAD911"
+      },
+      "GLOBAL_PROMPT_LIBRARY_TABLE": {
+       "Ref": "GlobalPromptLibraryTableB24FFE1D"
+      },
+      "PROMPT_EVALUATIONS_TABLE": {
+       "Ref": "PromptEvaluationsTableD710C7C2"
+      },
+      "AGENT_THOUGHTS_TABLE": {
+       "Ref": "AgentThoughtsTableD41729B7"
+      },
+      "STEP_CONFIGURATIONS_TABLE": {
+       "Ref": "StepConfigurationsTableC53F757F"
+      },
+      "PROMPT_EVALUATION_FUNCTION": {
+       "Ref": "PromptEvaluationFunctionC4D212FF"
+      }
+     }
+    },
+    "Handler": "save_prompt.handler",
+    "MemorySize": 1024,
+    "Role": {
+     "Fn::GetAtt": [
+      "SavePromptFunctionServiceRole2B7D93AE",
+      "Arn"
+     ]
+    },
+    "Runtime": "python3.11",
+    "Timeout": 60
+   },
+   "DependsOn": [
+    "SavePromptFunctionServiceRoleDefaultPolicyAF0618A8",
+    "SavePromptFunctionServiceRole2B7D93AE"
+   ],
+   "Metadata": {
+    "aws:cdk:path": "ConversationStack/SavePromptFunction/Resource",
+    "aws:asset:path": "asset.56108b57629407e942b820fb895849512a677188cdae7125d9ea710d9cfd031d",
     "aws:asset:is-bundled": false,
     "aws:asset:property": "Code"
    }
@@ -426,7 +1192,7 @@
   "CDKMetadata": {
    "Type": "AWS::CDK::Metadata",
    "Properties": {
-    "Analytics": "v2:deflate64:H4sIAAAAAAAA/zWOyw6CMBBFv8V9GRFMXIuJa4LuydBWHOkjoW0MafrvFoircx+ZzK2gKs9QHvDrCi6mQtEA8eGRTyxHfRSLQW1FDp84KMluL7OJxBTqQSDEezDckzVr9deJEWqInd0vNrZWEV9Wu6vEXN2jc9I7uK7IHprAJ+kbdPlBJ50NM5dsa/OmkcyYWLv4tzXHGk4VXA4fR1TMwXjSErqdP5NX7E7UAAAA"
+    "Analytics": "v2:deflate64:H4sIAAAAAAAA/zWOyw6CMBBFv8V9GREWuhUT1wTdk6GtONJHQtsY0vTfLRBX5z4ymVtBVV6gPODXFVxMhaIB4sMjn1iO+igWg9qKHD5xUJLdXmYTiSnUg0CI92C4J2vW6q8TI9QQO7tfbGytIr6sdleJubpH56R3cF2RPTSBT9I36PKDTjobZi7Z1uZNI5kxsXbxb2uONZwqOB8+jqiYg/GkJXQ7fxTCjsLUAAAA"
    },
    "Metadata": {
     "aws:cdk:path": "ConversationStack/CDKMetadata/Default"

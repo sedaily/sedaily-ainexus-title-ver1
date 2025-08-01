@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { conversationAPI, mockMessages } from "../services/api";
+import { conversationAPI } from "../services/api";
 
 /**
  * 특정 대화의 메시지 관리를 위한 커스텀 훅
@@ -62,15 +62,10 @@ export const useMessages = (conversationId) => {
         console.error("실패한 conversationId:", conversationId);
         setError("메시지를 불러오는데 실패했습니다.");
 
-        // API 실패시 mock 데이터로 fallback
-        const conversationMessages = mockMessages[conversationId] || [];
-        console.log("useMessages - Mock 데이터 사용:", {
-          conversationId,
-          mockMessagesCount: conversationMessages.length,
-        });
-
+        // API 실패시 빈 배열로 설정
         if (reset) {
-          setMessages(conversationMessages);
+          console.log("useMessages - API 실패, 빈 배열로 초기화");
+          setMessages([]);
           setHasMore(false);
           setNextCursor(null);
         }

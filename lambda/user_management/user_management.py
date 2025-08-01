@@ -455,7 +455,7 @@ def record_usage(user_id, token_count, request_count=1):
 
 
 def decimal_to_float(data):
-    """룝두 DynamoDB Decimal 타입을 float로 변환"""
+    """DynamoDB Decimal 타입을 float로 변환"""
     if isinstance(data, dict):
         return {k: decimal_to_float(v) for k, v in data.items()}
     elif isinstance(data, list):

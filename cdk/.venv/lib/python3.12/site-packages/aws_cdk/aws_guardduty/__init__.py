@@ -1968,6 +1968,7 @@ class CfnIPSet(
             # the properties below are optional
             activate=False,
             detector_id="detectorId",
+            expected_bucket_owner="expectedBucketOwner",
             name="name",
             tags=[CfnTag(
                 key="key",
@@ -1985,6 +1986,7 @@ class CfnIPSet(
         location: builtins.str,
         activate: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
         detector_id: typing.Optional[builtins.str] = None,
+        expected_bucket_owner: typing.Optional[builtins.str] = None,
         name: typing.Optional[builtins.str] = None,
         tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
     ) -> None:
@@ -1995,6 +1997,7 @@ class CfnIPSet(
         :param location: The URI of the file that contains the IPSet.
         :param activate: Indicates whether or not GuardDuty uses the ``IPSet`` .
         :param detector_id: The unique ID of the detector of the GuardDuty account for which you want to create an IPSet. To find the ``detectorId`` in the current Region, see the Settings page in the GuardDuty console, or run the `ListDetectors <https://docs.aws.amazon.com/guardduty/latest/APIReference/API_ListDetectors.html>`_ API.
+        :param expected_bucket_owner: The AWS account ID that owns the Amazon S3 bucket specified in the *Location* field. When you provide this account ID, GuardDuty will validate that the S3 bucket belongs to this account. If you don't specify an account ID owner, GuardDuty doesn't perform any validation.
         :param name: The user-friendly name to identify the IPSet. Allowed characters are alphanumeric, whitespace, dash (-), and underscores (_).
         :param tags: The tags to be added to a new IP set resource. Each tag consists of a key and an optional value, both of which you define. For more information, see `Tag <https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-resource-tags.html>`_ .
         '''
@@ -2007,6 +2010,7 @@ class CfnIPSet(
             location=location,
             activate=activate,
             detector_id=detector_id,
+            expected_bucket_owner=expected_bucket_owner,
             name=name,
             tags=tags,
         )
@@ -2120,6 +2124,19 @@ class CfnIPSet(
         jsii.set(self, "detectorId", value) # pyright: ignore[reportArgumentType]
 
     @builtins.property
+    @jsii.member(jsii_name="expectedBucketOwner")
+    def expected_bucket_owner(self) -> typing.Optional[builtins.str]:
+        '''The AWS account ID that owns the Amazon S3 bucket specified in the *Location* field.'''
+        return typing.cast(typing.Optional[builtins.str], jsii.get(self, "expectedBucketOwner"))
+
+    @expected_bucket_owner.setter
+    def expected_bucket_owner(self, value: typing.Optional[builtins.str]) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__9191409994fec537ce4d4e8e40256113b2937c7a1bb90b2f14b71998143f9810)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "expectedBucketOwner", value) # pyright: ignore[reportArgumentType]
+
+    @builtins.property
     @jsii.member(jsii_name="name")
     def name(self) -> typing.Optional[builtins.str]:
         '''The user-friendly name to identify the IPSet.'''
@@ -2154,6 +2171,7 @@ class CfnIPSet(
         "location": "location",
         "activate": "activate",
         "detector_id": "detectorId",
+        "expected_bucket_owner": "expectedBucketOwner",
         "name": "name",
         "tags": "tags",
     },
@@ -2166,6 +2184,7 @@ class CfnIPSetProps:
         location: builtins.str,
         activate: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
         detector_id: typing.Optional[builtins.str] = None,
+        expected_bucket_owner: typing.Optional[builtins.str] = None,
         name: typing.Optional[builtins.str] = None,
         tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
     ) -> None:
@@ -2175,6 +2194,7 @@ class CfnIPSetProps:
         :param location: The URI of the file that contains the IPSet.
         :param activate: Indicates whether or not GuardDuty uses the ``IPSet`` .
         :param detector_id: The unique ID of the detector of the GuardDuty account for which you want to create an IPSet. To find the ``detectorId`` in the current Region, see the Settings page in the GuardDuty console, or run the `ListDetectors <https://docs.aws.amazon.com/guardduty/latest/APIReference/API_ListDetectors.html>`_ API.
+        :param expected_bucket_owner: The AWS account ID that owns the Amazon S3 bucket specified in the *Location* field. When you provide this account ID, GuardDuty will validate that the S3 bucket belongs to this account. If you don't specify an account ID owner, GuardDuty doesn't perform any validation.
         :param name: The user-friendly name to identify the IPSet. Allowed characters are alphanumeric, whitespace, dash (-), and underscores (_).
         :param tags: The tags to be added to a new IP set resource. Each tag consists of a key and an optional value, both of which you define. For more information, see `Tag <https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-resource-tags.html>`_ .
 
@@ -2194,6 +2214,7 @@ class CfnIPSetProps:
                 # the properties below are optional
                 activate=False,
                 detector_id="detectorId",
+                expected_bucket_owner="expectedBucketOwner",
                 name="name",
                 tags=[CfnTag(
                     key="key",
@@ -2207,6 +2228,7 @@ class CfnIPSetProps:
             check_type(argname="argument location", value=location, expected_type=type_hints["location"])
             check_type(argname="argument activate", value=activate, expected_type=type_hints["activate"])
             check_type(argname="argument detector_id", value=detector_id, expected_type=type_hints["detector_id"])
+            check_type(argname="argument expected_bucket_owner", value=expected_bucket_owner, expected_type=type_hints["expected_bucket_owner"])
             check_type(argname="argument name", value=name, expected_type=type_hints["name"])
             check_type(argname="argument tags", value=tags, expected_type=type_hints["tags"])
         self._values: typing.Dict[builtins.str, typing.Any] = {
@@ -2217,6 +2239,8 @@ class CfnIPSetProps:
             self._values["activate"] = activate
         if detector_id is not None:
             self._values["detector_id"] = detector_id
+        if expected_bucket_owner is not None:
+            self._values["expected_bucket_owner"] = expected_bucket_owner
         if name is not None:
             self._values["name"] = name
         if tags is not None:
@@ -2263,6 +2287,17 @@ class CfnIPSetProps:
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-guardduty-ipset.html#cfn-guardduty-ipset-detectorid
         '''
         result = self._values.get("detector_id")
+        return typing.cast(typing.Optional[builtins.str], result)
+
+    @builtins.property
+    def expected_bucket_owner(self) -> typing.Optional[builtins.str]:
+        '''The AWS account ID that owns the Amazon S3 bucket specified in the *Location* field.
+
+        When you provide this account ID, GuardDuty will validate that the S3 bucket belongs to this account. If you don't specify an account ID owner, GuardDuty doesn't perform any validation.
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-guardduty-ipset.html#cfn-guardduty-ipset-expectedbucketowner
+        '''
+        result = self._values.get("expected_bucket_owner")
         return typing.cast(typing.Optional[builtins.str], result)
 
     @builtins.property
@@ -4096,6 +4131,7 @@ class CfnThreatIntelSet(
             # the properties below are optional
             activate=False,
             detector_id="detectorId",
+            expected_bucket_owner="expectedBucketOwner",
             name="name",
             tags=[CfnTag(
                 key="key",
@@ -4113,6 +4149,7 @@ class CfnThreatIntelSet(
         location: builtins.str,
         activate: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
         detector_id: typing.Optional[builtins.str] = None,
+        expected_bucket_owner: typing.Optional[builtins.str] = None,
         name: typing.Optional[builtins.str] = None,
         tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
     ) -> None:
@@ -4123,6 +4160,7 @@ class CfnThreatIntelSet(
         :param location: The URI of the file that contains the ThreatIntelSet.
         :param activate: A Boolean value that indicates whether GuardDuty is to start using the uploaded ThreatIntelSet.
         :param detector_id: The unique ID of the detector of the GuardDuty account for which you want to create a ``ThreatIntelSet`` . To find the ``detectorId`` in the current Region, see the Settings page in the GuardDuty console, or run the `ListDetectors <https://docs.aws.amazon.com/guardduty/latest/APIReference/API_ListDetectors.html>`_ API.
+        :param expected_bucket_owner: The AWS account ID that owns the Amazon S3 bucket specified in the *Location* field. When you provide this account ID, GuardDuty will validate that the S3 bucket belongs to this account. If you don't specify an account ID owner, GuardDuty doesn't perform any validation.
         :param name: A user-friendly ThreatIntelSet name displayed in all findings that are generated by activity that involves IP addresses included in this ThreatIntelSet.
         :param tags: The tags to be added to a new threat list resource. Each tag consists of a key and an optional value, both of which you define. For more information, see `Tag <https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-resource-tags.html>`_ .
         '''
@@ -4135,6 +4173,7 @@ class CfnThreatIntelSet(
             location=location,
             activate=activate,
             detector_id=detector_id,
+            expected_bucket_owner=expected_bucket_owner,
             name=name,
             tags=tags,
         )
@@ -4249,6 +4288,19 @@ class CfnThreatIntelSet(
         jsii.set(self, "detectorId", value) # pyright: ignore[reportArgumentType]
 
     @builtins.property
+    @jsii.member(jsii_name="expectedBucketOwner")
+    def expected_bucket_owner(self) -> typing.Optional[builtins.str]:
+        '''The AWS account ID that owns the Amazon S3 bucket specified in the *Location* field.'''
+        return typing.cast(typing.Optional[builtins.str], jsii.get(self, "expectedBucketOwner"))
+
+    @expected_bucket_owner.setter
+    def expected_bucket_owner(self, value: typing.Optional[builtins.str]) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__45c0733c6c75c09ff089a9606f91e845cf362445012b247e68e83208c0a5aaee)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "expectedBucketOwner", value) # pyright: ignore[reportArgumentType]
+
+    @builtins.property
     @jsii.member(jsii_name="name")
     def name(self) -> typing.Optional[builtins.str]:
         '''A user-friendly ThreatIntelSet name displayed in all findings that are generated by activity that involves IP addresses included in this ThreatIntelSet.'''
@@ -4283,6 +4335,7 @@ class CfnThreatIntelSet(
         "location": "location",
         "activate": "activate",
         "detector_id": "detectorId",
+        "expected_bucket_owner": "expectedBucketOwner",
         "name": "name",
         "tags": "tags",
     },
@@ -4295,6 +4348,7 @@ class CfnThreatIntelSetProps:
         location: builtins.str,
         activate: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
         detector_id: typing.Optional[builtins.str] = None,
+        expected_bucket_owner: typing.Optional[builtins.str] = None,
         name: typing.Optional[builtins.str] = None,
         tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
     ) -> None:
@@ -4304,6 +4358,7 @@ class CfnThreatIntelSetProps:
         :param location: The URI of the file that contains the ThreatIntelSet.
         :param activate: A Boolean value that indicates whether GuardDuty is to start using the uploaded ThreatIntelSet.
         :param detector_id: The unique ID of the detector of the GuardDuty account for which you want to create a ``ThreatIntelSet`` . To find the ``detectorId`` in the current Region, see the Settings page in the GuardDuty console, or run the `ListDetectors <https://docs.aws.amazon.com/guardduty/latest/APIReference/API_ListDetectors.html>`_ API.
+        :param expected_bucket_owner: The AWS account ID that owns the Amazon S3 bucket specified in the *Location* field. When you provide this account ID, GuardDuty will validate that the S3 bucket belongs to this account. If you don't specify an account ID owner, GuardDuty doesn't perform any validation.
         :param name: A user-friendly ThreatIntelSet name displayed in all findings that are generated by activity that involves IP addresses included in this ThreatIntelSet.
         :param tags: The tags to be added to a new threat list resource. Each tag consists of a key and an optional value, both of which you define. For more information, see `Tag <https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-resource-tags.html>`_ .
 
@@ -4323,6 +4378,7 @@ class CfnThreatIntelSetProps:
                 # the properties below are optional
                 activate=False,
                 detector_id="detectorId",
+                expected_bucket_owner="expectedBucketOwner",
                 name="name",
                 tags=[CfnTag(
                     key="key",
@@ -4336,6 +4392,7 @@ class CfnThreatIntelSetProps:
             check_type(argname="argument location", value=location, expected_type=type_hints["location"])
             check_type(argname="argument activate", value=activate, expected_type=type_hints["activate"])
             check_type(argname="argument detector_id", value=detector_id, expected_type=type_hints["detector_id"])
+            check_type(argname="argument expected_bucket_owner", value=expected_bucket_owner, expected_type=type_hints["expected_bucket_owner"])
             check_type(argname="argument name", value=name, expected_type=type_hints["name"])
             check_type(argname="argument tags", value=tags, expected_type=type_hints["tags"])
         self._values: typing.Dict[builtins.str, typing.Any] = {
@@ -4346,6 +4403,8 @@ class CfnThreatIntelSetProps:
             self._values["activate"] = activate
         if detector_id is not None:
             self._values["detector_id"] = detector_id
+        if expected_bucket_owner is not None:
+            self._values["expected_bucket_owner"] = expected_bucket_owner
         if name is not None:
             self._values["name"] = name
         if tags is not None:
@@ -4392,6 +4451,17 @@ class CfnThreatIntelSetProps:
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-guardduty-threatintelset.html#cfn-guardduty-threatintelset-detectorid
         '''
         result = self._values.get("detector_id")
+        return typing.cast(typing.Optional[builtins.str], result)
+
+    @builtins.property
+    def expected_bucket_owner(self) -> typing.Optional[builtins.str]:
+        '''The AWS account ID that owns the Amazon S3 bucket specified in the *Location* field.
+
+        When you provide this account ID, GuardDuty will validate that the S3 bucket belongs to this account. If you don't specify an account ID owner, GuardDuty doesn't perform any validation.
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-guardduty-threatintelset.html#cfn-guardduty-threatintelset-expectedbucketowner
+        '''
+        result = self._values.get("expected_bucket_owner")
         return typing.cast(typing.Optional[builtins.str], result)
 
     @builtins.property
@@ -4700,6 +4770,7 @@ def _typecheckingstub__b0c6fd2cb08b5267e6265af6fae1a30df065b4b25dc1d6d684eec9f9b
     location: builtins.str,
     activate: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
     detector_id: typing.Optional[builtins.str] = None,
+    expected_bucket_owner: typing.Optional[builtins.str] = None,
     name: typing.Optional[builtins.str] = None,
     tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
 ) -> None:
@@ -4742,6 +4813,12 @@ def _typecheckingstub__1aa4bf6ad59c1223085a10fc5ece87e88253a83036d5b0e3947792ffc
     """Type checking stubs"""
     pass
 
+def _typecheckingstub__9191409994fec537ce4d4e8e40256113b2937c7a1bb90b2f14b71998143f9810(
+    value: typing.Optional[builtins.str],
+) -> None:
+    """Type checking stubs"""
+    pass
+
 def _typecheckingstub__0128f966eac1a136f141aedcb397b96308a170e31f1d45176a39160ebf5a7a8f(
     value: typing.Optional[builtins.str],
 ) -> None:
@@ -4760,6 +4837,7 @@ def _typecheckingstub__f47aa340c89b95bf1878c9cb7463920b568c23940ad283e6f2c2bb481
     location: builtins.str,
     activate: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
     detector_id: typing.Optional[builtins.str] = None,
+    expected_bucket_owner: typing.Optional[builtins.str] = None,
     name: typing.Optional[builtins.str] = None,
     tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
 ) -> None:
@@ -5075,6 +5153,7 @@ def _typecheckingstub__e60035c0bc955afb794ee89f0439deae280bfec665014cbbd161f0856
     location: builtins.str,
     activate: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
     detector_id: typing.Optional[builtins.str] = None,
+    expected_bucket_owner: typing.Optional[builtins.str] = None,
     name: typing.Optional[builtins.str] = None,
     tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
 ) -> None:
@@ -5117,6 +5196,12 @@ def _typecheckingstub__6198953302f0959c3d25abb6f0063fb638c6abf44a125235eafb49370
     """Type checking stubs"""
     pass
 
+def _typecheckingstub__45c0733c6c75c09ff089a9606f91e845cf362445012b247e68e83208c0a5aaee(
+    value: typing.Optional[builtins.str],
+) -> None:
+    """Type checking stubs"""
+    pass
+
 def _typecheckingstub__78860e52ab0e0d6681a85585054b7ed92f84696ec2b6a43bb90c609188bf36e6(
     value: typing.Optional[builtins.str],
 ) -> None:
@@ -5135,6 +5220,7 @@ def _typecheckingstub__0a5d0bedab8c4fad4ab288ce5a467dbe6a4d07ef2947521b14162f1e7
     location: builtins.str,
     activate: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
     detector_id: typing.Optional[builtins.str] = None,
+    expected_bucket_owner: typing.Optional[builtins.str] = None,
     name: typing.Optional[builtins.str] = None,
     tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
 ) -> None:

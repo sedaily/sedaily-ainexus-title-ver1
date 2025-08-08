@@ -1,19 +1,20 @@
 from collections import defaultdict
-from typing import Any, Callable, Dict, Literal, Type, Union
+from typing import Any, Callable, Union
 
-from attrs import NOTHING
+from attrs import NOTHING, NothingType
 
-from cattrs import BaseConverter
-from cattrs._compat import get_newtype_base, is_literal, is_subclass, is_union_type
+from .. import BaseConverter
+from .._compat import get_newtype_base, is_literal, is_subclass, is_union_type
+from ..typealiases import is_type_alias
 
 __all__ = [
-    "default_tag_generator",
     "configure_tagged_union",
     "configure_union_passthrough",
+    "default_tag_generator",
 ]
 
 
-def default_tag_generator(typ: Type) -> str:
+def default_tag_generator(typ: type) -> str:
     """Return the class name."""
     return typ.__name__
 
@@ -21,13 +22,13 @@ def default_tag_generator(typ: Type) -> str:
 def configure_tagged_union(
     union: Any,
     converter: BaseConverter,
-    tag_generator: Callable[[Type], str] = default_tag_generator,
+    tag_generator: Callable[[type], str] = default_tag_generator,
     tag_name: str = "_type",
-    default: Union[Type, Literal[NOTHING]] = NOTHING,
+    default: Union[type, NothingType] = NOTHING,
 ) -> None:
     """
-    Configure the converter so that `union` (which should be a union) is
-    un/structured with the help of an additional piece of data in the
+    Configure the converter so that `union` (which should be a union, or a type alias
+    of one) is un/structured with the help of an additional piece of data in the
     unstructured payload, the tag.
 
     :param converter: The converter to apply the strategy to.
@@ -44,7 +45,12 @@ def configure_tagged_union(
     un/structuring base strategy.
 
     .. versionadded:: 23.1.0
+
+    ..  versionchanged:: 25.1
+        Type aliases of unions are now also supported.
     """
+    if is_type_alias(union):
+        union = union.__value__
     args = union.__args__
     tag_to_hook = {}
     exact_cl_unstruct_hooks = {}
@@ -78,7 +84,7 @@ def configure_tagged_union(
         _exact_cl_unstruct_hooks=exact_cl_unstruct_hooks,
         _cl_to_tag=cl_to_tag,
         _tag_name=tag_name,
-    ) -> Dict:
+    ) -> dict:
         res = _exact_cl_unstruct_hooks[val.__class__](val)
         res[_tag_name] = _cl_to_tag[val.__class__]
         return res

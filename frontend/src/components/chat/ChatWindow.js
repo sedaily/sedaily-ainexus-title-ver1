@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useMemo, memo } from "react";
+import React, { useState, useCallback, useMemo, memo, useRef } from "react";
 import {
   ChatBubbleLeftRightIcon,
   SparklesIcon,
@@ -6,8 +6,10 @@ import {
   StopIcon,
   CpuChipIcon,
 } from "@heroicons/react/24/outline";
+import toast from "react-hot-toast";
 import ConversationDrawer from "./ConversationDrawer";
 import ModelSelector from "../ModelSelector";
+import FileUploadButton from "../FileUploadButton";
 import { useChat } from "../../hooks/useChat";
 import { useMessages } from "../../hooks/useMessages";
 import { useConversations } from "../../hooks/useConversations";
@@ -33,6 +35,10 @@ const ChatWindow = memo(
     const [thoughts, setThoughts] = useState([]);
     const [steps, setSteps] = useState([]);
     const [isExecutingSteps, setIsExecutingSteps] = useState(false);
+    const [isDragging, setIsDragging] = useState(false);
+    const dragCounterRef = useRef(0);
+    const fileInputRef = useRef(null);
+    const [attachedFiles, setAttachedFiles] = useState([]);
 
     // Auth context for user info
     const { user } = useAuth();
@@ -79,9 +85,9 @@ const ChatWindow = memo(
       copiedMessage,
       isGenerating,
       inputHeight,
-      handleSendMessage,
+      handleSendMessage: originalHandleSendMessage,
       handleStopGeneration,
-      handleKeyPress,
+      handleKeyPress: originalHandleKeyPress,
       handleCopyMessage,
       handleCopyTitle,
       wsConnected,
@@ -100,6 +106,39 @@ const ChatWindow = memo(
       handleStepwiseStart, // 단계별 실행 시작
       handleStepwiseComplete // 단계별 실행 완료
     );
+
+    // 첨부파일과 함께 메시지 전송하는 래퍼 함수
+    const handleSendMessage = useCallback(() => {
+      console.log('🔍 [DEBUG] handleSendMessage 호출:', {
+        inputValue: inputValue,
+        inputValueLength: inputValue.length,
+        attachedFilesCount: attachedFiles.length,
+        attachedFiles: attachedFiles.map(f => ({ name: f.name, contentLength: f.content.length }))
+      });
+
+      // 아무것도 없으면 에러
+      if (!inputValue?.trim() && attachedFiles.length === 0) {
+        toast.error('메시지를 입력하거나 파일을 첨부해주세요.', {
+          duration: 3000,
+          position: 'top-center',
+        });
+        return;
+      }
+
+      // 메시지 전송
+      originalHandleSendMessage(inputValue, attachedFiles);
+      
+      // 전송 후 첨부파일 초기화
+      setAttachedFiles([]);
+    }, [inputValue, attachedFiles, originalHandleSendMessage]);
+
+    // 키 입력 핸들러
+    const handleKeyPress = useCallback((e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        handleSendMessage();
+      }
+    }, [handleSendMessage]);
 
     // 통합된 메시지 목록 (최적화된 메모이제이션)
     const allMessages = useMemo(() => {
@@ -126,8 +165,90 @@ const ChatWindow = memo(
       [handleCopyMessage, handleCopyTitle, copiedMessage]
     );
 
+    // 드래그 앤 드롭 이벤트 핸들러
+    const handleDragEnter = useCallback((e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounterRef.current += 1;
+      if (e.dataTransfer.items && e.dataTransfer.items.length > 0) {
+        setIsDragging(true);
+      }
+    }, []);
+
+    const handleDragLeave = useCallback((e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      dragCounterRef.current -= 1;
+      if (dragCounterRef.current === 0) {
+        setIsDragging(false);
+      }
+    }, []);
+
+    const handleDragOver = useCallback((e) => {
+      e.preventDefault();
+      e.stopPropagation();
+    }, []);
+
+    const handleDrop = useCallback(async (e) => {
+      e.preventDefault();
+      e.stopPropagation();
+      setIsDragging(false);
+      dragCounterRef.current = 0;
+
+      const files = Array.from(e.dataTransfer.files);
+      if (files.length > 0) {
+        // 첫 번째 파일만 처리 (여러 파일 중 하나만)
+        const file = files[0];
+        
+        // FileUploadButton의 로직을 재사용
+        if (file.type === 'text/plain' || file.name.endsWith('.txt') || 
+            file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+          // 파일 처리를 위해 FileUploadButton의 ref를 통해 처리
+          if (fileInputRef.current && fileInputRef.current.handleFile) {
+            await fileInputRef.current.handleFile(file);
+          }
+        } else {
+          toast.error('지원하지 않는 파일 형식입니다. TXT 또는 PDF 파일만 업로드 가능합니다.', {
+            duration: 4000,
+            position: 'top-center',
+          });
+        }
+      }
+    }, []);
+
     return (
-      <div className="flex h-[calc(100vh-56px)] overflow-hidden relative">
+      <div 
+        className="flex h-[calc(100vh-56px)] overflow-hidden relative"
+        onDragEnter={handleDragEnter}
+        onDragLeave={handleDragLeave}
+        onDragOver={handleDragOver}
+        onDrop={handleDrop}
+      >
+        {/* 드래그 앤 드롭 오버레이 */}
+        {isDragging && (
+          <div className="absolute inset-0 z-50 bg-blue-50 dark:bg-blue-900 bg-opacity-95 dark:bg-opacity-20 backdrop-blur-sm flex items-center justify-center transition-all duration-200">
+            <div className="bg-white dark:bg-dark-secondary rounded-3xl shadow-2xl p-12 text-center transform scale-105 transition-transform duration-200">
+              <div className="relative">
+                <div className="bg-gradient-to-br from-blue-100 to-blue-200 dark:from-blue-800 dark:to-blue-900 rounded-full p-8 w-32 h-32 mx-auto mb-6 flex items-center justify-center animate-bounce">
+                  <svg className="w-16 h-16 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" />
+                  </svg>
+                </div>
+                <div className="absolute inset-0 bg-blue-400 dark:bg-blue-500 rounded-full blur-xl opacity-20 animate-pulse"></div>
+              </div>
+              <h3 className="text-2xl font-bold text-gray-800 dark:text-white mb-3">
+                파일을 여기에 놓으세요
+              </h3>
+              <p className="text-base text-gray-600 dark:text-gray-300 mb-2">
+                TXT, PDF 파일 지원
+              </p>
+              <p className="text-sm text-gray-500 dark:text-gray-400">
+                최대 50MB까지 업로드 가능
+              </p>
+            </div>
+          </div>
+        )}
+
         {/* 대화 드로어 - 모바일에서는 오버레이로 표시 */}
         <ConversationDrawer onCollapsedChange={setSidebarCollapsed} />
 
@@ -240,8 +361,74 @@ const ChatWindow = memo(
             >
               {/* 둥근 모서리 통짜 입력창 */}
               <div className="w-full rounded-2xl bg-white dark:bg-[#2E333D] border border-gray-200 dark:border-transparent shadow-sm dark:shadow-none transition-all duration-200">
+                {/* 첨부파일 표시 영역 */}
+                {attachedFiles.length > 0 && (
+                  <div className="flex flex-wrap gap-2 px-3 sm:px-5 pt-3 pb-2 border-b border-gray-200 dark:border-gray-600">
+                    {attachedFiles.map(file => (
+                      <div
+                        key={file.id}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg group hover:bg-gray-200 dark:hover:bg-gray-600 transition-all duration-200"
+                      >
+                        <div className="flex items-center gap-2">
+                          {/* 파일 아이콘 */}
+                          <div className="w-8 h-8 bg-gradient-to-br from-pink-500 to-pink-600 dark:from-pink-600 dark:to-pink-700 rounded flex items-center justify-center shadow-sm">
+                            <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-5L9 2H4z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-gray-700 dark:text-gray-200 max-w-[150px] truncate">
+                              {file.name}
+                            </span>
+                            <span className="text-xs text-gray-500 dark:text-gray-400">
+                              {file.type === 'pdf' && file.pageCount ? `${file.pageCount}페이지` : '문서'}
+                            </span>
+                          </div>
+                        </div>
+                        {/* 제거 버튼 */}
+                        <button
+                          onClick={() => setAttachedFiles(prev => prev.filter(f => f.id !== file.id))}
+                          className="ml-1 p-1 rounded-full bg-transparent hover:bg-gray-300 dark:hover:bg-gray-500 transition-all duration-200 opacity-60 hover:opacity-100"
+                          title="파일 제거"
+                        >
+                          <svg className="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                          </svg>
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                
                 {/* 메인 입력 영역 */}
                 <div className="flex items-center gap-2 sm:gap-3 px-3 sm:px-5 py-3 sm:py-4">
+                  {/* 파일 업로드 버튼 */}
+                  <FileUploadButton
+                    ref={fileInputRef}
+                    onFileContent={(text, fileInfo) => {
+                      // 파일을 첨부파일 목록에 추가
+                      if (fileInfo) {
+                        const newFile = {
+                          id: Date.now() + Math.random(), // 고유 ID
+                          name: fileInfo.fileName,
+                          size: fileInfo.fileSize,
+                          type: fileInfo.fileType,
+                          content: text,
+                          pageCount: fileInfo.pageCount
+                        };
+                        
+                        setAttachedFiles(prev => [...prev, newFile]);
+                        
+                        // 성공 토스트
+                        toast.success(`📎 ${fileInfo.fileName} 파일이 첨부되었습니다.`, {
+                          duration: 3000,
+                          position: 'top-center',
+                        });
+                      }
+                    }}
+                    disabled={isGenerating}
+                  />
+                  
                   {/* 글 입력 영역 */}
                   <textarea
                     value={inputValue}
@@ -250,7 +437,7 @@ const ChatWindow = memo(
                     placeholder={
                       isGenerating
                         ? "생성 중입니다..."
-                        : "기사 본문을 입력하세요..."
+                        : "기사 본문을 입력하거나 파일을 업로드하세요..."
                     }
                     className="flex-1 resize-none bg-transparent text-sm sm:text-base text-gray-900 dark:text-gray-100 placeholder-gray-500 dark:placeholder-gray-400 focus:outline-none appearance-none"
                     rows={1}
@@ -276,14 +463,14 @@ const ChatWindow = memo(
                   ) : (
                     <button
                       onClick={handleSendMessage}
-                      disabled={!inputValue.trim()}
+                      disabled={!inputValue?.trim() && attachedFiles.length === 0}
                       className={`shrink-0 rounded-full p-2.5 transition-all duration-200 ${
-                        inputValue.trim()
+                        inputValue?.trim() || attachedFiles.length > 0
                           ? "bg-[#5E89FF] hover:bg-[#4A7BFF] text-white shadow-md"
                           : "bg-gray-300 dark:bg-gray-600 text-gray-500 dark:text-gray-400 cursor-not-allowed"
                       }`}
                       title={
-                        inputValue.trim()
+                        inputValue?.trim() || attachedFiles.length > 0
                           ? "메시지 전송"
                           : "메시지를 입력하세요"
                       }
@@ -304,9 +491,24 @@ const ChatWindow = memo(
                       />
                     </div>
 
-                    {/* 글자 수 표시 */}
+                    {/* 글자 수 표시 및 대용량 텍스트 경고 */}
                     <div className="text-xs text-gray-500 dark:text-gray-400">
-                      {inputValue.length}자
+                      {inputValue.length.toLocaleString()}자
+                      {inputValue.length > 200000 && (
+                        <span className="ml-2 text-blue-500 font-medium">
+                          (대용량 문서 - 배치 처리 모드)
+                        </span>
+                      )}
+                      {inputValue.length > 150000 && inputValue.length <= 200000 && (
+                        <span className="ml-2 text-red-500 font-medium">
+                          (너무 긴 텍스트 - 오류 발생 가능)
+                        </span>
+                      )}
+                      {inputValue.length > 50000 && inputValue.length <= 150000 && (
+                        <span className="ml-2 text-orange-500">
+                          (긴 텍스트 - 처리 시간 증가)
+                        </span>
+                      )}
                     </div>
                   </div>
 

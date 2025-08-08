@@ -40,20 +40,7 @@ export const AuthProvider = ({ children }) => {
     try {
       setLoading(true);
       
-      // 개발 모드에서 인증 스킵
-      if (process.env.REACT_APP_SKIP_AUTH === 'true') {
-        console.log("🔓 개발 모드: 인증 스킵 - 더미 사용자 생성");
-        setIsAuthenticated(true);
-        setUser({
-          id: "dev-user-001",
-          email: "dev@example.com",
-          name: "개발자",
-          role: "admin",
-          groups: ["admin"],
-        });
-        return;
-      }
-      
+      // 실제 AWS Cognito 인증 체크
       const currentUser = await getCurrentUser();
       const session = await fetchAuthSession();
 
@@ -84,11 +71,6 @@ export const AuthProvider = ({ children }) => {
       });
     } catch (error) {
       console.error("Authentication check failed:", error);
-      console.error("Error details:", {
-        message: error.message,
-        name: error.name,
-        stack: error.stack
-      });
       setIsAuthenticated(false);
       setUser(null);
     } finally {
@@ -102,13 +84,7 @@ export const AuthProvider = ({ children }) => {
       
       console.log("로그인 시도:", { email });
 
-      // 개발 모드에서 인증 스킵
-      if (process.env.REACT_APP_SKIP_AUTH === 'true') {
-        console.log("🔓 개발 모드: 로그인 스킵");
-        await checkAuthStatus();
-        return { success: true, user: { email } };
-      }
-
+      // 실제 AWS Cognito 인증
       const user = await signIn({ username: email, password });
       
       console.log("signIn 결과:", user);

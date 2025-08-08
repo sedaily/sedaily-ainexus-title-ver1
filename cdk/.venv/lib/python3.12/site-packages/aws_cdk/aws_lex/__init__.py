@@ -1784,7 +1784,8 @@ class CfnBot(
             descriptive_bot_builder_specification: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnBot.DescriptiveBotBuilderSpecificationProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
             sample_utterance_generation_specification: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnBot.SampleUtteranceGenerationSpecificationProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
         ) -> None:
-            '''
+            '''Contains specifications about the Amazon Lex build time generative AI capabilities from Amazon Bedrock that you can turn on for your bot.
+
             :param descriptive_bot_builder_specification: 
             :param sample_utterance_generation_specification: 
 
@@ -3430,9 +3431,10 @@ class CfnBot(
             enabled: typing.Union[builtins.bool, _IResolvable_da3f097b],
             bedrock_model_specification: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnBot.BedrockModelSpecificationProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
         ) -> None:
-            '''
-            :param enabled: 
-            :param bedrock_model_specification: 
+            '''Contains specifications for the descriptive bot building feature.
+
+            :param enabled: Specifies whether the descriptive bot building feature is activated or not.
+            :param bedrock_model_specification: An object containing information about the Amazon Bedrock model used to interpret the prompt used in descriptive bot building.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-lex-bot-descriptivebotbuilderspecification.html
             :exampleMetadata: fixture=_generated
@@ -3472,7 +3474,8 @@ class CfnBot(
 
         @builtins.property
         def enabled(self) -> typing.Union[builtins.bool, _IResolvable_da3f097b]:
-            '''
+            '''Specifies whether the descriptive bot building feature is activated or not.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-lex-bot-descriptivebotbuilderspecification.html#cfn-lex-bot-descriptivebotbuilderspecification-enabled
             '''
             result = self._values.get("enabled")
@@ -3483,7 +3486,8 @@ class CfnBot(
         def bedrock_model_specification(
             self,
         ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnBot.BedrockModelSpecificationProperty"]]:
-            '''
+            '''An object containing information about the Amazon Bedrock model used to interpret the prompt used in descriptive bot building.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-lex-bot-descriptivebotbuilderspecification.html#cfn-lex-bot-descriptivebotbuilderspecification-bedrockmodelspecification
             '''
             result = self._values.get("bedrock_model_specification")
@@ -4727,7 +4731,8 @@ class CfnBot(
             buildtime_settings: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnBot.BuildtimeSettingsProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
             runtime_settings: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnBot.RuntimeSettingsProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
         ) -> None:
-            '''
+            '''Contains specifications about the generative AI capabilities from Amazon Bedrock that you can turn on for your bot.
+
             :param buildtime_settings: 
             :param runtime_settings: 
 
@@ -6825,8 +6830,11 @@ class CfnBot(
             *,
             enabled: typing.Union[builtins.bool, _IResolvable_da3f097b],
         ) -> None:
-            '''
-            :param enabled: 
+            '''Configures the Assisted Natural Language Understanding (NLU) feature for your bot.
+
+            This specification determines whether enhanced intent recognition and utterance understanding capabilities are active.
+
+            :param enabled: Determines whether the Assisted NLU feature is enabled for the bot. When set to ``true`` , Amazon Lex uses advanced models to improve intent recognition and slot resolution, with the default being ``false`` .
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-lex-bot-nluimprovementspecification.html
             :exampleMetadata: fixture=_generated
@@ -6850,7 +6858,10 @@ class CfnBot(
 
         @builtins.property
         def enabled(self) -> typing.Union[builtins.bool, _IResolvable_da3f097b]:
-            '''
+            '''Determines whether the Assisted NLU feature is enabled for the bot.
+
+            When set to ``true`` , Amazon Lex uses advanced models to improve intent recognition and slot resolution, with the default being ``false`` .
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-lex-bot-nluimprovementspecification.html#cfn-lex-bot-nluimprovementspecification-enabled
             '''
             result = self._values.get("enabled")
@@ -8448,7 +8459,8 @@ class CfnBot(
             nlu_improvement_specification: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnBot.NluImprovementSpecificationProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
             slot_resolution_improvement_specification: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnBot.SlotResolutionImprovementSpecificationProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
         ) -> None:
-            '''
+            '''Contains specifications about the Amazon Lex runtime generative AI capabilities from Amazon Bedrock that you can turn on for your bot.
+
             :param nlu_improvement_specification: 
             :param slot_resolution_improvement_specification: 
 
@@ -8775,8 +8787,9 @@ class CfnBot(
             enabled: typing.Union[builtins.bool, _IResolvable_da3f097b],
             bedrock_model_specification: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnBot.BedrockModelSpecificationProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
         ) -> None:
-            '''
-            :param enabled: 
+            '''Contains specifications for the sample utterance generation feature.
+
+            :param enabled: Specifies whether to enable sample utterance generation or not.
             :param bedrock_model_specification: 
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-lex-bot-sampleutterancegenerationspecification.html
@@ -8817,7 +8830,8 @@ class CfnBot(
 
         @builtins.property
         def enabled(self) -> typing.Union[builtins.bool, _IResolvable_da3f097b]:
-            '''
+            '''Specifies whether to enable sample utterance generation or not.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-lex-bot-sampleutterancegenerationspecification.html#cfn-lex-bot-sampleutterancegenerationspecification-enabled
             '''
             result = self._values.get("enabled")
@@ -9611,9 +9625,10 @@ class CfnBot(
             enabled: typing.Union[builtins.bool, _IResolvable_da3f097b],
             bedrock_model_specification: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnBot.BedrockModelSpecificationProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
         ) -> None:
-            '''
-            :param enabled: 
-            :param bedrock_model_specification: 
+            '''Contains specifications for the assisted slot resolution feature.
+
+            :param enabled: Specifies whether assisted slot resolution is turned on or off.
+            :param bedrock_model_specification: An object containing information about the Amazon Bedrock model used to assist slot resolution.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-lex-bot-slotresolutionimprovementspecification.html
             :exampleMetadata: fixture=_generated
@@ -9653,7 +9668,8 @@ class CfnBot(
 
         @builtins.property
         def enabled(self) -> typing.Union[builtins.bool, _IResolvable_da3f097b]:
-            '''
+            '''Specifies whether assisted slot resolution is turned on or off.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-lex-bot-slotresolutionimprovementspecification.html#cfn-lex-bot-slotresolutionimprovementspecification-enabled
             '''
             result = self._values.get("enabled")
@@ -9664,7 +9680,8 @@ class CfnBot(
         def bedrock_model_specification(
             self,
         ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnBot.BedrockModelSpecificationProperty"]]:
-            '''
+            '''An object containing information about the Amazon Bedrock model used to assist slot resolution.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-lex-bot-slotresolutionimprovementspecification.html#cfn-lex-bot-slotresolutionimprovementspecification-bedrockmodelspecification
             '''
             result = self._values.get("bedrock_model_specification")

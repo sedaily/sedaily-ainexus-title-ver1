@@ -154,7 +154,7 @@ class CfnServer(
         :param id: Construct identifier for this resource (unique in its scope).
         :param instance_profile_arn: The ARN of the instance profile that your Amazon EC2 instances use.
         :param instance_type: The Amazon EC2 instance type to use. For example, ``m5.large`` .
-        :param service_role_arn: The service role that the AWS OpsWorks CM service backend uses to work with your account. Although the AWS OpsWorks management console typically creates the service role for you, if you are using the AWS CLI or API commands, run the service-role-creation.yaml AWS CloudFormation template, located at https://s3.amazonaws.com/opsworks-cm-us-east-1-prod-default-assets/misc/opsworks-cm-roles.yaml. This template creates a CloudFormation stack that includes the service role and instance profile that you need.
+        :param service_role_arn: The service role that the AWS OpsWorks CM service backend uses to work with your account.
         :param associate_public_ip_address: Associate a public IP address with a server that you are launching. Valid values are ``true`` or ``false`` . The default value is ``true`` .
         :param backup_id: If you specify this field, AWS OpsWorks CM creates the server by using the backup represented by BackupId.
         :param backup_retention_count: The number of automated backups that you want to keep. Whenever a new backup is created, AWS OpsWorks CM deletes the oldest backups if this number is exceeded. The default value is ``1`` .
@@ -730,7 +730,7 @@ class CfnServerProps:
 
         :param instance_profile_arn: The ARN of the instance profile that your Amazon EC2 instances use.
         :param instance_type: The Amazon EC2 instance type to use. For example, ``m5.large`` .
-        :param service_role_arn: The service role that the AWS OpsWorks CM service backend uses to work with your account. Although the AWS OpsWorks management console typically creates the service role for you, if you are using the AWS CLI or API commands, run the service-role-creation.yaml AWS CloudFormation template, located at https://s3.amazonaws.com/opsworks-cm-us-east-1-prod-default-assets/misc/opsworks-cm-roles.yaml. This template creates a CloudFormation stack that includes the service role and instance profile that you need.
+        :param service_role_arn: The service role that the AWS OpsWorks CM service backend uses to work with your account.
         :param associate_public_ip_address: Associate a public IP address with a server that you are launching. Valid values are ``true`` or ``false`` . The default value is ``true`` .
         :param backup_id: If you specify this field, AWS OpsWorks CM creates the server by using the backup represented by BackupId.
         :param backup_retention_count: The number of automated backups that you want to keep. Whenever a new backup is created, AWS OpsWorks CM deletes the oldest backups if this number is exceeded. The default value is ``1`` .
@@ -881,8 +881,6 @@ class CfnServerProps:
     @builtins.property
     def service_role_arn(self) -> builtins.str:
         '''The service role that the AWS OpsWorks CM service backend uses to work with your account.
-
-        Although the AWS OpsWorks management console typically creates the service role for you, if you are using the AWS CLI or API commands, run the service-role-creation.yaml AWS CloudFormation template, located at https://s3.amazonaws.com/opsworks-cm-us-east-1-prod-default-assets/misc/opsworks-cm-roles.yaml. This template creates a CloudFormation stack that includes the service role and instance profile that you need.
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-opsworkscm-server.html#cfn-opsworkscm-server-servicerolearn
         '''

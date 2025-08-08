@@ -1,18 +1,25 @@
 """Preconfigured converters for bson."""
 
 from base64 import b85decode, b85encode
+from collections.abc import Set
 from datetime import date, datetime
-from typing import Any, Type, TypeVar, Union
+from typing import Any, TypeVar, Union
 
 from bson import DEFAULT_CODEC_OPTIONS, CodecOptions, Int64, ObjectId, decode, encode
 
-from cattrs._compat import AbstractSet, is_mapping
-from cattrs.gen import make_mapping_structure_fn
-
+from .._compat import is_mapping, is_subclass
+from ..cols import mapping_structure_factory
 from ..converters import BaseConverter, Converter
 from ..dispatch import StructureHook
+from ..fns import identity
+from ..literals import is_literal_containing_enums
 from ..strategies import configure_union_passthrough
-from . import validate_datetime, wrap
+from . import (
+    is_primitive_enum,
+    literals_with_enums_unstructure_factory,
+    validate_datetime,
+    wrap,
+)
 
 T = TypeVar("T")
 
@@ -38,7 +45,7 @@ class BsonConverter(Converter):
     def loads(
         self,
         data: bytes,
-        cl: Type[T],
+        cl: type[T],
         codec_options: CodecOptions = DEFAULT_CODEC_OPTIONS,
     ) -> T:
         return self.structure(decode(data, codec_options=codec_options), cl)
@@ -52,15 +59,19 @@ def configure_converter(converter: BaseConverter):
     * byte mapping keys are base85-encoded into strings when unstructuring, and reverse
     * non-string, non-byte mapping keys are coerced into strings when unstructuring
     * a deserialization hook is registered for bson.ObjectId by default
+    * string and int enums are passed through when unstructuring
+
+    .. versionchanged:: 24.2.0
+        Enums are left to the library to unstructure, speeding them up.
     """
 
     def gen_unstructure_mapping(cl: Any, unstructure_to=None):
         key_handler = str
         args = getattr(cl, "__args__", None)
         if args:
-            if issubclass(args[0], str):
+            if is_subclass(args[0], str):
                 key_handler = None
-            elif issubclass(args[0], bytes):
+            elif is_subclass(args[0], bytes):
 
                 def key_handler(k):
                     return b85encode(k).decode("utf8")
@@ -71,10 +82,10 @@ def configure_converter(converter: BaseConverter):
 
     def gen_structure_mapping(cl: Any) -> StructureHook:
         args = getattr(cl, "__args__", None)
-        if args and issubclass(args[0], bytes):
-            h = make_mapping_structure_fn(cl, converter, key_type=Base85Bytes)
+        if args and is_subclass(args[0], bytes):
+            h = mapping_structure_factory(cl, converter, key_type=Base85Bytes)
         else:
-            h = make_mapping_structure_fn(cl, converter)
+            h = mapping_structure_factory(cl, converter)
         return h
 
     converter.register_structure_hook(Base85Bytes, lambda v, _: b85decode(v))
@@ -92,12 +103,16 @@ def configure_converter(converter: BaseConverter):
     converter.register_structure_hook(datetime, validate_datetime)
     converter.register_unstructure_hook(date, lambda v: v.isoformat())
     converter.register_structure_hook(date, lambda v, _: date.fromisoformat(v))
+    converter.register_unstructure_hook_func(is_primitive_enum, identity)
+    converter.register_unstructure_hook_factory(
+        is_literal_containing_enums, literals_with_enums_unstructure_factory
+    )
 
 
 @wrap(BsonConverter)
 def make_converter(*args: Any, **kwargs: Any) -> BsonConverter:
     kwargs["unstruct_collection_overrides"] = {
-        AbstractSet: list,
+        Set: list,
         **kwargs.get("unstruct_collection_overrides", {}),
     }
     res = BsonConverter(*args, **kwargs)

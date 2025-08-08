@@ -19496,6 +19496,7 @@ class AutoScalingGroup(
         launch_template: typing.Optional[_ILaunchTemplate_f32c0fd7] = None,
         machine_image: typing.Optional[_IMachineImage_0e8bd50b] = None,
         max_healthy_percentage: typing.Optional[jsii.Number] = None,
+        migrate_to_launch_template: typing.Optional[builtins.bool] = None,
         min_healthy_percentage: typing.Optional[jsii.Number] = None,
         mixed_instances_policy: typing.Optional[typing.Union[MixedInstancesPolicy, typing.Dict[builtins.str, typing.Any]]] = None,
         require_imdsv2: typing.Optional[builtins.bool] = None,
@@ -19541,6 +19542,7 @@ class AutoScalingGroup(
         :param launch_template: Launch template to use. Launch configuration related settings and MixedInstancesPolicy must not be specified when a launch template is specified. Default: - Do not provide any launch template
         :param machine_image: AMI to launch. ``launchTemplate`` and ``mixedInstancesPolicy`` must not be specified when this property is specified Default: - Do not provide any machine image
         :param max_healthy_percentage: Specifies the upper threshold as a percentage of the desired capacity of the Auto Scaling group. It represents the maximum percentage of the group that can be in service and healthy, or pending, to support your workload when replacing instances. Value range is 0 to 100. After it's set, both ``minHealthyPercentage`` and ``maxHealthyPercentage`` to -1 will clear the previously set value. Both or neither of ``minHealthyPercentage`` and ``maxHealthyPercentage`` must be specified, and the difference between them cannot be greater than 100. A large range increases the number of instances that can be replaced at the same time. Default: - No instance maintenance policy.
+        :param migrate_to_launch_template: Whether safety guardrail should be enforced when migrating to the launch template. Default: false
         :param min_healthy_percentage: Specifies the lower threshold as a percentage of the desired capacity of the Auto Scaling group. It represents the minimum percentage of the group to keep in service, healthy, and ready to use to support your workload when replacing instances. Value range is 0 to 100. After it's set, both ``minHealthyPercentage`` and ``maxHealthyPercentage`` to -1 will clear the previously set value. Both or neither of ``minHealthyPercentage`` and ``maxHealthyPercentage`` must be specified, and the difference between them cannot be greater than 100. A large range increases the number of instances that can be replaced at the same time. Default: - No instance maintenance policy.
         :param mixed_instances_policy: Mixed Instances Policy to use. Launch configuration related settings and Launch Template must not be specified when a MixedInstancesPolicy is specified. Default: - Do not provide any MixedInstancesPolicy
         :param require_imdsv2: Whether IMDSv2 should be required on launched instances. Default: false
@@ -19588,6 +19590,7 @@ class AutoScalingGroup(
             launch_template=launch_template,
             machine_image=machine_image,
             max_healthy_percentage=max_healthy_percentage,
+            migrate_to_launch_template=migrate_to_launch_template,
             min_healthy_percentage=min_healthy_percentage,
             mixed_instances_policy=mixed_instances_policy,
             require_imdsv2=require_imdsv2,
@@ -20230,6 +20233,7 @@ class AutoScalingGroup(
         "launch_template": "launchTemplate",
         "machine_image": "machineImage",
         "max_healthy_percentage": "maxHealthyPercentage",
+        "migrate_to_launch_template": "migrateToLaunchTemplate",
         "min_healthy_percentage": "minHealthyPercentage",
         "mixed_instances_policy": "mixedInstancesPolicy",
         "require_imdsv2": "requireImdsv2",
@@ -20277,6 +20281,7 @@ class AutoScalingGroupProps(CommonAutoScalingGroupProps):
         launch_template: typing.Optional[_ILaunchTemplate_f32c0fd7] = None,
         machine_image: typing.Optional[_IMachineImage_0e8bd50b] = None,
         max_healthy_percentage: typing.Optional[jsii.Number] = None,
+        migrate_to_launch_template: typing.Optional[builtins.bool] = None,
         min_healthy_percentage: typing.Optional[jsii.Number] = None,
         mixed_instances_policy: typing.Optional[typing.Union[MixedInstancesPolicy, typing.Dict[builtins.str, typing.Any]]] = None,
         require_imdsv2: typing.Optional[builtins.bool] = None,
@@ -20321,6 +20326,7 @@ class AutoScalingGroupProps(CommonAutoScalingGroupProps):
         :param launch_template: Launch template to use. Launch configuration related settings and MixedInstancesPolicy must not be specified when a launch template is specified. Default: - Do not provide any launch template
         :param machine_image: AMI to launch. ``launchTemplate`` and ``mixedInstancesPolicy`` must not be specified when this property is specified Default: - Do not provide any machine image
         :param max_healthy_percentage: Specifies the upper threshold as a percentage of the desired capacity of the Auto Scaling group. It represents the maximum percentage of the group that can be in service and healthy, or pending, to support your workload when replacing instances. Value range is 0 to 100. After it's set, both ``minHealthyPercentage`` and ``maxHealthyPercentage`` to -1 will clear the previously set value. Both or neither of ``minHealthyPercentage`` and ``maxHealthyPercentage`` must be specified, and the difference between them cannot be greater than 100. A large range increases the number of instances that can be replaced at the same time. Default: - No instance maintenance policy.
+        :param migrate_to_launch_template: Whether safety guardrail should be enforced when migrating to the launch template. Default: false
         :param min_healthy_percentage: Specifies the lower threshold as a percentage of the desired capacity of the Auto Scaling group. It represents the minimum percentage of the group to keep in service, healthy, and ready to use to support your workload when replacing instances. Value range is 0 to 100. After it's set, both ``minHealthyPercentage`` and ``maxHealthyPercentage`` to -1 will clear the previously set value. Both or neither of ``minHealthyPercentage`` and ``maxHealthyPercentage`` must be specified, and the difference between them cannot be greater than 100. A large range increases the number of instances that can be replaced at the same time. Default: - No instance maintenance policy.
         :param mixed_instances_policy: Mixed Instances Policy to use. Launch configuration related settings and Launch Template must not be specified when a MixedInstancesPolicy is specified. Default: - Do not provide any MixedInstancesPolicy
         :param require_imdsv2: Whether IMDSv2 should be required on launched instances. Default: false
@@ -20386,6 +20392,7 @@ class AutoScalingGroupProps(CommonAutoScalingGroupProps):
             check_type(argname="argument launch_template", value=launch_template, expected_type=type_hints["launch_template"])
             check_type(argname="argument machine_image", value=machine_image, expected_type=type_hints["machine_image"])
             check_type(argname="argument max_healthy_percentage", value=max_healthy_percentage, expected_type=type_hints["max_healthy_percentage"])
+            check_type(argname="argument migrate_to_launch_template", value=migrate_to_launch_template, expected_type=type_hints["migrate_to_launch_template"])
             check_type(argname="argument min_healthy_percentage", value=min_healthy_percentage, expected_type=type_hints["min_healthy_percentage"])
             check_type(argname="argument mixed_instances_policy", value=mixed_instances_policy, expected_type=type_hints["mixed_instances_policy"])
             check_type(argname="argument require_imdsv2", value=require_imdsv2, expected_type=type_hints["require_imdsv2"])
@@ -20463,6 +20470,8 @@ class AutoScalingGroupProps(CommonAutoScalingGroupProps):
             self._values["machine_image"] = machine_image
         if max_healthy_percentage is not None:
             self._values["max_healthy_percentage"] = max_healthy_percentage
+        if migrate_to_launch_template is not None:
+            self._values["migrate_to_launch_template"] = migrate_to_launch_template
         if min_healthy_percentage is not None:
             self._values["min_healthy_percentage"] = min_healthy_percentage
         if mixed_instances_policy is not None:
@@ -20956,6 +20965,15 @@ class AutoScalingGroupProps(CommonAutoScalingGroupProps):
         '''
         result = self._values.get("max_healthy_percentage")
         return typing.cast(typing.Optional[jsii.Number], result)
+
+    @builtins.property
+    def migrate_to_launch_template(self) -> typing.Optional[builtins.bool]:
+        '''Whether safety guardrail should be enforced when migrating to the launch template.
+
+        :default: false
+        '''
+        result = self._values.get("migrate_to_launch_template")
+        return typing.cast(typing.Optional[builtins.bool], result)
 
     @builtins.property
     def min_healthy_percentage(self) -> typing.Optional[jsii.Number]:
@@ -23458,6 +23476,7 @@ def _typecheckingstub__82981fc74407321badee3133fda3bd0a016f4ab7634f761219c1c808c
     launch_template: typing.Optional[_ILaunchTemplate_f32c0fd7] = None,
     machine_image: typing.Optional[_IMachineImage_0e8bd50b] = None,
     max_healthy_percentage: typing.Optional[jsii.Number] = None,
+    migrate_to_launch_template: typing.Optional[builtins.bool] = None,
     min_healthy_percentage: typing.Optional[jsii.Number] = None,
     mixed_instances_policy: typing.Optional[typing.Union[MixedInstancesPolicy, typing.Dict[builtins.str, typing.Any]]] = None,
     require_imdsv2: typing.Optional[builtins.bool] = None,
@@ -23708,6 +23727,7 @@ def _typecheckingstub__186ff14d58334848486a7ecd802c6b72a1b76f272f25349712b95361e
     launch_template: typing.Optional[_ILaunchTemplate_f32c0fd7] = None,
     machine_image: typing.Optional[_IMachineImage_0e8bd50b] = None,
     max_healthy_percentage: typing.Optional[jsii.Number] = None,
+    migrate_to_launch_template: typing.Optional[builtins.bool] = None,
     min_healthy_percentage: typing.Optional[jsii.Number] = None,
     mixed_instances_policy: typing.Optional[typing.Union[MixedInstancesPolicy, typing.Dict[builtins.str, typing.Any]]] = None,
     require_imdsv2: typing.Optional[builtins.bool] = None,

@@ -3404,7 +3404,7 @@ class CfnFleet(
         '''
         :param scope: Scope in which this resource is defined.
         :param id: Construct identifier for this resource (unique in its scope).
-        :param instance_type: The instance type to use when launching fleet instances. The following instance types are available for non-Elastic fleets:. - stream.standard.small - stream.standard.medium - stream.standard.large - stream.compute.large - stream.compute.xlarge - stream.compute.2xlarge - stream.compute.4xlarge - stream.compute.8xlarge - stream.memory.large - stream.memory.xlarge - stream.memory.2xlarge - stream.memory.4xlarge - stream.memory.8xlarge - stream.memory.z1d.large - stream.memory.z1d.xlarge - stream.memory.z1d.2xlarge - stream.memory.z1d.3xlarge - stream.memory.z1d.6xlarge - stream.memory.z1d.12xlarge - stream.graphics-design.large - stream.graphics-design.xlarge - stream.graphics-design.2xlarge - stream.graphics-design.4xlarge - stream.graphics-desktop.2xlarge - stream.graphics.g4dn.xlarge - stream.graphics.g4dn.2xlarge - stream.graphics.g4dn.4xlarge - stream.graphics.g4dn.8xlarge - stream.graphics.g4dn.12xlarge - stream.graphics.g4dn.16xlarge - stream.graphics-pro.4xlarge - stream.graphics-pro.8xlarge - stream.graphics-pro.16xlarge The following instance types are available for Elastic fleets: - stream.standard.small - stream.standard.medium
+        :param instance_type: The instance type to use when launching fleet instances. The following instance types are available for non-Elastic fleets:. - stream.standard.small - stream.standard.medium - stream.standard.large - stream.compute.large - stream.compute.xlarge - stream.compute.2xlarge - stream.compute.4xlarge - stream.compute.8xlarge - stream.memory.large - stream.memory.xlarge - stream.memory.2xlarge - stream.memory.4xlarge - stream.memory.8xlarge - stream.memory.z1d.large - stream.memory.z1d.xlarge - stream.memory.z1d.2xlarge - stream.memory.z1d.3xlarge - stream.memory.z1d.6xlarge - stream.memory.z1d.12xlarge - stream.graphics-design.large - stream.graphics-design.xlarge - stream.graphics-design.2xlarge - stream.graphics-design.4xlarge - stream.graphics-desktop.2xlarge - stream.graphics.g4dn.xlarge - stream.graphics.g4dn.2xlarge - stream.graphics.g4dn.4xlarge - stream.graphics.g4dn.8xlarge - stream.graphics.g4dn.12xlarge - stream.graphics.g4dn.16xlarge - stream.graphics-pro.4xlarge - stream.graphics-pro.8xlarge - stream.graphics-pro.16xlarge - stream.graphics.g5.xlarge - stream.graphics.g5.2xlarge - stream.graphics.g5.4xlarge - stream.graphics.g5.8xlarge - stream.graphics.g5.16xlarge - stream.graphics.g5.12xlarge - stream.graphics.g5.24xlarge - stream.graphics.g6.xlarge - stream.graphics.g6.2xlarge - stream.graphics.g6.4xlarge - stream.graphics.g6.8xlarge - stream.graphics.g6.16xlarge - stream.graphics.g6.12xlarge - stream.graphics.g6.24xlarge - stream.graphics.gr6.4xlarge - stream.graphics.gr6.8xlarge The following instance types are available for Elastic fleets: - stream.standard.small - stream.standard.medium
         :param name: A unique name for the fleet.
         :param compute_capacity: The desired capacity for the fleet. This is not allowed for Elastic fleets.
         :param description: The description to display.
@@ -4181,7 +4181,7 @@ class CfnFleetProps:
     ) -> None:
         '''Properties for defining a ``CfnFleet``.
 
-        :param instance_type: The instance type to use when launching fleet instances. The following instance types are available for non-Elastic fleets:. - stream.standard.small - stream.standard.medium - stream.standard.large - stream.compute.large - stream.compute.xlarge - stream.compute.2xlarge - stream.compute.4xlarge - stream.compute.8xlarge - stream.memory.large - stream.memory.xlarge - stream.memory.2xlarge - stream.memory.4xlarge - stream.memory.8xlarge - stream.memory.z1d.large - stream.memory.z1d.xlarge - stream.memory.z1d.2xlarge - stream.memory.z1d.3xlarge - stream.memory.z1d.6xlarge - stream.memory.z1d.12xlarge - stream.graphics-design.large - stream.graphics-design.xlarge - stream.graphics-design.2xlarge - stream.graphics-design.4xlarge - stream.graphics-desktop.2xlarge - stream.graphics.g4dn.xlarge - stream.graphics.g4dn.2xlarge - stream.graphics.g4dn.4xlarge - stream.graphics.g4dn.8xlarge - stream.graphics.g4dn.12xlarge - stream.graphics.g4dn.16xlarge - stream.graphics-pro.4xlarge - stream.graphics-pro.8xlarge - stream.graphics-pro.16xlarge The following instance types are available for Elastic fleets: - stream.standard.small - stream.standard.medium
+        :param instance_type: The instance type to use when launching fleet instances. The following instance types are available for non-Elastic fleets:. - stream.standard.small - stream.standard.medium - stream.standard.large - stream.compute.large - stream.compute.xlarge - stream.compute.2xlarge - stream.compute.4xlarge - stream.compute.8xlarge - stream.memory.large - stream.memory.xlarge - stream.memory.2xlarge - stream.memory.4xlarge - stream.memory.8xlarge - stream.memory.z1d.large - stream.memory.z1d.xlarge - stream.memory.z1d.2xlarge - stream.memory.z1d.3xlarge - stream.memory.z1d.6xlarge - stream.memory.z1d.12xlarge - stream.graphics-design.large - stream.graphics-design.xlarge - stream.graphics-design.2xlarge - stream.graphics-design.4xlarge - stream.graphics-desktop.2xlarge - stream.graphics.g4dn.xlarge - stream.graphics.g4dn.2xlarge - stream.graphics.g4dn.4xlarge - stream.graphics.g4dn.8xlarge - stream.graphics.g4dn.12xlarge - stream.graphics.g4dn.16xlarge - stream.graphics-pro.4xlarge - stream.graphics-pro.8xlarge - stream.graphics-pro.16xlarge - stream.graphics.g5.xlarge - stream.graphics.g5.2xlarge - stream.graphics.g5.4xlarge - stream.graphics.g5.8xlarge - stream.graphics.g5.16xlarge - stream.graphics.g5.12xlarge - stream.graphics.g5.24xlarge - stream.graphics.g6.xlarge - stream.graphics.g6.2xlarge - stream.graphics.g6.4xlarge - stream.graphics.g6.8xlarge - stream.graphics.g6.16xlarge - stream.graphics.g6.12xlarge - stream.graphics.g6.24xlarge - stream.graphics.gr6.4xlarge - stream.graphics.gr6.8xlarge The following instance types are available for Elastic fleets: - stream.standard.small - stream.standard.medium
         :param name: A unique name for the fleet.
         :param compute_capacity: The desired capacity for the fleet. This is not allowed for Elastic fleets.
         :param description: The description to display.
@@ -4327,6 +4327,22 @@ class CfnFleetProps:
         - stream.graphics-pro.4xlarge
         - stream.graphics-pro.8xlarge
         - stream.graphics-pro.16xlarge
+        - stream.graphics.g5.xlarge
+        - stream.graphics.g5.2xlarge
+        - stream.graphics.g5.4xlarge
+        - stream.graphics.g5.8xlarge
+        - stream.graphics.g5.16xlarge
+        - stream.graphics.g5.12xlarge
+        - stream.graphics.g5.24xlarge
+        - stream.graphics.g6.xlarge
+        - stream.graphics.g6.2xlarge
+        - stream.graphics.g6.4xlarge
+        - stream.graphics.g6.8xlarge
+        - stream.graphics.g6.16xlarge
+        - stream.graphics.g6.12xlarge
+        - stream.graphics.g6.24xlarge
+        - stream.graphics.gr6.4xlarge
+        - stream.graphics.gr6.8xlarge
 
         The following instance types are available for Elastic fleets:
 
@@ -4666,7 +4682,7 @@ class CfnImageBuilder(
         '''
         :param scope: Scope in which this resource is defined.
         :param id: Construct identifier for this resource (unique in its scope).
-        :param instance_type: The instance type to use when launching the image builder. The following instance types are available:. - stream.standard.small - stream.standard.medium - stream.standard.large - stream.compute.large - stream.compute.xlarge - stream.compute.2xlarge - stream.compute.4xlarge - stream.compute.8xlarge - stream.memory.large - stream.memory.xlarge - stream.memory.2xlarge - stream.memory.4xlarge - stream.memory.8xlarge - stream.memory.z1d.large - stream.memory.z1d.xlarge - stream.memory.z1d.2xlarge - stream.memory.z1d.3xlarge - stream.memory.z1d.6xlarge - stream.memory.z1d.12xlarge - stream.graphics-design.large - stream.graphics-design.xlarge - stream.graphics-design.2xlarge - stream.graphics-design.4xlarge - stream.graphics-desktop.2xlarge - stream.graphics.g4dn.xlarge - stream.graphics.g4dn.2xlarge - stream.graphics.g4dn.4xlarge - stream.graphics.g4dn.8xlarge - stream.graphics.g4dn.12xlarge - stream.graphics.g4dn.16xlarge - stream.graphics-pro.4xlarge - stream.graphics-pro.8xlarge - stream.graphics-pro.16xlarge
+        :param instance_type: The instance type to use when launching the image builder. The following instance types are available:. - stream.standard.small - stream.standard.medium - stream.standard.large - stream.compute.large - stream.compute.xlarge - stream.compute.2xlarge - stream.compute.4xlarge - stream.compute.8xlarge - stream.memory.large - stream.memory.xlarge - stream.memory.2xlarge - stream.memory.4xlarge - stream.memory.8xlarge - stream.memory.z1d.large - stream.memory.z1d.xlarge - stream.memory.z1d.2xlarge - stream.memory.z1d.3xlarge - stream.memory.z1d.6xlarge - stream.memory.z1d.12xlarge - stream.graphics-design.large - stream.graphics-design.xlarge - stream.graphics-design.2xlarge - stream.graphics-design.4xlarge - stream.graphics-desktop.2xlarge - stream.graphics.g4dn.xlarge - stream.graphics.g4dn.2xlarge - stream.graphics.g4dn.4xlarge - stream.graphics.g4dn.8xlarge - stream.graphics.g4dn.12xlarge - stream.graphics.g4dn.16xlarge - stream.graphics-pro.4xlarge - stream.graphics-pro.8xlarge - stream.graphics-pro.16xlarge - stream.graphics.g5.xlarge - stream.graphics.g5.2xlarge - stream.graphics.g5.4xlarge - stream.graphics.g5.8xlarge - stream.graphics.g5.16xlarge - stream.graphics.g5.12xlarge - stream.graphics.g5.24xlarge - stream.graphics.g6.xlarge - stream.graphics.g6.2xlarge - stream.graphics.g6.4xlarge - stream.graphics.g6.8xlarge - stream.graphics.g6.16xlarge - stream.graphics.g6.12xlarge - stream.graphics.g6.24xlarge - stream.graphics.gr6.4xlarge - stream.graphics.gr6.8xlarge
         :param name: A unique name for the image builder.
         :param access_endpoints: The list of virtual private cloud (VPC) interface endpoint objects. Administrators can connect to the image builder only through the specified endpoints.
         :param appstream_agent_version: The version of the AppStream 2.0 agent to use for this image builder. To use the latest version of the AppStream 2.0 agent, specify [LATEST].
@@ -5205,7 +5221,7 @@ class CfnImageBuilderProps:
     ) -> None:
         '''Properties for defining a ``CfnImageBuilder``.
 
-        :param instance_type: The instance type to use when launching the image builder. The following instance types are available:. - stream.standard.small - stream.standard.medium - stream.standard.large - stream.compute.large - stream.compute.xlarge - stream.compute.2xlarge - stream.compute.4xlarge - stream.compute.8xlarge - stream.memory.large - stream.memory.xlarge - stream.memory.2xlarge - stream.memory.4xlarge - stream.memory.8xlarge - stream.memory.z1d.large - stream.memory.z1d.xlarge - stream.memory.z1d.2xlarge - stream.memory.z1d.3xlarge - stream.memory.z1d.6xlarge - stream.memory.z1d.12xlarge - stream.graphics-design.large - stream.graphics-design.xlarge - stream.graphics-design.2xlarge - stream.graphics-design.4xlarge - stream.graphics-desktop.2xlarge - stream.graphics.g4dn.xlarge - stream.graphics.g4dn.2xlarge - stream.graphics.g4dn.4xlarge - stream.graphics.g4dn.8xlarge - stream.graphics.g4dn.12xlarge - stream.graphics.g4dn.16xlarge - stream.graphics-pro.4xlarge - stream.graphics-pro.8xlarge - stream.graphics-pro.16xlarge
+        :param instance_type: The instance type to use when launching the image builder. The following instance types are available:. - stream.standard.small - stream.standard.medium - stream.standard.large - stream.compute.large - stream.compute.xlarge - stream.compute.2xlarge - stream.compute.4xlarge - stream.compute.8xlarge - stream.memory.large - stream.memory.xlarge - stream.memory.2xlarge - stream.memory.4xlarge - stream.memory.8xlarge - stream.memory.z1d.large - stream.memory.z1d.xlarge - stream.memory.z1d.2xlarge - stream.memory.z1d.3xlarge - stream.memory.z1d.6xlarge - stream.memory.z1d.12xlarge - stream.graphics-design.large - stream.graphics-design.xlarge - stream.graphics-design.2xlarge - stream.graphics-design.4xlarge - stream.graphics-desktop.2xlarge - stream.graphics.g4dn.xlarge - stream.graphics.g4dn.2xlarge - stream.graphics.g4dn.4xlarge - stream.graphics.g4dn.8xlarge - stream.graphics.g4dn.12xlarge - stream.graphics.g4dn.16xlarge - stream.graphics-pro.4xlarge - stream.graphics-pro.8xlarge - stream.graphics-pro.16xlarge - stream.graphics.g5.xlarge - stream.graphics.g5.2xlarge - stream.graphics.g5.4xlarge - stream.graphics.g5.8xlarge - stream.graphics.g5.16xlarge - stream.graphics.g5.12xlarge - stream.graphics.g5.24xlarge - stream.graphics.g6.xlarge - stream.graphics.g6.2xlarge - stream.graphics.g6.4xlarge - stream.graphics.g6.8xlarge - stream.graphics.g6.16xlarge - stream.graphics.g6.12xlarge - stream.graphics.g6.24xlarge - stream.graphics.gr6.4xlarge - stream.graphics.gr6.8xlarge
         :param name: A unique name for the image builder.
         :param access_endpoints: The list of virtual private cloud (VPC) interface endpoint objects. Administrators can connect to the image builder only through the specified endpoints.
         :param appstream_agent_version: The version of the AppStream 2.0 agent to use for this image builder. To use the latest version of the AppStream 2.0 agent, specify [LATEST].
@@ -5337,6 +5353,22 @@ class CfnImageBuilderProps:
         - stream.graphics-pro.4xlarge
         - stream.graphics-pro.8xlarge
         - stream.graphics-pro.16xlarge
+        - stream.graphics.g5.xlarge
+        - stream.graphics.g5.2xlarge
+        - stream.graphics.g5.4xlarge
+        - stream.graphics.g5.8xlarge
+        - stream.graphics.g5.16xlarge
+        - stream.graphics.g5.12xlarge
+        - stream.graphics.g5.24xlarge
+        - stream.graphics.g6.xlarge
+        - stream.graphics.g6.2xlarge
+        - stream.graphics.g6.4xlarge
+        - stream.graphics.g6.8xlarge
+        - stream.graphics.g6.16xlarge
+        - stream.graphics.g6.12xlarge
+        - stream.graphics.g6.24xlarge
+        - stream.graphics.gr6.4xlarge
+        - stream.graphics.gr6.8xlarge
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-appstream-imagebuilder.html#cfn-appstream-imagebuilder-instancetype
         '''

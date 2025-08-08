@@ -2751,29 +2751,31 @@ class KeyProps:
         :param removal_policy: Whether the encryption key should be retained when it is removed from the Stack. This is useful when one wants to retain access to data that was encrypted with a key that is being retired. Default: RemovalPolicy.Retain
         :param rotation_period: The period between each automatic rotation. Default: - set by CFN to 365 days.
 
-        :exampleMetadata: infused
+        :exampleMetadata: fixture=default infused
 
         Example::
 
-            import aws_cdk.aws_kms as kms
+            cmk = kms.Key(self, "cmk")
+            claude_model = bedrock.BedrockFoundationModel.ANTHROPIC_CLAUDE_SONNET_V1_0
             
-            
-            source_output = codepipeline.Artifact()
-            target_bucket = s3.Bucket(self, "MyBucket")
-            key = kms.Key(self, "EnvVarEncryptKey",
-                description="sample key"
+            variant1 = bedrock.PromptVariant.text(
+                variant_name="variant1",
+                model=claude_model,
+                prompt_variables=["topic"],
+                prompt_text="This is my first text prompt. Please summarize our conversation on: {{topic}}.",
+                inference_configuration=bedrock.PromptInferenceConfiguration.text(
+                    temperature=1,
+                    top_p=0.999,
+                    max_tokens=2000
+                )
             )
             
-            pipeline = codepipeline.Pipeline(self, "MyPipeline")
-            deploy_action = codepipeline_actions.S3DeployAction(
-                action_name="S3Deploy",
-                bucket=target_bucket,
-                input=source_output,
-                encryption_key=key
-            )
-            deploy_stage = pipeline.add_stage(
-                stage_name="Deploy",
-                actions=[deploy_action]
+            prompt1 = bedrock.Prompt(self, "prompt1",
+                prompt_name="prompt1",
+                description="my first prompt",
+                default_variant=variant1,
+                variants=[variant1],
+                kms_key=cmk
             )
         '''
         if __debug__:

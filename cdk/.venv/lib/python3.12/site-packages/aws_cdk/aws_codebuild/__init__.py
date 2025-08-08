@@ -261,9 +261,72 @@ codebuild.Project(self, "Project",
 )
 ```
 
-Note that two different CodeBuild Projects using the same S3 bucket will *not*
-share their cache: each Project will get a unique file in the S3 bucket to store
-the cache in.
+If you want to [share the same cache between multiple projects](https://docs.aws.amazon.com/codebuild/latest/userguide/caching-s3.html#caching-s3-sharing), you must must do the following:
+
+* Use the same `cacheNamespace`.
+* Specify the same cache key.
+* Define identical cache paths.
+* Use the same Amazon S3 buckets and `pathPrefix` if set.
+
+```python
+# source_bucket: s3.Bucket
+# my_caching_bucket: s3.Bucket
+
+
+codebuild.Project(self, "ProjectA",
+    source=codebuild.Source.s3(
+        bucket=source_bucket,
+        path="path/to/source-a.zip"
+    ),
+    # configure the same bucket and path prefix
+    cache=codebuild.Cache.bucket(my_caching_bucket,
+        prefix="cache",
+        # use the same cache namespace
+        cache_namespace="cache-namespace"
+    ),
+    build_spec=codebuild.BuildSpec.from_object({
+        "version": "0.2",
+        "phases": {
+            "build": {
+                "commands": ["..."]
+            }
+        },
+        # specify the same cache key and paths
+        "cache": {
+            "key": "unique-key",
+            "paths": ["/root/cachedir/**/*"
+            ]
+        }
+    })
+)
+
+codebuild.Project(self, "ProjectB",
+    source=codebuild.Source.s3(
+        bucket=source_bucket,
+        path="path/to/source-b.zip"
+    ),
+    # configure the same bucket and path prefix
+    cache=codebuild.Cache.bucket(my_caching_bucket,
+        prefix="cache",
+        # use the same cache namespace
+        cache_namespace="cache-namespace"
+    ),
+    build_spec=codebuild.BuildSpec.from_object({
+        "version": "0.2",
+        "phases": {
+            "build": {
+                "commands": ["..."]
+            }
+        },
+        # specify the same cache key and paths
+        "cache": {
+            "key": "unique-key",
+            "paths": ["/root/cachedir/**/*"
+            ]
+        }
+    })
+)
+```
 
 ### Local Caching
 
@@ -1463,31 +1526,103 @@ class BitBucketSourceCredentialsProps:
 @jsii.data_type(
     jsii_type="aws-cdk-lib.aws_codebuild.BucketCacheOptions",
     jsii_struct_bases=[],
-    name_mapping={"prefix": "prefix"},
+    name_mapping={"cache_namespace": "cacheNamespace", "prefix": "prefix"},
 )
 class BucketCacheOptions:
-    def __init__(self, *, prefix: typing.Optional[builtins.str] = None) -> None:
+    def __init__(
+        self,
+        *,
+        cache_namespace: typing.Optional[builtins.str] = None,
+        prefix: typing.Optional[builtins.str] = None,
+    ) -> None:
         '''
+        :param cache_namespace: Defines the scope of the cache. You can use this namespace to share a cache across multiple projects. Default: undefined - No cache namespace, which means that the cache is not shared across multiple projects.
         :param prefix: The prefix to use to store the cache in the bucket.
 
-        :exampleMetadata: fixture=_generated
+        :exampleMetadata: infused
 
         Example::
 
-            # The code below shows an example of how to instantiate this type.
-            # The values are placeholders you should change.
-            from aws_cdk import aws_codebuild as codebuild
+            # source_bucket: s3.Bucket
+            # my_caching_bucket: s3.Bucket
             
-            bucket_cache_options = codebuild.BucketCacheOptions(
-                prefix="prefix"
+            
+            codebuild.Project(self, "ProjectA",
+                source=codebuild.Source.s3(
+                    bucket=source_bucket,
+                    path="path/to/source-a.zip"
+                ),
+                # configure the same bucket and path prefix
+                cache=codebuild.Cache.bucket(my_caching_bucket,
+                    prefix="cache",
+                    # use the same cache namespace
+                    cache_namespace="cache-namespace"
+                ),
+                build_spec=codebuild.BuildSpec.from_object({
+                    "version": "0.2",
+                    "phases": {
+                        "build": {
+                            "commands": ["..."]
+                        }
+                    },
+                    # specify the same cache key and paths
+                    "cache": {
+                        "key": "unique-key",
+                        "paths": ["/root/cachedir/**/*"
+                        ]
+                    }
+                })
+            )
+            
+            codebuild.Project(self, "ProjectB",
+                source=codebuild.Source.s3(
+                    bucket=source_bucket,
+                    path="path/to/source-b.zip"
+                ),
+                # configure the same bucket and path prefix
+                cache=codebuild.Cache.bucket(my_caching_bucket,
+                    prefix="cache",
+                    # use the same cache namespace
+                    cache_namespace="cache-namespace"
+                ),
+                build_spec=codebuild.BuildSpec.from_object({
+                    "version": "0.2",
+                    "phases": {
+                        "build": {
+                            "commands": ["..."]
+                        }
+                    },
+                    # specify the same cache key and paths
+                    "cache": {
+                        "key": "unique-key",
+                        "paths": ["/root/cachedir/**/*"
+                        ]
+                    }
+                })
             )
         '''
         if __debug__:
             type_hints = typing.get_type_hints(_typecheckingstub__0964d02b7c6a99cc65ab53a8ae83bdb47d0901ee8a6f094b815d479e0fd8cb10)
+            check_type(argname="argument cache_namespace", value=cache_namespace, expected_type=type_hints["cache_namespace"])
             check_type(argname="argument prefix", value=prefix, expected_type=type_hints["prefix"])
         self._values: typing.Dict[builtins.str, typing.Any] = {}
+        if cache_namespace is not None:
+            self._values["cache_namespace"] = cache_namespace
         if prefix is not None:
             self._values["prefix"] = prefix
+
+    @builtins.property
+    def cache_namespace(self) -> typing.Optional[builtins.str]:
+        '''Defines the scope of the cache.
+
+        You can use this namespace to share a cache across multiple projects.
+
+        :default: undefined - No cache namespace, which means that the cache is not shared across multiple projects.
+
+        :see: https://docs.aws.amazon.com/codebuild/latest/userguide/caching-s3.html#caching-s3-sharing
+        '''
+        result = self._values.get("cache_namespace")
+        return typing.cast(typing.Optional[builtins.str], result)
 
     @builtins.property
     def prefix(self) -> typing.Optional[builtins.str]:
@@ -2103,31 +2238,53 @@ class Cache(
 
     Example::
 
-        # my_caching_bucket: s3.Bucket
+        # vpc: ec2.Vpc
+        # my_security_group: ec2.SecurityGroup
         
+        pipelines.CodeBuildStep("Synth",
+            # ...standard ShellStep props...
+            commands=[],
+            env={},
         
-        codebuild.Project(self, "Project",
-            source=codebuild.Source.bit_bucket(
-                owner="awslabs",
-                repo="aws-cdk"
+            # If you are using a CodeBuildStep explicitly, set the 'cdk.out' directory
+            # to be the synth step's output.
+            primary_output_directory="cdk.out",
+        
+            # Control the name of the project
+            project_name="MyProject",
+        
+            # Control parts of the BuildSpec other than the regular 'build' and 'install' commands
+            partial_build_spec=codebuild.BuildSpec.from_object({
+                "version": "0.2"
+            }),
+        
+            # Control the build environment
+            build_environment=codebuild.BuildEnvironment(
+                compute_type=codebuild.ComputeType.LARGE,
+                privileged=True
             ),
+            timeout=Duration.minutes(90),
+            file_system_locations=[
+                codebuild.FileSystemLocation.efs(
+                    identifier="myidentifier2",
+                    location="myclodation.mydnsroot.com:/loc",
+                    mount_point="/media",
+                    mount_options="opts"
+                )
+            ],
         
-            cache=codebuild.Cache.bucket(my_caching_bucket),
+            # Control Elastic Network Interface creation
+            vpc=vpc,
+            subnet_selection=ec2.SubnetSelection(subnet_type=ec2.SubnetType.PRIVATE_WITH_EGRESS),
+            security_groups=[my_security_group],
         
-            # BuildSpec with a 'cache' section necessary for S3 caching. This can
-            # also come from 'buildspec.yml' in your source.
-            build_spec=codebuild.BuildSpec.from_object({
-                "version": "0.2",
-                "phases": {
-                    "build": {
-                        "commands": ["..."]
-                    }
-                },
-                "cache": {
-                    "paths": ["/root/cachedir/**/*"
-                    ]
-                }
-            })
+            # Control caching
+            cache=codebuild.Cache.bucket(s3.Bucket(self, "Cache")),
+        
+            # Additional policy statements for the execution role
+            role_policy_statements=[
+                iam.PolicyStatement()
+            ]
         )
     '''
 
@@ -2140,17 +2297,19 @@ class Cache(
         cls,
         bucket: _IBucket_42e086fd,
         *,
+        cache_namespace: typing.Optional[builtins.str] = None,
         prefix: typing.Optional[builtins.str] = None,
     ) -> "Cache":
         '''Create an S3 caching strategy.
 
         :param bucket: the S3 bucket to use for caching.
+        :param cache_namespace: Defines the scope of the cache. You can use this namespace to share a cache across multiple projects. Default: undefined - No cache namespace, which means that the cache is not shared across multiple projects.
         :param prefix: The prefix to use to store the cache in the bucket.
         '''
         if __debug__:
             type_hints = typing.get_type_hints(_typecheckingstub__17e53da7d0dcdb63a4024e7a2681ef7faa68be13f710db0f237c0a06196e2279)
             check_type(argname="argument bucket", value=bucket, expected_type=type_hints["bucket"])
-        options = BucketCacheOptions(prefix=prefix)
+        options = BucketCacheOptions(cache_namespace=cache_namespace, prefix=prefix)
 
         return typing.cast("Cache", jsii.sinvoke(cls, "bucket", [bucket, options]))
 
@@ -16207,12 +16366,31 @@ class Source(
 
     Example::
 
-        project = codebuild.Project(self, "MyProject",
-            build_spec=codebuild.BuildSpec.from_source_filename("my-buildspec.yml"),
-            source=codebuild.Source.git_hub(
+        # my_caching_bucket: s3.Bucket
+        
+        
+        codebuild.Project(self, "Project",
+            source=codebuild.Source.bit_bucket(
                 owner="awslabs",
                 repo="aws-cdk"
-            )
+            ),
+        
+            cache=codebuild.Cache.bucket(my_caching_bucket),
+        
+            # BuildSpec with a 'cache' section necessary for S3 caching. This can
+            # also come from 'buildspec.yml' in your source.
+            build_spec=codebuild.BuildSpec.from_object({
+                "version": "0.2",
+                "phases": {
+                    "build": {
+                        "commands": ["..."]
+                    }
+                },
+                "cache": {
+                    "paths": ["/root/cachedir/**/*"
+                    ]
+                }
+            })
         )
     '''
 
@@ -18923,6 +19101,7 @@ def _typecheckingstub__ebef68770fb5be7ec641650b4d069caf22f7652724d683d64610af210
 
 def _typecheckingstub__0964d02b7c6a99cc65ab53a8ae83bdb47d0901ee8a6f094b815d479e0fd8cb10(
     *,
+    cache_namespace: typing.Optional[builtins.str] = None,
     prefix: typing.Optional[builtins.str] = None,
 ) -> None:
     """Type checking stubs"""
@@ -18989,6 +19168,7 @@ def _typecheckingstub__4da3d788faa6a5e8ccf7b7a0f950b8fdc88fa2e5bd876f8b662b8fce2
 def _typecheckingstub__17e53da7d0dcdb63a4024e7a2681ef7faa68be13f710db0f237c0a06196e2279(
     bucket: _IBucket_42e086fd,
     *,
+    cache_namespace: typing.Optional[builtins.str] = None,
     prefix: typing.Optional[builtins.str] = None,
 ) -> None:
     """Type checking stubs"""

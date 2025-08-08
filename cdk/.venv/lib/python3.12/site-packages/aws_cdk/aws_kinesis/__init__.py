@@ -342,6 +342,7 @@ from .. import (
     IResolvable as _IResolvable_da3f097b,
     IResource as _IResource_c80c4260,
     ITaggable as _ITaggable_36806126,
+    ITaggableV2 as _ITaggableV2_4e6798f8,
     RemovalPolicy as _RemovalPolicy_9f93c814,
     Resource as _Resource_45bc6135,
     TagManager as _TagManager_0a598cb3,
@@ -938,7 +939,7 @@ class CfnStream(
             )
 
 
-@jsii.implements(_IInspectable_c2943556)
+@jsii.implements(_IInspectable_c2943556, _ITaggableV2_4e6798f8)
 class CfnStreamConsumer(
     _CfnResource_9df397a6,
     metaclass=jsii.JSIIMeta,
@@ -964,7 +965,13 @@ class CfnStreamConsumer(
         
         cfn_stream_consumer = kinesis.CfnStreamConsumer(self, "MyCfnStreamConsumer",
             consumer_name="consumerName",
-            stream_arn="streamArn"
+            stream_arn="streamArn",
+        
+            # the properties below are optional
+            tags=[CfnTag(
+                key="key",
+                value="value"
+            )]
         )
     '''
 
@@ -975,19 +982,21 @@ class CfnStreamConsumer(
         *,
         consumer_name: builtins.str,
         stream_arn: builtins.str,
+        tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
     ) -> None:
         '''
         :param scope: Scope in which this resource is defined.
         :param id: Construct identifier for this resource (unique in its scope).
         :param consumer_name: The name of the consumer is something you choose when you register the consumer.
         :param stream_arn: The ARN of the stream with which you registered the consumer.
+        :param tags: An array of tags to be added to a specified Kinesis resource. A tag consists of a required key and an optional value. You can specify up to 50 tag key-value pairs.
         '''
         if __debug__:
             type_hints = typing.get_type_hints(_typecheckingstub__40129c585ad941f6708a726728b53f8f98c392e9aac49550e397150ee353888f)
             check_type(argname="argument scope", value=scope, expected_type=type_hints["scope"])
             check_type(argname="argument id", value=id, expected_type=type_hints["id"])
         props = CfnStreamConsumerProps(
-            consumer_name=consumer_name, stream_arn=stream_arn
+            consumer_name=consumer_name, stream_arn=stream_arn, tags=tags
         )
 
         jsii.create(self.__class__, self, [scope, id, props])
@@ -1063,14 +1072,6 @@ class CfnStreamConsumer(
         return typing.cast(builtins.str, jsii.get(self, "attrConsumerStatus"))
 
     @builtins.property
-    @jsii.member(jsii_name="attrId")
-    def attr_id(self) -> builtins.str:
-        '''
-        :cloudformationAttribute: Id
-        '''
-        return typing.cast(builtins.str, jsii.get(self, "attrId"))
-
-    @builtins.property
     @jsii.member(jsii_name="attrStreamArn")
     def attr_stream_arn(self) -> builtins.str:
         '''The ARN of the data stream with which the consumer is registered.
@@ -1078,6 +1079,12 @@ class CfnStreamConsumer(
         :cloudformationAttribute: StreamARN
         '''
         return typing.cast(builtins.str, jsii.get(self, "attrStreamArn"))
+
+    @builtins.property
+    @jsii.member(jsii_name="cdkTagManager")
+    def cdk_tag_manager(self) -> _TagManager_0a598cb3:
+        '''Tag Manager which manages the tags for this resource.'''
+        return typing.cast(_TagManager_0a598cb3, jsii.get(self, "cdkTagManager"))
 
     @builtins.property
     @jsii.member(jsii_name="cfnProperties")
@@ -1110,11 +1117,28 @@ class CfnStreamConsumer(
             check_type(argname="argument value", value=value, expected_type=type_hints["value"])
         jsii.set(self, "streamArn", value) # pyright: ignore[reportArgumentType]
 
+    @builtins.property
+    @jsii.member(jsii_name="tags")
+    def tags(self) -> typing.Optional[typing.List[_CfnTag_f6864754]]:
+        '''An array of tags to be added to a specified Kinesis resource.'''
+        return typing.cast(typing.Optional[typing.List[_CfnTag_f6864754]], jsii.get(self, "tags"))
+
+    @tags.setter
+    def tags(self, value: typing.Optional[typing.List[_CfnTag_f6864754]]) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__741a97d9ae28403dd10b071c7777bb76448096ad2b30f06325c121d8271174db)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "tags", value) # pyright: ignore[reportArgumentType]
+
 
 @jsii.data_type(
     jsii_type="aws-cdk-lib.aws_kinesis.CfnStreamConsumerProps",
     jsii_struct_bases=[],
-    name_mapping={"consumer_name": "consumerName", "stream_arn": "streamArn"},
+    name_mapping={
+        "consumer_name": "consumerName",
+        "stream_arn": "streamArn",
+        "tags": "tags",
+    },
 )
 class CfnStreamConsumerProps:
     def __init__(
@@ -1122,11 +1146,13 @@ class CfnStreamConsumerProps:
         *,
         consumer_name: builtins.str,
         stream_arn: builtins.str,
+        tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
     ) -> None:
         '''Properties for defining a ``CfnStreamConsumer``.
 
         :param consumer_name: The name of the consumer is something you choose when you register the consumer.
         :param stream_arn: The ARN of the stream with which you registered the consumer.
+        :param tags: An array of tags to be added to a specified Kinesis resource. A tag consists of a required key and an optional value. You can specify up to 50 tag key-value pairs.
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-kinesis-streamconsumer.html
         :exampleMetadata: fixture=_generated
@@ -1139,17 +1165,26 @@ class CfnStreamConsumerProps:
             
             cfn_stream_consumer_props = kinesis.CfnStreamConsumerProps(
                 consumer_name="consumerName",
-                stream_arn="streamArn"
+                stream_arn="streamArn",
+            
+                # the properties below are optional
+                tags=[CfnTag(
+                    key="key",
+                    value="value"
+                )]
             )
         '''
         if __debug__:
             type_hints = typing.get_type_hints(_typecheckingstub__04af0c0cee5710afdb7b50f59ef3686da8bba1bf2ed3a56c1e5209c6859bca6f)
             check_type(argname="argument consumer_name", value=consumer_name, expected_type=type_hints["consumer_name"])
             check_type(argname="argument stream_arn", value=stream_arn, expected_type=type_hints["stream_arn"])
+            check_type(argname="argument tags", value=tags, expected_type=type_hints["tags"])
         self._values: typing.Dict[builtins.str, typing.Any] = {
             "consumer_name": consumer_name,
             "stream_arn": stream_arn,
         }
+        if tags is not None:
+            self._values["tags"] = tags
 
     @builtins.property
     def consumer_name(self) -> builtins.str:
@@ -1170,6 +1205,17 @@ class CfnStreamConsumerProps:
         result = self._values.get("stream_arn")
         assert result is not None, "Required property 'stream_arn' is missing"
         return typing.cast(builtins.str, result)
+
+    @builtins.property
+    def tags(self) -> typing.Optional[typing.List[_CfnTag_f6864754]]:
+        '''An array of tags to be added to a specified Kinesis resource.
+
+        A tag consists of a required key and an optional value. You can specify up to 50 tag key-value pairs.
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-kinesis-streamconsumer.html#cfn-kinesis-streamconsumer-tags
+        '''
+        result = self._values.get("tags")
+        return typing.cast(typing.Optional[typing.List[_CfnTag_f6864754]], result)
 
     def __eq__(self, rhs: typing.Any) -> builtins.bool:
         return isinstance(rhs, self.__class__) and rhs._values == self._values
@@ -5771,6 +5817,7 @@ def _typecheckingstub__40129c585ad941f6708a726728b53f8f98c392e9aac49550e397150ee
     *,
     consumer_name: builtins.str,
     stream_arn: builtins.str,
+    tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
 ) -> None:
     """Type checking stubs"""
     pass
@@ -5799,10 +5846,17 @@ def _typecheckingstub__decaab8d4ef9478c7a29a7262bbddccc719545cf6499f4ac625d9c446
     """Type checking stubs"""
     pass
 
+def _typecheckingstub__741a97d9ae28403dd10b071c7777bb76448096ad2b30f06325c121d8271174db(
+    value: typing.Optional[typing.List[_CfnTag_f6864754]],
+) -> None:
+    """Type checking stubs"""
+    pass
+
 def _typecheckingstub__04af0c0cee5710afdb7b50f59ef3686da8bba1bf2ed3a56c1e5209c6859bca6f(
     *,
     consumer_name: builtins.str,
     stream_arn: builtins.str,
+    tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
 ) -> None:
     """Type checking stubs"""
     pass

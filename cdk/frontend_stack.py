@@ -27,12 +27,12 @@ class FrontendStack(Stack):
         self.stage = stage
         self.domain_name = domain_name
         
-        # 환경별 버킷 이름 생성
+        # 환경별 버킷 이름 생성 (고유성을 위해 계정 ID와 리전 추가)
         if stage == "prod":
-            bucket_name = f"title-generator-frontend-prod"
+            bucket_name = f"title-generator-frontend-prod-{self.account}-{self.region}"
             bucket_description = "Title Generator 프로덕션 프론트엔드"
         elif stage == "dev":
-            bucket_name = f"title-generator-frontend-dev"
+            bucket_name = f"title-generator-frontend-dev-{self.account}-{self.region}"
             bucket_description = "Title Generator 개발 프론트엔드"
         else:
             # local 환경
@@ -172,11 +172,13 @@ class FrontendStack(Stack):
         # 커스텀 도메인이 설정된 경우 인증서와 도메인 추가
         if self.domain_name:
             try:
-                # DNS 검증 인증서 생성
+                # CloudFront는 us-east-1 리전의 인증서만 사용 가능
+                # DNS 검증 인증서 생성 (us-east-1에 생성)
                 certificate = acm.Certificate(
                     self, "Certificate",
                     domain_name=self.domain_name,
-                    validation=acm.CertificateValidation.from_dns()
+                    validation=acm.CertificateValidation.from_dns(),
+                    region="us-east-1"  # CloudFront용 인증서는 반드시 us-east-1에 생성
                 )
                 
                 # CloudFront에 도메인과 인증서 설정
@@ -214,7 +216,7 @@ class FrontendStack(Stack):
             self, "WebsiteURL",
             value=website_url,
             description="Frontend Website URL",
-            export_name="FrontendURL"
+            export_name=f"{self.stack_name}-FrontendURL"
         )
         
         # 커스텀 도메인이 있는 경우 추가 출력
@@ -223,26 +225,26 @@ class FrontendStack(Stack):
                 self, "CustomDomain",
                 value=self.domain_name,
                 description="Custom Domain Name",
-                export_name="CustomDomain"
+                export_name=f"{self.stack_name}-CustomDomain"
             )
         
         CfnOutput(
             self, "BucketName",
             value=self.website_bucket.bucket_name,
             description="S3 Bucket Name for Frontend",
-            export_name="FrontendBucketName"
+            export_name=f"{self.stack_name}-FrontendBucketName"
         )
         
         CfnOutput(
             self, "DistributionId",
             value=self.distribution.distribution_id,
             description="CloudFront Distribution ID",
-            export_name="DistributionId"
+            export_name=f"{self.stack_name}-DistributionId"
         )
         
         CfnOutput(
             self, "DistributionDomainName",
             value=self.distribution.distribution_domain_name,
             description="CloudFront Distribution Domain Name",
-            export_name="DistributionDomainName"
+            export_name=f"{self.stack_name}-DistributionDomainName"
         ) 

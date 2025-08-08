@@ -1,4 +1,4 @@
-#!/Users/yeong-gwang/Documents/work/서울경제신문/ai_제목달기/cdk/.venv/bin/python
+#!/Users/yeong-gwang/Documents/work/서울경제신문/개발작업/nexus_/nexus_/title_generator_clone/cdk/.venv/bin/python
 
 import sys
 import json

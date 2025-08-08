@@ -4765,7 +4765,7 @@ class CfnGateway(
         :param gateway_name: A unique name for the gateway.
         :param gateway_platform: The gateway's platform. You can only specify one platform in a gateway.
         :param gateway_capability_summaries: A list of gateway capability summaries that each contain a namespace and status. Each gateway capability defines data sources for the gateway. To retrieve a capability configuration's definition, use `DescribeGatewayCapabilityConfiguration <https://docs.aws.amazon.com/iot-sitewise/latest/APIReference/API_DescribeGatewayCapabilityConfiguration.html>`_ .
-        :param gateway_version: The version of the gateway. A value of ``3`` indicates an MQTT-enabled, V3 gateway, while ``2`` indicates a Classic streams, V2 gateway.
+        :param gateway_version: The version of the gateway you want to create.
         :param tags: A list of key-value pairs that contain metadata for the gateway. For more information, see `Tagging your AWS IoT SiteWise resources <https://docs.aws.amazon.com/iot-sitewise/latest/userguide/tag-resources.html>`_ in the *AWS IoT SiteWise User Guide* .
         '''
         if __debug__:
@@ -4884,7 +4884,7 @@ class CfnGateway(
     @builtins.property
     @jsii.member(jsii_name="gatewayVersion")
     def gateway_version(self) -> typing.Optional[builtins.str]:
-        '''The version of the gateway.'''
+        '''The version of the gateway you want to create.'''
         return typing.cast(typing.Optional[builtins.str], jsii.get(self, "gatewayVersion"))
 
     @gateway_version.setter
@@ -4924,7 +4924,7 @@ class CfnGateway(
         ) -> None:
             '''Contains a summary of a gateway capability configuration.
 
-            :param capability_namespace: The namespace of the capability configuration. For example, if you configure OPC-UA sources from the AWS IoT SiteWise console, your OPC-UA capability configuration has the namespace ``iotsitewise:opcuacollector:version`` , where ``version`` is a number such as ``1`` .
+            :param capability_namespace: The namespace of the capability configuration. For example, if you configure OPC UA sources for an MQTT-enabled gateway, your OPC-UA capability configuration has the namespace ``iotsitewise:opcuacollector:3`` .
             :param capability_configuration: The JSON document that defines the configuration for the gateway capability. For more information, see `Configuring data sources (CLI) <https://docs.aws.amazon.com/iot-sitewise/latest/userguide/configure-sources.html#configure-source-cli>`_ in the *AWS IoT SiteWise User Guide* .
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-iotsitewise-gateway-gatewaycapabilitysummary.html
@@ -4957,7 +4957,7 @@ class CfnGateway(
         def capability_namespace(self) -> builtins.str:
             '''The namespace of the capability configuration.
 
-            For example, if you configure OPC-UA sources from the AWS IoT SiteWise console, your OPC-UA capability configuration has the namespace ``iotsitewise:opcuacollector:version`` , where ``version`` is a number such as ``1`` .
+            For example, if you configure OPC UA sources for an MQTT-enabled gateway, your OPC-UA capability configuration has the namespace ``iotsitewise:opcuacollector:3`` .
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-iotsitewise-gateway-gatewaycapabilitysummary.html#cfn-iotsitewise-gateway-gatewaycapabilitysummary-capabilitynamespace
             '''
@@ -5004,7 +5004,13 @@ class CfnGateway(
             greengrass_v2: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnGateway.GreengrassV2Property", typing.Dict[builtins.str, typing.Any]]]] = None,
             siemens_ie: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnGateway.SiemensIEProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
         ) -> None:
-            '''Contains a gateway's platform information.
+            '''The gateway's platform configuration. You can only specify one platform type in a gateway.
+
+            (Legacy only) For Greengrass V1 gateways, specify the ``greengrass`` parameter with a valid Greengrass group ARN.
+
+            For Greengrass V2 gateways, specify the ``greengrassV2`` parameter with a valid core device thing name. If creating a V3 gateway ( ``gatewayVersion=3`` ), you must also specify the ``coreDeviceOperatingSystem`` .
+
+            For Siemens Industrial Edge gateways, specify the ``siemensIE`` parameter with a valid IoT Core thing name.
 
             :param greengrass: 
             :param greengrass_v2: A gateway that runs on AWS IoT Greengrass V2 .
@@ -5297,7 +5303,7 @@ class CfnGatewayProps:
         :param gateway_name: A unique name for the gateway.
         :param gateway_platform: The gateway's platform. You can only specify one platform in a gateway.
         :param gateway_capability_summaries: A list of gateway capability summaries that each contain a namespace and status. Each gateway capability defines data sources for the gateway. To retrieve a capability configuration's definition, use `DescribeGatewayCapabilityConfiguration <https://docs.aws.amazon.com/iot-sitewise/latest/APIReference/API_DescribeGatewayCapabilityConfiguration.html>`_ .
-        :param gateway_version: The version of the gateway. A value of ``3`` indicates an MQTT-enabled, V3 gateway, while ``2`` indicates a Classic streams, V2 gateway.
+        :param gateway_version: The version of the gateway you want to create.
         :param tags: A list of key-value pairs that contain metadata for the gateway. For more information, see `Tagging your AWS IoT SiteWise resources <https://docs.aws.amazon.com/iot-sitewise/latest/userguide/tag-resources.html>`_ in the *AWS IoT SiteWise User Guide* .
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iotsitewise-gateway.html
@@ -5397,9 +5403,7 @@ class CfnGatewayProps:
 
     @builtins.property
     def gateway_version(self) -> typing.Optional[builtins.str]:
-        '''The version of the gateway.
-
-        A value of ``3`` indicates an MQTT-enabled, V3 gateway, while ``2`` indicates a Classic streams, V2 gateway.
+        '''The version of the gateway you want to create.
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-iotsitewise-gateway.html#cfn-iotsitewise-gateway-gatewayversion
         '''

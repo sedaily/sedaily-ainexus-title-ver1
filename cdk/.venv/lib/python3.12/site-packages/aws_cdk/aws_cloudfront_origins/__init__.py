@@ -2908,15 +2908,19 @@ class S3BucketOrigin(
 
     Example::
 
-        my_bucket = s3.Bucket(self, "myBucket")
-        s3_origin = origins.S3BucketOrigin.with_origin_access_control(my_bucket,
-            origin_access_levels=[cloudfront.AccessLevel.READ, cloudfront.AccessLevel.LIST]
+        import aws_cdk.aws_kms as kms
+        
+        
+        my_kms_key = kms.Key(self, "myKMSKey")
+        my_bucket = s3.Bucket(self, "mySSEKMSEncryptedBucket",
+            encryption=s3.BucketEncryption.KMS,
+            encryption_key=my_kms_key,
+            object_ownership=s3.ObjectOwnership.BUCKET_OWNER_ENFORCED
         )
-        cloudfront.Distribution(self, "distribution",
+        cloudfront.Distribution(self, "myDist",
             default_behavior=cloudfront.BehaviorOptions(
-                origin=s3_origin
-            ),
-            default_root_object="index.html"
+                origin=origins.S3BucketOrigin.with_origin_access_control(my_bucket)
+            )
         )
     '''
 
@@ -3348,14 +3352,16 @@ class S3BucketOriginWithOACProps(S3BucketOriginBaseProps):
         Example::
 
             my_bucket = s3.Bucket(self, "myBucket")
-            s3_origin = origins.S3BucketOrigin.with_origin_access_control(my_bucket,
-                origin_access_levels=[cloudfront.AccessLevel.READ, cloudfront.AccessLevel.LIST]
+            oac = cloudfront.S3OriginAccessControl(self, "MyOAC",
+                signing=cloudfront.Signing.SIGV4_NO_OVERRIDE
             )
-            cloudfront.Distribution(self, "distribution",
+            s3_origin = origins.S3BucketOrigin.with_origin_access_control(my_bucket,
+                origin_access_control=oac
+            )
+            cloudfront.Distribution(self, "myDist",
                 default_behavior=cloudfront.BehaviorOptions(
                     origin=s3_origin
-                ),
-                default_root_object="index.html"
+                )
             )
         '''
         if __debug__:
@@ -3722,20 +3728,19 @@ class S3Origin(
 
     Example::
 
-        # Adding an existing Lambda@Edge function created in a different stack
-        # to a CloudFront distribution.
         # s3_bucket: s3.Bucket
-        
-        function_version = lambda_.Version.from_version_arn(self, "Version", "arn:aws:lambda:us-east-1:123456789012:function:functionName:1")
-        
+        # Add a cloudfront Function to a Distribution
+        cf_function = cloudfront.Function(self, "Function",
+            code=cloudfront.FunctionCode.from_inline("function handler(event) { return event.request }"),
+            runtime=cloudfront.FunctionRuntime.JS_2_0
+        )
         cloudfront.Distribution(self, "distro",
             default_behavior=cloudfront.BehaviorOptions(
                 origin=origins.S3Origin(s3_bucket),
-                edge_lambdas=[cloudfront.EdgeLambda(
-                    function_version=function_version,
-                    event_type=cloudfront.LambdaEdgeEventType.VIEWER_REQUEST
-                )
-                ]
+                function_associations=[cloudfront.FunctionAssociation(
+                    function=cf_function,
+                    event_type=cloudfront.FunctionEventType.VIEWER_REQUEST
+                )]
             )
         )
     '''

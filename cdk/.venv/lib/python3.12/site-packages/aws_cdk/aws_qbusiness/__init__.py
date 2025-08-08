@@ -1280,6 +1280,17 @@ class CfnDataAccessor(
             principal="principal",
         
             # the properties below are optional
+            authentication_detail=qbusiness.CfnDataAccessor.DataAccessorAuthenticationDetailProperty(
+                authentication_type="authenticationType",
+        
+                # the properties below are optional
+                authentication_configuration=qbusiness.CfnDataAccessor.DataAccessorAuthenticationConfigurationProperty(
+                    idc_trusted_token_issuer_configuration=qbusiness.CfnDataAccessor.DataAccessorIdcTrustedTokenIssuerConfigurationProperty(
+                        idc_trusted_token_issuer_arn="idcTrustedTokenIssuerArn"
+                    )
+                ),
+                external_ids=["externalIds"]
+            ),
             tags=[CfnTag(
                 key="key",
                 value="value"
@@ -1296,6 +1307,7 @@ class CfnDataAccessor(
         application_id: builtins.str,
         display_name: builtins.str,
         principal: builtins.str,
+        authentication_detail: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnDataAccessor.DataAccessorAuthenticationDetailProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
         tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
     ) -> None:
         '''
@@ -1305,6 +1317,7 @@ class CfnDataAccessor(
         :param application_id: The unique identifier of the Amazon Q Business application.
         :param display_name: The friendly name of the data accessor.
         :param principal: The Amazon Resource Name (ARN) of the IAM role for the ISV associated with this data accessor.
+        :param authentication_detail: The authentication configuration details for the data accessor. This specifies how the ISV authenticates when accessing data through this data accessor.
         :param tags: The tags to associate with the data accessor.
         '''
         if __debug__:
@@ -1316,6 +1329,7 @@ class CfnDataAccessor(
             application_id=application_id,
             display_name=display_name,
             principal=principal,
+            authentication_detail=authentication_detail,
             tags=tags,
         )
 
@@ -1463,6 +1477,24 @@ class CfnDataAccessor(
             type_hints = typing.get_type_hints(_typecheckingstub__fd64ede16f385d2990fa12fa363564c55f359fed279a75365018e42cd6e63fff)
             check_type(argname="argument value", value=value, expected_type=type_hints["value"])
         jsii.set(self, "principal", value) # pyright: ignore[reportArgumentType]
+
+    @builtins.property
+    @jsii.member(jsii_name="authenticationDetail")
+    def authentication_detail(
+        self,
+    ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnDataAccessor.DataAccessorAuthenticationDetailProperty"]]:
+        '''The authentication configuration details for the data accessor.'''
+        return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnDataAccessor.DataAccessorAuthenticationDetailProperty"]], jsii.get(self, "authenticationDetail"))
+
+    @authentication_detail.setter
+    def authentication_detail(
+        self,
+        value: typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnDataAccessor.DataAccessorAuthenticationDetailProperty"]],
+    ) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__8aa34af043257e0411af6e09ebeda77531edcaba51ad9fd392b4515b8c730792)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "authenticationDetail", value) # pyright: ignore[reportArgumentType]
 
     @builtins.property
     @jsii.member(jsii_name="tags")
@@ -2045,6 +2077,227 @@ class CfnDataAccessor(
             )
 
     @jsii.data_type(
+        jsii_type="aws-cdk-lib.aws_qbusiness.CfnDataAccessor.DataAccessorAuthenticationConfigurationProperty",
+        jsii_struct_bases=[],
+        name_mapping={
+            "idc_trusted_token_issuer_configuration": "idcTrustedTokenIssuerConfiguration",
+        },
+    )
+    class DataAccessorAuthenticationConfigurationProperty:
+        def __init__(
+            self,
+            *,
+            idc_trusted_token_issuer_configuration: typing.Union[_IResolvable_da3f097b, typing.Union["CfnDataAccessor.DataAccessorIdcTrustedTokenIssuerConfigurationProperty", typing.Dict[builtins.str, typing.Any]]],
+        ) -> None:
+            '''A union type that contains the specific authentication configuration based on the authentication type selected.
+
+            :param idc_trusted_token_issuer_configuration: Configuration for IAM Identity Center Trusted Token Issuer (TTI) authentication used when the authentication type is ``AWS_IAM_IDC_TTI`` .
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-qbusiness-dataaccessor-dataaccessorauthenticationconfiguration.html
+            :exampleMetadata: fixture=_generated
+
+            Example::
+
+                # The code below shows an example of how to instantiate this type.
+                # The values are placeholders you should change.
+                from aws_cdk import aws_qbusiness as qbusiness
+                
+                data_accessor_authentication_configuration_property = qbusiness.CfnDataAccessor.DataAccessorAuthenticationConfigurationProperty(
+                    idc_trusted_token_issuer_configuration=qbusiness.CfnDataAccessor.DataAccessorIdcTrustedTokenIssuerConfigurationProperty(
+                        idc_trusted_token_issuer_arn="idcTrustedTokenIssuerArn"
+                    )
+                )
+            '''
+            if __debug__:
+                type_hints = typing.get_type_hints(_typecheckingstub__5026e300a407a951a2bf85ba48cf1646fb1b1672f84f2ea26974311fd2b650de)
+                check_type(argname="argument idc_trusted_token_issuer_configuration", value=idc_trusted_token_issuer_configuration, expected_type=type_hints["idc_trusted_token_issuer_configuration"])
+            self._values: typing.Dict[builtins.str, typing.Any] = {
+                "idc_trusted_token_issuer_configuration": idc_trusted_token_issuer_configuration,
+            }
+
+        @builtins.property
+        def idc_trusted_token_issuer_configuration(
+            self,
+        ) -> typing.Union[_IResolvable_da3f097b, "CfnDataAccessor.DataAccessorIdcTrustedTokenIssuerConfigurationProperty"]:
+            '''Configuration for IAM Identity Center Trusted Token Issuer (TTI) authentication used when the authentication type is ``AWS_IAM_IDC_TTI`` .
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-qbusiness-dataaccessor-dataaccessorauthenticationconfiguration.html#cfn-qbusiness-dataaccessor-dataaccessorauthenticationconfiguration-idctrustedtokenissuerconfiguration
+            '''
+            result = self._values.get("idc_trusted_token_issuer_configuration")
+            assert result is not None, "Required property 'idc_trusted_token_issuer_configuration' is missing"
+            return typing.cast(typing.Union[_IResolvable_da3f097b, "CfnDataAccessor.DataAccessorIdcTrustedTokenIssuerConfigurationProperty"], result)
+
+        def __eq__(self, rhs: typing.Any) -> builtins.bool:
+            return isinstance(rhs, self.__class__) and rhs._values == self._values
+
+        def __ne__(self, rhs: typing.Any) -> builtins.bool:
+            return not (rhs == self)
+
+        def __repr__(self) -> str:
+            return "DataAccessorAuthenticationConfigurationProperty(%s)" % ", ".join(
+                k + "=" + repr(v) for k, v in self._values.items()
+            )
+
+    @jsii.data_type(
+        jsii_type="aws-cdk-lib.aws_qbusiness.CfnDataAccessor.DataAccessorAuthenticationDetailProperty",
+        jsii_struct_bases=[],
+        name_mapping={
+            "authentication_type": "authenticationType",
+            "authentication_configuration": "authenticationConfiguration",
+            "external_ids": "externalIds",
+        },
+    )
+    class DataAccessorAuthenticationDetailProperty:
+        def __init__(
+            self,
+            *,
+            authentication_type: builtins.str,
+            authentication_configuration: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnDataAccessor.DataAccessorAuthenticationConfigurationProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
+            external_ids: typing.Optional[typing.Sequence[builtins.str]] = None,
+        ) -> None:
+            '''Contains the authentication configuration details for a data accessor.
+
+            This structure defines how the ISV authenticates when accessing data through the data accessor.
+
+            :param authentication_type: The type of authentication to use for the data accessor. This determines how the ISV authenticates when accessing data. You can use one of two authentication types: - ``AWS_IAM_IDC_TTI`` - Authentication using IAM Identity Center Trusted Token Issuer (TTI). This authentication type allows the ISV to use a trusted token issuer to generate tokens for accessing the data. - ``AWS_IAM_IDC_AUTH_CODE`` - Authentication using IAM Identity Center authorization code flow. This authentication type uses the standard OAuth 2.0 authorization code flow for authentication.
+            :param authentication_configuration: The specific authentication configuration based on the authentication type.
+            :param external_ids: A list of external identifiers associated with this authentication configuration. These are used to correlate the data accessor with external systems.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-qbusiness-dataaccessor-dataaccessorauthenticationdetail.html
+            :exampleMetadata: fixture=_generated
+
+            Example::
+
+                # The code below shows an example of how to instantiate this type.
+                # The values are placeholders you should change.
+                from aws_cdk import aws_qbusiness as qbusiness
+                
+                data_accessor_authentication_detail_property = qbusiness.CfnDataAccessor.DataAccessorAuthenticationDetailProperty(
+                    authentication_type="authenticationType",
+                
+                    # the properties below are optional
+                    authentication_configuration=qbusiness.CfnDataAccessor.DataAccessorAuthenticationConfigurationProperty(
+                        idc_trusted_token_issuer_configuration=qbusiness.CfnDataAccessor.DataAccessorIdcTrustedTokenIssuerConfigurationProperty(
+                            idc_trusted_token_issuer_arn="idcTrustedTokenIssuerArn"
+                        )
+                    ),
+                    external_ids=["externalIds"]
+                )
+            '''
+            if __debug__:
+                type_hints = typing.get_type_hints(_typecheckingstub__ce3d0eb33f705ecbcd9b23e1fae7014cc8010d410a8398ce3feea55694ebed37)
+                check_type(argname="argument authentication_type", value=authentication_type, expected_type=type_hints["authentication_type"])
+                check_type(argname="argument authentication_configuration", value=authentication_configuration, expected_type=type_hints["authentication_configuration"])
+                check_type(argname="argument external_ids", value=external_ids, expected_type=type_hints["external_ids"])
+            self._values: typing.Dict[builtins.str, typing.Any] = {
+                "authentication_type": authentication_type,
+            }
+            if authentication_configuration is not None:
+                self._values["authentication_configuration"] = authentication_configuration
+            if external_ids is not None:
+                self._values["external_ids"] = external_ids
+
+        @builtins.property
+        def authentication_type(self) -> builtins.str:
+            '''The type of authentication to use for the data accessor.
+
+            This determines how the ISV authenticates when accessing data. You can use one of two authentication types:
+
+            - ``AWS_IAM_IDC_TTI`` - Authentication using IAM Identity Center Trusted Token Issuer (TTI). This authentication type allows the ISV to use a trusted token issuer to generate tokens for accessing the data.
+            - ``AWS_IAM_IDC_AUTH_CODE`` - Authentication using IAM Identity Center authorization code flow. This authentication type uses the standard OAuth 2.0 authorization code flow for authentication.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-qbusiness-dataaccessor-dataaccessorauthenticationdetail.html#cfn-qbusiness-dataaccessor-dataaccessorauthenticationdetail-authenticationtype
+            '''
+            result = self._values.get("authentication_type")
+            assert result is not None, "Required property 'authentication_type' is missing"
+            return typing.cast(builtins.str, result)
+
+        @builtins.property
+        def authentication_configuration(
+            self,
+        ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnDataAccessor.DataAccessorAuthenticationConfigurationProperty"]]:
+            '''The specific authentication configuration based on the authentication type.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-qbusiness-dataaccessor-dataaccessorauthenticationdetail.html#cfn-qbusiness-dataaccessor-dataaccessorauthenticationdetail-authenticationconfiguration
+            '''
+            result = self._values.get("authentication_configuration")
+            return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnDataAccessor.DataAccessorAuthenticationConfigurationProperty"]], result)
+
+        @builtins.property
+        def external_ids(self) -> typing.Optional[typing.List[builtins.str]]:
+            '''A list of external identifiers associated with this authentication configuration.
+
+            These are used to correlate the data accessor with external systems.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-qbusiness-dataaccessor-dataaccessorauthenticationdetail.html#cfn-qbusiness-dataaccessor-dataaccessorauthenticationdetail-externalids
+            '''
+            result = self._values.get("external_ids")
+            return typing.cast(typing.Optional[typing.List[builtins.str]], result)
+
+        def __eq__(self, rhs: typing.Any) -> builtins.bool:
+            return isinstance(rhs, self.__class__) and rhs._values == self._values
+
+        def __ne__(self, rhs: typing.Any) -> builtins.bool:
+            return not (rhs == self)
+
+        def __repr__(self) -> str:
+            return "DataAccessorAuthenticationDetailProperty(%s)" % ", ".join(
+                k + "=" + repr(v) for k, v in self._values.items()
+            )
+
+    @jsii.data_type(
+        jsii_type="aws-cdk-lib.aws_qbusiness.CfnDataAccessor.DataAccessorIdcTrustedTokenIssuerConfigurationProperty",
+        jsii_struct_bases=[],
+        name_mapping={"idc_trusted_token_issuer_arn": "idcTrustedTokenIssuerArn"},
+    )
+    class DataAccessorIdcTrustedTokenIssuerConfigurationProperty:
+        def __init__(self, *, idc_trusted_token_issuer_arn: builtins.str) -> None:
+            '''Configuration details for IAM Identity Center Trusted Token Issuer (TTI) authentication.
+
+            :param idc_trusted_token_issuer_arn: The Amazon Resource Name (ARN) of the IAM Identity Center Trusted Token Issuer that will be used for authentication.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-qbusiness-dataaccessor-dataaccessoridctrustedtokenissuerconfiguration.html
+            :exampleMetadata: fixture=_generated
+
+            Example::
+
+                # The code below shows an example of how to instantiate this type.
+                # The values are placeholders you should change.
+                from aws_cdk import aws_qbusiness as qbusiness
+                
+                data_accessor_idc_trusted_token_issuer_configuration_property = qbusiness.CfnDataAccessor.DataAccessorIdcTrustedTokenIssuerConfigurationProperty(
+                    idc_trusted_token_issuer_arn="idcTrustedTokenIssuerArn"
+                )
+            '''
+            if __debug__:
+                type_hints = typing.get_type_hints(_typecheckingstub__aa8bef9d39508faf93f48a0365a4605be496aa8cf95d29ab54e4ceabbabaef4d)
+                check_type(argname="argument idc_trusted_token_issuer_arn", value=idc_trusted_token_issuer_arn, expected_type=type_hints["idc_trusted_token_issuer_arn"])
+            self._values: typing.Dict[builtins.str, typing.Any] = {
+                "idc_trusted_token_issuer_arn": idc_trusted_token_issuer_arn,
+            }
+
+        @builtins.property
+        def idc_trusted_token_issuer_arn(self) -> builtins.str:
+            '''The Amazon Resource Name (ARN) of the IAM Identity Center Trusted Token Issuer that will be used for authentication.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-qbusiness-dataaccessor-dataaccessoridctrustedtokenissuerconfiguration.html#cfn-qbusiness-dataaccessor-dataaccessoridctrustedtokenissuerconfiguration-idctrustedtokenissuerarn
+            '''
+            result = self._values.get("idc_trusted_token_issuer_arn")
+            assert result is not None, "Required property 'idc_trusted_token_issuer_arn' is missing"
+            return typing.cast(builtins.str, result)
+
+        def __eq__(self, rhs: typing.Any) -> builtins.bool:
+            return isinstance(rhs, self.__class__) and rhs._values == self._values
+
+        def __ne__(self, rhs: typing.Any) -> builtins.bool:
+            return not (rhs == self)
+
+        def __repr__(self) -> str:
+            return "DataAccessorIdcTrustedTokenIssuerConfigurationProperty(%s)" % ", ".join(
+                k + "=" + repr(v) for k, v in self._values.items()
+            )
+
+    @jsii.data_type(
         jsii_type="aws-cdk-lib.aws_qbusiness.CfnDataAccessor.DocumentAttributeProperty",
         jsii_struct_bases=[],
         name_mapping={"name": "name", "value": "value"},
@@ -2240,6 +2493,7 @@ class CfnDataAccessor(
         "application_id": "applicationId",
         "display_name": "displayName",
         "principal": "principal",
+        "authentication_detail": "authenticationDetail",
         "tags": "tags",
     },
 )
@@ -2251,6 +2505,7 @@ class CfnDataAccessorProps:
         application_id: builtins.str,
         display_name: builtins.str,
         principal: builtins.str,
+        authentication_detail: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnDataAccessor.DataAccessorAuthenticationDetailProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
         tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
     ) -> None:
         '''Properties for defining a ``CfnDataAccessor``.
@@ -2259,6 +2514,7 @@ class CfnDataAccessorProps:
         :param application_id: The unique identifier of the Amazon Q Business application.
         :param display_name: The friendly name of the data accessor.
         :param principal: The Amazon Resource Name (ARN) of the IAM role for the ISV associated with this data accessor.
+        :param authentication_detail: The authentication configuration details for the data accessor. This specifies how the ISV authenticates when accessing data through this data accessor.
         :param tags: The tags to associate with the data accessor.
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-qbusiness-dataaccessor.html
@@ -2353,6 +2609,17 @@ class CfnDataAccessorProps:
                 principal="principal",
             
                 # the properties below are optional
+                authentication_detail=qbusiness.CfnDataAccessor.DataAccessorAuthenticationDetailProperty(
+                    authentication_type="authenticationType",
+            
+                    # the properties below are optional
+                    authentication_configuration=qbusiness.CfnDataAccessor.DataAccessorAuthenticationConfigurationProperty(
+                        idc_trusted_token_issuer_configuration=qbusiness.CfnDataAccessor.DataAccessorIdcTrustedTokenIssuerConfigurationProperty(
+                            idc_trusted_token_issuer_arn="idcTrustedTokenIssuerArn"
+                        )
+                    ),
+                    external_ids=["externalIds"]
+                ),
                 tags=[CfnTag(
                     key="key",
                     value="value"
@@ -2365,6 +2632,7 @@ class CfnDataAccessorProps:
             check_type(argname="argument application_id", value=application_id, expected_type=type_hints["application_id"])
             check_type(argname="argument display_name", value=display_name, expected_type=type_hints["display_name"])
             check_type(argname="argument principal", value=principal, expected_type=type_hints["principal"])
+            check_type(argname="argument authentication_detail", value=authentication_detail, expected_type=type_hints["authentication_detail"])
             check_type(argname="argument tags", value=tags, expected_type=type_hints["tags"])
         self._values: typing.Dict[builtins.str, typing.Any] = {
             "action_configurations": action_configurations,
@@ -2372,6 +2640,8 @@ class CfnDataAccessorProps:
             "display_name": display_name,
             "principal": principal,
         }
+        if authentication_detail is not None:
+            self._values["authentication_detail"] = authentication_detail
         if tags is not None:
             self._values["tags"] = tags
 
@@ -2416,6 +2686,19 @@ class CfnDataAccessorProps:
         result = self._values.get("principal")
         assert result is not None, "Required property 'principal' is missing"
         return typing.cast(builtins.str, result)
+
+    @builtins.property
+    def authentication_detail(
+        self,
+    ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, CfnDataAccessor.DataAccessorAuthenticationDetailProperty]]:
+        '''The authentication configuration details for the data accessor.
+
+        This specifies how the ISV authenticates when accessing data through this data accessor.
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-qbusiness-dataaccessor.html#cfn-qbusiness-dataaccessor-authenticationdetail
+        '''
+        result = self._values.get("authentication_detail")
+        return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, CfnDataAccessor.DataAccessorAuthenticationDetailProperty]], result)
 
     @builtins.property
     def tags(self) -> typing.Optional[typing.List[_CfnTag_f6864754]]:
@@ -3510,7 +3793,7 @@ class CfnDataSource(
             For more information, see `Custom document enrichment <https://docs.aws.amazon.com/amazonq/latest/business-use-dg/custom-document-enrichment.html>`_ .
 
             :param invocation_condition: The condition used for when a Lambda function should be invoked. For example, you can specify a condition that if there are empty date-time values, then Amazon Q Business should invoke a function that inserts the current date-time.
-            :param lambda_arn: The Amazon Resource Name (ARN) of the Lambda function sduring ingestion. For more information, see `Using Lambda functions for Amazon Q Business document enrichment <https://docs.aws.amazon.com/amazonq/latest/qbusiness-ug/cde-lambda-operations.html>`_ .
+            :param lambda_arn: The Amazon Resource Name (ARN) of the Lambda function during ingestion. For more information, see `Using Lambda functions for Amazon Q Business document enrichment <https://docs.aws.amazon.com/amazonq/latest/qbusiness-ug/cde-lambda-operations.html>`_ .
             :param role_arn: The Amazon Resource Name (ARN) of a role with permission to run ``PreExtractionHookConfiguration`` and ``PostExtractionHookConfiguration`` for altering document metadata and content during the document ingestion process.
             :param s3_bucket_name: Stores the original, raw documents or the structured, parsed documents before and after altering them. For more information, see `Data contracts for Lambda functions <https://docs.aws.amazon.com/amazonq/latest/business-use-dg/cde-lambda-operations.html#cde-lambda-operations-data-contracts>`_ .
 
@@ -3572,7 +3855,7 @@ class CfnDataSource(
 
         @builtins.property
         def lambda_arn(self) -> typing.Optional[builtins.str]:
-            '''The Amazon Resource Name (ARN) of the Lambda function sduring ingestion.
+            '''The Amazon Resource Name (ARN) of the Lambda function during ingestion.
 
             For more information, see `Using Lambda functions for Amazon Q Business document enrichment <https://docs.aws.amazon.com/amazonq/latest/qbusiness-ug/cde-lambda-operations.html>`_ .
 
@@ -5033,7 +5316,14 @@ class CfnPermission(
             actions=["actions"],
             application_id="applicationId",
             principal="principal",
-            statement_id="statementId"
+            statement_id="statementId",
+        
+            # the properties below are optional
+            conditions=[qbusiness.CfnPermission.ConditionProperty(
+                condition_key="conditionKey",
+                condition_operator="conditionOperator",
+                condition_values=["conditionValues"]
+            )]
         )
     '''
 
@@ -5046,6 +5336,7 @@ class CfnPermission(
         application_id: builtins.str,
         principal: builtins.str,
         statement_id: builtins.str,
+        conditions: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union["CfnPermission.ConditionProperty", typing.Dict[builtins.str, typing.Any]]]]]] = None,
     ) -> None:
         '''
         :param scope: Scope in which this resource is defined.
@@ -5054,6 +5345,7 @@ class CfnPermission(
         :param application_id: The unique identifier of the Amazon Q Business application.
         :param principal: Provides user and group information used for filtering documents to use for generating Amazon Q Business conversation responses.
         :param statement_id: A unique identifier for the policy statement.
+        :param conditions: 
         '''
         if __debug__:
             type_hints = typing.get_type_hints(_typecheckingstub__aa8b9992ffebedf4dda280be4bd0aa5dade8d62a6c092d850b1b1bb8df042ee8)
@@ -5064,6 +5356,7 @@ class CfnPermission(
             application_id=application_id,
             principal=principal,
             statement_id=statement_id,
+            conditions=conditions,
         )
 
         jsii.create(self.__class__, self, [scope, id, props])
@@ -5155,6 +5448,109 @@ class CfnPermission(
             check_type(argname="argument value", value=value, expected_type=type_hints["value"])
         jsii.set(self, "statementId", value) # pyright: ignore[reportArgumentType]
 
+    @builtins.property
+    @jsii.member(jsii_name="conditions")
+    def conditions(
+        self,
+    ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, "CfnPermission.ConditionProperty"]]]]:
+        return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, "CfnPermission.ConditionProperty"]]]], jsii.get(self, "conditions"))
+
+    @conditions.setter
+    def conditions(
+        self,
+        value: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, "CfnPermission.ConditionProperty"]]]],
+    ) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__df7eedd7834a134466643c8bd40b7906fe6b7fcc7f482e5265aec4bb05607f6a)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "conditions", value) # pyright: ignore[reportArgumentType]
+
+    @jsii.data_type(
+        jsii_type="aws-cdk-lib.aws_qbusiness.CfnPermission.ConditionProperty",
+        jsii_struct_bases=[],
+        name_mapping={
+            "condition_key": "conditionKey",
+            "condition_operator": "conditionOperator",
+            "condition_values": "conditionValues",
+        },
+    )
+    class ConditionProperty:
+        def __init__(
+            self,
+            *,
+            condition_key: builtins.str,
+            condition_operator: builtins.str,
+            condition_values: typing.Sequence[builtins.str],
+        ) -> None:
+            '''
+            :param condition_key: 
+            :param condition_operator: 
+            :param condition_values: 
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-qbusiness-permission-condition.html
+            :exampleMetadata: fixture=_generated
+
+            Example::
+
+                # The code below shows an example of how to instantiate this type.
+                # The values are placeholders you should change.
+                from aws_cdk import aws_qbusiness as qbusiness
+                
+                condition_property = qbusiness.CfnPermission.ConditionProperty(
+                    condition_key="conditionKey",
+                    condition_operator="conditionOperator",
+                    condition_values=["conditionValues"]
+                )
+            '''
+            if __debug__:
+                type_hints = typing.get_type_hints(_typecheckingstub__39a9bd842be75583d990f7774438e331f4161b57ee4d98a449b293c0e014f90d)
+                check_type(argname="argument condition_key", value=condition_key, expected_type=type_hints["condition_key"])
+                check_type(argname="argument condition_operator", value=condition_operator, expected_type=type_hints["condition_operator"])
+                check_type(argname="argument condition_values", value=condition_values, expected_type=type_hints["condition_values"])
+            self._values: typing.Dict[builtins.str, typing.Any] = {
+                "condition_key": condition_key,
+                "condition_operator": condition_operator,
+                "condition_values": condition_values,
+            }
+
+        @builtins.property
+        def condition_key(self) -> builtins.str:
+            '''
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-qbusiness-permission-condition.html#cfn-qbusiness-permission-condition-conditionkey
+            '''
+            result = self._values.get("condition_key")
+            assert result is not None, "Required property 'condition_key' is missing"
+            return typing.cast(builtins.str, result)
+
+        @builtins.property
+        def condition_operator(self) -> builtins.str:
+            '''
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-qbusiness-permission-condition.html#cfn-qbusiness-permission-condition-conditionoperator
+            '''
+            result = self._values.get("condition_operator")
+            assert result is not None, "Required property 'condition_operator' is missing"
+            return typing.cast(builtins.str, result)
+
+        @builtins.property
+        def condition_values(self) -> typing.List[builtins.str]:
+            '''
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-qbusiness-permission-condition.html#cfn-qbusiness-permission-condition-conditionvalues
+            '''
+            result = self._values.get("condition_values")
+            assert result is not None, "Required property 'condition_values' is missing"
+            return typing.cast(typing.List[builtins.str], result)
+
+        def __eq__(self, rhs: typing.Any) -> builtins.bool:
+            return isinstance(rhs, self.__class__) and rhs._values == self._values
+
+        def __ne__(self, rhs: typing.Any) -> builtins.bool:
+            return not (rhs == self)
+
+        def __repr__(self) -> str:
+            return "ConditionProperty(%s)" % ", ".join(
+                k + "=" + repr(v) for k, v in self._values.items()
+            )
+
 
 @jsii.data_type(
     jsii_type="aws-cdk-lib.aws_qbusiness.CfnPermissionProps",
@@ -5164,6 +5560,7 @@ class CfnPermission(
         "application_id": "applicationId",
         "principal": "principal",
         "statement_id": "statementId",
+        "conditions": "conditions",
     },
 )
 class CfnPermissionProps:
@@ -5174,6 +5571,7 @@ class CfnPermissionProps:
         application_id: builtins.str,
         principal: builtins.str,
         statement_id: builtins.str,
+        conditions: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnPermission.ConditionProperty, typing.Dict[builtins.str, typing.Any]]]]]] = None,
     ) -> None:
         '''Properties for defining a ``CfnPermission``.
 
@@ -5181,6 +5579,7 @@ class CfnPermissionProps:
         :param application_id: The unique identifier of the Amazon Q Business application.
         :param principal: Provides user and group information used for filtering documents to use for generating Amazon Q Business conversation responses.
         :param statement_id: A unique identifier for the policy statement.
+        :param conditions: 
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-qbusiness-permission.html
         :exampleMetadata: fixture=_generated
@@ -5195,7 +5594,14 @@ class CfnPermissionProps:
                 actions=["actions"],
                 application_id="applicationId",
                 principal="principal",
-                statement_id="statementId"
+                statement_id="statementId",
+            
+                # the properties below are optional
+                conditions=[qbusiness.CfnPermission.ConditionProperty(
+                    condition_key="conditionKey",
+                    condition_operator="conditionOperator",
+                    condition_values=["conditionValues"]
+                )]
             )
         '''
         if __debug__:
@@ -5204,12 +5610,15 @@ class CfnPermissionProps:
             check_type(argname="argument application_id", value=application_id, expected_type=type_hints["application_id"])
             check_type(argname="argument principal", value=principal, expected_type=type_hints["principal"])
             check_type(argname="argument statement_id", value=statement_id, expected_type=type_hints["statement_id"])
+            check_type(argname="argument conditions", value=conditions, expected_type=type_hints["conditions"])
         self._values: typing.Dict[builtins.str, typing.Any] = {
             "actions": actions,
             "application_id": application_id,
             "principal": principal,
             "statement_id": statement_id,
         }
+        if conditions is not None:
+            self._values["conditions"] = conditions
 
     @builtins.property
     def actions(self) -> typing.List[builtins.str]:
@@ -5250,6 +5659,16 @@ class CfnPermissionProps:
         result = self._values.get("statement_id")
         assert result is not None, "Required property 'statement_id' is missing"
         return typing.cast(builtins.str, result)
+
+    @builtins.property
+    def conditions(
+        self,
+    ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, CfnPermission.ConditionProperty]]]]:
+        '''
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-qbusiness-permission.html#cfn-qbusiness-permission-conditions
+        '''
+        result = self._values.get("conditions")
+        return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, CfnPermission.ConditionProperty]]]], result)
 
     def __eq__(self, rhs: typing.Any) -> builtins.bool:
         return isinstance(rhs, self.__class__) and rhs._values == self._values
@@ -8087,6 +8506,7 @@ def _typecheckingstub__32b7ecf69912e25edcd2354b3e0497931ea6bf042b1aabc881c8677d2
     application_id: builtins.str,
     display_name: builtins.str,
     principal: builtins.str,
+    authentication_detail: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnDataAccessor.DataAccessorAuthenticationDetailProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
     tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
 ) -> None:
     """Type checking stubs"""
@@ -8128,6 +8548,12 @@ def _typecheckingstub__fd64ede16f385d2990fa12fa363564c55f359fed279a75365018e42cd
     """Type checking stubs"""
     pass
 
+def _typecheckingstub__8aa34af043257e0411af6e09ebeda77531edcaba51ad9fd392b4515b8c730792(
+    value: typing.Optional[typing.Union[_IResolvable_da3f097b, CfnDataAccessor.DataAccessorAuthenticationDetailProperty]],
+) -> None:
+    """Type checking stubs"""
+    pass
+
 def _typecheckingstub__17fcd903858daed5111fdf34ce66e12720cfa6fd9e1712eb5744a4b8c06fb1fe(
     value: typing.Optional[typing.List[_CfnTag_f6864754]],
 ) -> None:
@@ -8165,6 +8591,29 @@ def _typecheckingstub__e0944dd9fc73c38902199011a9a1b06a552398d255157793794e769d8
     """Type checking stubs"""
     pass
 
+def _typecheckingstub__5026e300a407a951a2bf85ba48cf1646fb1b1672f84f2ea26974311fd2b650de(
+    *,
+    idc_trusted_token_issuer_configuration: typing.Union[_IResolvable_da3f097b, typing.Union[CfnDataAccessor.DataAccessorIdcTrustedTokenIssuerConfigurationProperty, typing.Dict[builtins.str, typing.Any]]],
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__ce3d0eb33f705ecbcd9b23e1fae7014cc8010d410a8398ce3feea55694ebed37(
+    *,
+    authentication_type: builtins.str,
+    authentication_configuration: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnDataAccessor.DataAccessorAuthenticationConfigurationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
+    external_ids: typing.Optional[typing.Sequence[builtins.str]] = None,
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__aa8bef9d39508faf93f48a0365a4605be496aa8cf95d29ab54e4ceabbabaef4d(
+    *,
+    idc_trusted_token_issuer_arn: builtins.str,
+) -> None:
+    """Type checking stubs"""
+    pass
+
 def _typecheckingstub__fc877a8d06303e2294e4f8e5813534f57082fb9476b669bafe4451af29bb5979(
     *,
     name: builtins.str,
@@ -8189,6 +8638,7 @@ def _typecheckingstub__4dfde2d4c17793fa3cb9793a9171b9042ac55727b3f0c3a17f1606cab
     application_id: builtins.str,
     display_name: builtins.str,
     principal: builtins.str,
+    authentication_detail: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnDataAccessor.DataAccessorAuthenticationDetailProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
     tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
 ) -> None:
     """Type checking stubs"""
@@ -8523,6 +8973,7 @@ def _typecheckingstub__aa8b9992ffebedf4dda280be4bd0aa5dade8d62a6c092d850b1b1bb8d
     application_id: builtins.str,
     principal: builtins.str,
     statement_id: builtins.str,
+    conditions: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnPermission.ConditionProperty, typing.Dict[builtins.str, typing.Any]]]]]] = None,
 ) -> None:
     """Type checking stubs"""
     pass
@@ -8563,12 +9014,28 @@ def _typecheckingstub__5bf1e79f20a58bfbabb1ce356f12e0ce01131844f0c50f11db4e0f82f
     """Type checking stubs"""
     pass
 
+def _typecheckingstub__df7eedd7834a134466643c8bd40b7906fe6b7fcc7f482e5265aec4bb05607f6a(
+    value: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, CfnPermission.ConditionProperty]]]],
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__39a9bd842be75583d990f7774438e331f4161b57ee4d98a449b293c0e014f90d(
+    *,
+    condition_key: builtins.str,
+    condition_operator: builtins.str,
+    condition_values: typing.Sequence[builtins.str],
+) -> None:
+    """Type checking stubs"""
+    pass
+
 def _typecheckingstub__7ea87fcda68d4a26468f5e5d1c394a46d117b80b00274f61bbd36b0329a0a8c4(
     *,
     actions: typing.Sequence[builtins.str],
     application_id: builtins.str,
     principal: builtins.str,
     statement_id: builtins.str,
+    conditions: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnPermission.ConditionProperty, typing.Dict[builtins.str, typing.Any]]]]]] = None,
 ) -> None:
     """Type checking stubs"""
     pass

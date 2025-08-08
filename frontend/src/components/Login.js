@@ -22,33 +22,19 @@ const Login = ({ onLoginSuccess, onSwitchToSignup }) => {
   };
 
   const handleSubmit = async (e) => {
-    console.log("🚀 handleSubmit 함수 호출됨!");
     e.preventDefault();
-    
-    console.log("📝 폼 데이터 확인:", formData);
-    console.log("⚡ login 함수 존재 여부:", typeof login);
     
     setLoading(true);
     setError("");
 
+    // 실제 인증 처리
     try {
-      console.log("🔄 로그인 함수 호출 시작...");
       const response = await login(formData);
-      console.log("✅ 로그인 성공:", response);
-
       if (onLoginSuccess) {
         onLoginSuccess(response);
       }
     } catch (error) {
-      console.error("❌ 로그인 오류:", error);
-      console.error("❌ 오류 상세:", {
-        name: error.name,
-        message: error.message,
-        stack: error.stack
-      });
-      
       const apiError = await handleAPIError(error);
-      console.log("🔍 처리된 API 오류:", apiError);
       
       // 리다이렉트가 필요한 경우 (401 오류 등)
       if (apiError.shouldRedirect) {
@@ -57,14 +43,12 @@ const Login = ({ onLoginSuccess, onSwitchToSignup }) => {
       
       // 이메일 인증이 필요한 경우 인증 페이지로 리다이렉트
       if (error.name === "UserNotConfirmedException" || (apiError.userMessage && apiError.userMessage.includes("이메일 인증"))) {
-        console.log("📧 이메일 인증 페이지로 리다이렉트");
         navigate(`/verify?email=${encodeURIComponent(formData.email)}`);
         return;
       }
       
       setError(apiError.userMessage || error.message || "로그인에 실패했습니다.");
     } finally {
-      console.log("🏁 로그인 처리 완료, loading 해제");
       setLoading(false);
     }
   };

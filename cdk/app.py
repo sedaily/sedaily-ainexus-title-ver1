@@ -3,9 +3,6 @@ import aws_cdk as cdk
 import os
 from bedrock_stack import BedrockDiyStack
 from frontend_stack import FrontendStack
-# from conversation_stack import ConversationStack  # 제거: 대화 저장 기능 불필요
-# from performance_optimization_stack import PerformanceOptimizationStack
-# from cicd_stack import CICDStack
 
 app = cdk.App()
 
@@ -41,32 +38,36 @@ for suffix in environments:
     # 1. 백엔드 스택 생성
     backend_stack = BedrockDiyStack(
         app, 
-        f"BedrockDiyTitleGeneratorStack{stack_suffix}",
-        stack_name=f"BedrockDiyTitleGeneratorStack{stack_suffix}",
-        description=f"AWS Bedrock DIY 제목 생성기 시스템 - {domain_suffix.upper()} 환경",
+        f"JournalismFaithfulStack{stack_suffix}",
+        stack_name=f"JournalismFaithfulStack{stack_suffix}",
+        description=f"저널리즘 충실형 제목 생성 시스템 - {domain_suffix.upper()} 환경",
         env=env,
         tags={
             "Environment": domain_suffix,
-            "Project": "TitleGenerator",
-            "Owner": "CI/CD"
+            "Project": "JournalismFaithful",
+            "Owner": "Development"
         }
     )
 
-    # ConversationStack 제거 - 대화 저장 기능 불필요
-
-    # 3. 프론트엔드 스택 생성
+    # 2. 프론트엔드 스택 생성
+    # 프로덕션 환경에 커스텀 도메인 설정
+    custom_domain = None
+    if domain_suffix == 'prod':
+        custom_domain = "title-t5-v2.sedaily.io"
+    
     frontend_stack = FrontendStack(
         app, 
-        f"TitleGeneratorFrontendStack{stack_suffix}",
-        stack_name=f"TitleGeneratorFrontendStack{stack_suffix}",
+        f"JournalismFaithfulFrontendStack{stack_suffix}",
+        stack_name=f"JournalismFaithfulFrontendStack{stack_suffix}",
         api_gateway_url=backend_stack.api.url,
         rest_api=backend_stack.api,
+        domain_name=custom_domain,  # 커스텀 도메인 설정
         stage=domain_suffix,  # 환경 정보 전달
         env=env,
         tags={
             "Environment": domain_suffix,
-            "Project": "TitleGenerator",
-            "Owner": "CI/CD"
+            "Project": "JournalismFaithful",
+            "Owner": "Development"
         }
     )
 
@@ -74,7 +75,7 @@ for suffix in environments:
     frontend_stack.add_dependency(backend_stack)
 
     print(f"✅ {domain_suffix.upper()} stacks configured:")
-    print(f"   - Backend: BedrockDiyTitleGeneratorStack{stack_suffix}")
-    print(f"   - Frontend: TitleGeneratorFrontendStack{stack_suffix}")
+    print(f"   - Backend: JournalismFaithfulStack{stack_suffix}")
+    print(f"   - Frontend: JournalismFaithfulFrontendStack{stack_suffix}")
 
 app.synth() 

@@ -1,4 +1,7 @@
-from typing import Any, List, Optional, Set, Tuple, Type, Union
+from collections.abc import Sequence
+from typing import Any, Optional, Union
+
+from typing_extensions import Self
 
 from cattrs._compat import ExceptionGroup
 
@@ -9,21 +12,21 @@ class StructureHandlerNotFoundError(Exception):
     :attr:`type_`.
     """
 
-    def __init__(self, message: str, type_: Type) -> None:
+    def __init__(self, message: str, type_: type) -> None:
         super().__init__(message)
         self.type_ = type_
 
 
 class BaseValidationError(ExceptionGroup):
-    cl: Type
+    cl: type
 
-    def __new__(cls, message, excs, cl: Type):
+    def __new__(cls, message: str, excs: Sequence[Exception], cl: type):
         obj = super().__new__(cls, message, excs)
         obj.cl = cl
         return obj
 
-    def derive(self, excs):
-        return ClassValidationError(self.message, excs, self.cl)
+    def derive(self, excs: Sequence[Exception]) -> Self:
+        return self.__class__(self.message, excs, self.cl)
 
 
 class IterableValidationNote(str):
@@ -40,7 +43,7 @@ class IterableValidationNote(str):
         instance.type = type
         return instance
 
-    def __getnewargs__(self) -> Tuple[str, Union[int, str], Any]:
+    def __getnewargs__(self) -> tuple[str, Union[int, str], Any]:
         return (str(self), self.index, self.type)
 
 
@@ -49,7 +52,7 @@ class IterableValidationError(BaseValidationError):
 
     def group_exceptions(
         self,
-    ) -> Tuple[List[Tuple[Exception, IterableValidationNote]], List[Exception]]:
+    ) -> tuple[list[tuple[Exception, IterableValidationNote]], list[Exception]]:
         """Split the exceptions into two groups: with and without validation notes."""
         excs_with_notes = []
         other_excs = []
@@ -79,7 +82,7 @@ class AttributeValidationNote(str):
         instance.type = type
         return instance
 
-    def __getnewargs__(self) -> Tuple[str, str, Any]:
+    def __getnewargs__(self) -> tuple[str, str, Any]:
         return (str(self), self.name, self.type)
 
 
@@ -88,7 +91,7 @@ class ClassValidationError(BaseValidationError):
 
     def group_exceptions(
         self,
-    ) -> Tuple[List[Tuple[Exception, AttributeValidationNote]], List[Exception]]:
+    ) -> tuple[list[tuple[Exception, AttributeValidationNote]], list[Exception]]:
         """Split the exceptions into two groups: with and without validation notes."""
         excs_with_notes = []
         other_excs = []
@@ -117,7 +120,7 @@ class ForbiddenExtraKeysError(Exception):
     """
 
     def __init__(
-        self, message: Optional[str], cl: Type, extra_fields: Set[str]
+        self, message: Optional[str], cl: type, extra_fields: set[str]
     ) -> None:
         self.cl = cl
         self.extra_fields = extra_fields

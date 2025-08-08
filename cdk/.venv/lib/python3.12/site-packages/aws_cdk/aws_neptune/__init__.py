@@ -1782,7 +1782,7 @@ class CfnDBInstance(
         :param db_cluster_identifier: If the DB instance is a member of a DB cluster, contains the name of the DB cluster that the DB instance is a member of.
         :param db_instance_identifier: Contains a user-supplied database identifier. This identifier is the unique key that identifies a DB instance.
         :param db_parameter_group_name: The name of an existing DB parameter group or a reference to an AWS::Neptune::DBParameterGroup resource created in the template. If any of the data members of the referenced parameter group are changed during an update, the DB instance might need to be restarted, which causes some interruption. If the parameter group contains static parameters, whether they were changed or not, an update triggers a reboot.
-        :param db_snapshot_identifier: This parameter is not supported. ``AWS::Neptune::DBInstance`` does not support restoring from snapshots. ``AWS::Neptune::DBCluster`` does support restoring from snapshots.
+        :param db_snapshot_identifier: (deprecated) This parameter is not supported. ``AWS::Neptune::DBInstance`` does not support restoring from snapshots. ``AWS::Neptune::DBCluster`` does support restoring from snapshots.
         :param db_subnet_group_name: A DB subnet group to associate with the DB instance. If you update this value, the new subnet group must be a subnet group in a new virtual private cloud (VPC).
         :param preferred_maintenance_window: Specifies the weekly time range during which system maintenance can occur, in Universal Coordinated Time (UTC).
         :param tags: An arbitrary set of tags (key-value pairs) for this DB instance.
@@ -1847,14 +1847,6 @@ class CfnDBInstance(
         :cloudformationAttribute: Endpoint
         '''
         return typing.cast(builtins.str, jsii.get(self, "attrEndpoint"))
-
-    @builtins.property
-    @jsii.member(jsii_name="attrId")
-    def attr_id(self) -> builtins.str:
-        '''
-        :cloudformationAttribute: Id
-        '''
-        return typing.cast(builtins.str, jsii.get(self, "attrId"))
 
     @builtins.property
     @jsii.member(jsii_name="attrPort")
@@ -1982,7 +1974,12 @@ class CfnDBInstance(
     @builtins.property
     @jsii.member(jsii_name="dbSnapshotIdentifier")
     def db_snapshot_identifier(self) -> typing.Optional[builtins.str]:
-        '''This parameter is not supported.'''
+        '''(deprecated) This parameter is not supported.
+
+        :deprecated: this property has been deprecated
+
+        :stability: deprecated
+        '''
         return typing.cast(typing.Optional[builtins.str], jsii.get(self, "dbSnapshotIdentifier"))
 
     @db_snapshot_identifier.setter
@@ -2077,7 +2074,7 @@ class CfnDBInstanceProps:
         :param db_cluster_identifier: If the DB instance is a member of a DB cluster, contains the name of the DB cluster that the DB instance is a member of.
         :param db_instance_identifier: Contains a user-supplied database identifier. This identifier is the unique key that identifies a DB instance.
         :param db_parameter_group_name: The name of an existing DB parameter group or a reference to an AWS::Neptune::DBParameterGroup resource created in the template. If any of the data members of the referenced parameter group are changed during an update, the DB instance might need to be restarted, which causes some interruption. If the parameter group contains static parameters, whether they were changed or not, an update triggers a reboot.
-        :param db_snapshot_identifier: This parameter is not supported. ``AWS::Neptune::DBInstance`` does not support restoring from snapshots. ``AWS::Neptune::DBCluster`` does support restoring from snapshots.
+        :param db_snapshot_identifier: (deprecated) This parameter is not supported. ``AWS::Neptune::DBInstance`` does not support restoring from snapshots. ``AWS::Neptune::DBCluster`` does support restoring from snapshots.
         :param db_subnet_group_name: A DB subnet group to associate with the DB instance. If you update this value, the new subnet group must be a subnet group in a new virtual private cloud (VPC).
         :param preferred_maintenance_window: Specifies the weekly time range during which system maintenance can occur, in Universal Coordinated Time (UTC).
         :param tags: An arbitrary set of tags (key-value pairs) for this DB instance.
@@ -2229,13 +2226,16 @@ class CfnDBInstanceProps:
 
     @builtins.property
     def db_snapshot_identifier(self) -> typing.Optional[builtins.str]:
-        '''This parameter is not supported.
+        '''(deprecated) This parameter is not supported.
 
         ``AWS::Neptune::DBInstance`` does not support restoring from snapshots.
 
         ``AWS::Neptune::DBCluster`` does support restoring from snapshots.
 
+        :deprecated: this property has been deprecated
+
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-neptune-dbinstance.html#cfn-neptune-dbinstance-dbsnapshotidentifier
+        :stability: deprecated
         '''
         result = self._values.get("db_snapshot_identifier")
         return typing.cast(typing.Optional[builtins.str], result)

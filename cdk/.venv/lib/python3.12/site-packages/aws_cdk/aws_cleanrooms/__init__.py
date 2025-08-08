@@ -1473,7 +1473,7 @@ class CfnCollaboration(
         :param description: A description of the collaboration provided by the collaboration owner.
         :param name: A human-readable identifier provided by the collaboration owner. Display names are not unique.
         :param query_log_status: An indicator as to whether query logging has been enabled or disabled for the collaboration. When ``ENABLED`` , AWS Clean Rooms logs details about queries run within this collaboration and those logs can be viewed in Amazon CloudWatch Logs. The default value is ``DISABLED`` .
-        :param analytics_engine: The analytics engine for the collaboration.
+        :param analytics_engine: The analytics engine for the collaboration. .. epigraph:: After July 16, 2025, the ``CLEAN_ROOMS_SQL`` parameter will no longer be available.
         :param creator_member_abilities: The abilities granted to the collaboration creator. *Allowed values* ``CAN_QUERY`` | ``CAN_RECEIVE_RESULTS`` | ``CAN_RUN_JOB``
         :param creator_ml_member_abilities: The ML member abilities for a collaboration member.
         :param creator_payment_configuration: An object representing the collaboration member's payment responsibilities set by the collaboration creator.
@@ -2536,7 +2536,7 @@ class CfnCollaborationProps:
         :param description: A description of the collaboration provided by the collaboration owner.
         :param name: A human-readable identifier provided by the collaboration owner. Display names are not unique.
         :param query_log_status: An indicator as to whether query logging has been enabled or disabled for the collaboration. When ``ENABLED`` , AWS Clean Rooms logs details about queries run within this collaboration and those logs can be viewed in Amazon CloudWatch Logs. The default value is ``DISABLED`` .
-        :param analytics_engine: The analytics engine for the collaboration.
+        :param analytics_engine: The analytics engine for the collaboration. .. epigraph:: After July 16, 2025, the ``CLEAN_ROOMS_SQL`` parameter will no longer be available.
         :param creator_member_abilities: The abilities granted to the collaboration creator. *Allowed values* ``CAN_QUERY`` | ``CAN_RECEIVE_RESULTS`` | ``CAN_RUN_JOB``
         :param creator_ml_member_abilities: The ML member abilities for a collaboration member.
         :param creator_payment_configuration: An object representing the collaboration member's payment responsibilities set by the collaboration creator.
@@ -2709,6 +2709,10 @@ class CfnCollaborationProps:
     @builtins.property
     def analytics_engine(self) -> typing.Optional[builtins.str]:
         '''The analytics engine for the collaboration.
+
+        .. epigraph::
+
+           After July 16, 2025, the ``CLEAN_ROOMS_SQL`` parameter will no longer be available.
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cleanrooms-collaboration.html#cfn-cleanrooms-collaboration-analyticsengine
         '''

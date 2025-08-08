@@ -269,9 +269,14 @@ const ConversationDrawer = memo(({
         {/* 헤더 - 접힌 상태에서는 숨김 */}
         {!isCollapsed && (
           <div className="flex items-center justify-between p-5 border-b border-gray-200 dark:border-[#21262d] relative transition-opacity duration-200 ease-in-out will-change-transform">
-            <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-[#e6edf3]">
-              TITLE-NOMICS
-            </h1>
+            <div>
+              <h1 className="text-xl font-semibold tracking-tight text-gray-900 dark:text-[#e6edf3]">
+                TITLE-NOMICS
+              </h1>
+              <p className="text-xs text-gray-500 dark:text-gray-400 mt-0.5">
+                AI PRISM
+              </p>
+            </div>
 
             {/* 미니멀 토글 버튼 */}
             <button

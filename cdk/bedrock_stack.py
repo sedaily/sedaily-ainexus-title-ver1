@@ -10,6 +10,8 @@ from aws_cdk import (
     aws_iam as iam,
     aws_cloudwatch as cloudwatch,
     aws_cognito as cognito,
+    aws_sqs as sqs,
+    aws_lambda_event_sources as lambda_event_sources,
     RemovalPolicy,
     Duration,
     CfnOutput
@@ -23,8 +25,8 @@ class BedrockDiyStack(Stack):
         """Cognito 사용자 풀 생성 - 인증을 위해 복원"""
         # 사용자 풀 생성
         self.user_pool = cognito.UserPool(
-            self, "BedrockDiyUserPool",
-            user_pool_name=f"nexus-title-generator-users-{self.env_suffix}",
+            self, "UserPool",
+            user_pool_name=f"{self.project_prefix}-users-{self.env_suffix}",
             self_sign_up_enabled=True,
             sign_in_aliases=cognito.SignInAliases(
                 email=True,
@@ -50,8 +52,8 @@ class BedrockDiyStack(Stack):
 
         # 사용자 풀 클라이언트 생성
         self.user_pool_client = self.user_pool.add_client(
-            "BedrockDiyWebClient",
-            user_pool_client_name=f"nexus-title-generator-web-client-{self.env_suffix}",
+            "WebClient",
+            user_pool_client_name=f"{self.project_prefix}-web-client-{self.env_suffix}",
             auth_flows=cognito.AuthFlow(
                 user_password=True,
                 user_srp=True
@@ -74,6 +76,10 @@ class BedrockDiyStack(Stack):
         )
     def __init__(self, scope: Construct, construct_id: str, **kwargs) -> None:
         super().__init__(scope, construct_id, **kwargs)
+        
+        # 프로젝트 접두사 가져오기 (리소스 이름 구별용)
+        self.project_prefix = self.node.try_get_context("project_prefix") or "myproject"
+        self.project_name = self.node.try_get_context("project_name") or "Title Generator"
         
         # 환경 이름 설정 (DynamoDB 테이블 이름에 사용)
         if "Dev" in construct_id:
@@ -102,7 +108,10 @@ class BedrockDiyStack(Stack):
         # 7. CloudWatch 알람 생성
         self.create_cloudwatch_alarms()
         
-        # 8. CDK 출력값 생성
+        # 8. SQS 큐 및 배치 처리 시스템 생성
+        self.create_batch_processing_system()
+        
+        # 9. CDK 출력값 생성
         self.create_outputs()
 
 
@@ -111,7 +120,7 @@ class BedrockDiyStack(Stack):
         # 프롬프트 저장용 버킷
         self.prompt_bucket = s3.Bucket(
             self, "PromptBucket",
-            bucket_name=f"title-generator-prompts-{self.account}-{self.region}",
+            bucket_name=f"{self.project_prefix}-prompts-{self.env_suffix}-{self.account}-{self.region}",
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
             versioned=True,
@@ -129,7 +138,7 @@ class BedrockDiyStack(Stack):
         # 기사 업로드용 버킷
         self.article_bucket = s3.Bucket(
             self, "ArticleBucket",
-            bucket_name=f"title-generator-articles-{self.account}-{self.region}",
+            bucket_name=f"{self.project_prefix}-articles-{self.env_suffix}-{self.account}-{self.region}",
             removal_policy=RemovalPolicy.DESTROY,
             auto_delete_objects=True,
             versioned=True,
@@ -154,7 +163,7 @@ class BedrockDiyStack(Stack):
         # 프롬프트 메타데이터 테이블 (관리자가 만든 프롬프트)
         self.prompt_meta_table = dynamodb.Table(
             self, "PromptMetaTable",
-            table_name=f"nexus-title-generator-prompt-meta-{self.env_suffix}",
+            table_name=f"{self.project_prefix}-prompt-meta-{self.env_suffix}",
             partition_key=dynamodb.Attribute(
                 name="promptId",  # promptId를 파티션 키로 사용
                 type=dynamodb.AttributeType.STRING
@@ -163,18 +172,6 @@ class BedrockDiyStack(Stack):
             removal_policy=RemovalPolicy.DESTROY
         )
 
-        # AI 생성 로그 테이블 (선택적 - 통계/분석용)
-        self.generation_logs_table = dynamodb.Table(
-            self, "GenerationLogsTable",
-            table_name=f"nexus-title-generator-logs-{self.env_suffix}",
-            partition_key=dynamodb.Attribute(
-                name="requestId",
-                type=dynamodb.AttributeType.STRING
-            ),
-            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
-            removal_policy=RemovalPolicy.DESTROY,
-            time_to_live_attribute="ttl"  # 30일 후 자동 삭제
-        )
 
         # =============================================================================
         # 프롬프트 인스턴스 테이블
@@ -183,20 +180,19 @@ class BedrockDiyStack(Stack):
         # 프롬프트 인스턴스 테이블 (사용자가 입력한 placeholder 값들)
         self.prompt_instance_table = dynamodb.Table(
             self, "PromptInstanceTable",
-            table_name=f"nexus-title-generator-prompt-instances-{self.env_suffix}",
+            table_name=f"{self.project_prefix}-prompt-instances-{self.env_suffix}",
             partition_key=dynamodb.Attribute(
                 name="instanceId",  # instanceId를 파티션 키로 사용
                 type=dynamodb.AttributeType.STRING
             ),
             billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
-            removal_policy=RemovalPolicy.DESTROY,
-            stream=dynamodb.StreamViewType.NEW_AND_OLD_IMAGES  # DynamoDB Streams 활성화
+            removal_policy=RemovalPolicy.DESTROY
         )
         
         # 사용자 관리 테이블 (인증을 위해 필요)
         self.users_table = dynamodb.Table(
             self, "UsersTable",
-            table_name=f"nexus-title-generator-users-{self.env_suffix}",
+            table_name=f"{self.project_prefix}-users-{self.env_suffix}",
             partition_key=dynamodb.Attribute(
                 name="user_id",
                 type=dynamodb.AttributeType.STRING
@@ -212,6 +208,47 @@ class BedrockDiyStack(Stack):
                 name="email",
                 type=dynamodb.AttributeType.STRING
             )
+        )
+        
+        # 대화 관리 테이블
+        self.conversations_table = dynamodb.Table(
+            self, "ConversationsTable",
+            table_name=f"{self.project_prefix}-conversations-{self.env_suffix}",
+            partition_key=dynamodb.Attribute(
+                name="conversation_id",
+                type=dynamodb.AttributeType.STRING
+            ),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            removal_policy=RemovalPolicy.DESTROY
+        )
+        
+        # 사용자별 대화 조회를 위한 GSI
+        self.conversations_table.add_global_secondary_index(
+            index_name="user-index",
+            partition_key=dynamodb.Attribute(
+                name="user_id",
+                type=dynamodb.AttributeType.STRING
+            ),
+            sort_key=dynamodb.Attribute(
+                name="created_at",
+                type=dynamodb.AttributeType.STRING
+            )
+        )
+        
+        # 메시지 관리 테이블
+        self.messages_table = dynamodb.Table(
+            self, "MessagesTable",
+            table_name=f"{self.project_prefix}-messages-{self.env_suffix}",
+            partition_key=dynamodb.Attribute(
+                name="conversation_id",
+                type=dynamodb.AttributeType.STRING
+            ),
+            sort_key=dynamodb.Attribute(
+                name="timestamp",
+                type=dynamodb.AttributeType.STRING
+            ),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            removal_policy=RemovalPolicy.DESTROY
         )
 
 
@@ -258,7 +295,6 @@ class BedrockDiyStack(Stack):
                     self.article_bucket.bucket_arn,
                     self.article_bucket.bucket_arn + "/*",
                     self.prompt_meta_table.table_arn,
-                    self.generation_logs_table.table_arn,
                     self.prompt_instance_table.table_arn,
                     self.users_table.table_arn,
                     self.users_table.table_arn + "/index/email-index",
@@ -269,19 +305,18 @@ class BedrockDiyStack(Stack):
             )
         )
 
-        # 1. 제목 생성 Lambda (핵심 기능)
+        # 1. 제목 생성 Lambda (핵심 기능) - 대용량 처리를 위해 메모리 증가
         self.generate_lambda = lambda_.Function(
             self, "GenerateFunction",
             runtime=lambda_.Runtime.PYTHON_3_11,
             handler="generate.handler",
             code=lambda_.Code.from_asset("../lambda/generate"),
             timeout=Duration.minutes(15),
-            memory_size=3008,
+            memory_size=10240,  # 10GB로 증가 (최대 허용치)
             role=lambda_role,
             environment={
                 "PROMPT_META_TABLE": self.prompt_meta_table.table_name,
                 "PROMPT_BUCKET": self.prompt_bucket.bucket_name,
-                "GENERATION_LOGS_TABLE": self.generation_logs_table.table_name,
                 "REGION": self.region,
             }
         )
@@ -341,6 +376,38 @@ class BedrockDiyStack(Stack):
                 "LOG_LEVEL": "INFO",
             }
         )
+        
+        # 4. 대화 관리 Lambda
+        self.conversation_lambda = lambda_.Function(
+            self, "ConversationFunction",
+            runtime=lambda_.Runtime.PYTHON_3_11,
+            handler="conversation_api.handler",
+            code=lambda_.Code.from_asset("../lambda/conversation"),
+            timeout=Duration.minutes(1),
+            memory_size=512,
+            role=lambda_role,
+            environment={
+                "CONVERSATIONS_TABLE": self.conversations_table.table_name,
+                "USERS_TABLE": self.users_table.table_name,
+                "REGION": self.region,
+            }
+        )
+        
+        # 5. 메시지 관리 Lambda
+        self.message_lambda = lambda_.Function(
+            self, "MessageFunction",
+            runtime=lambda_.Runtime.PYTHON_3_11,
+            handler="message_api.handler",
+            code=lambda_.Code.from_asset("../lambda/message"),
+            timeout=Duration.minutes(1),
+            memory_size=512,
+            role=lambda_role,
+            environment={
+                "MESSAGES_TABLE": self.messages_table.table_name,
+                "CONVERSATIONS_TABLE": self.conversations_table.table_name,
+                "REGION": self.region,
+            }
+        )
 
     # 간소화된 CORS 설정 함수
     def _create_cors_options_method(self, resource, allowed_methods):
@@ -376,7 +443,7 @@ class BedrockDiyStack(Stack):
         # REST API 생성
         self.api = apigateway.RestApi(
             self, "BedrockDiyApi",
-            rest_api_name="title-generator-api",
+            rest_api_name=f"{self.project_prefix}-api",
             description="제목 생성기 - 프롬프트 기반 AI 시스템",
             retain_deployments=True
         )
@@ -495,6 +562,78 @@ class BedrockDiyStack(Stack):
         
         # CORS 옵션 추가
         self._create_cors_options_method(prompt_card_resource, "GET,PUT,DELETE,OPTIONS")
+        
+        # 대화 관리 API 경로 추가
+        self.create_conversation_routes()
+
+    def create_conversation_routes(self):
+        """대화 관리 API 경로 생성"""
+        # /conversations 리소스
+        conversations_resource = self.api.root.add_resource("conversations")
+        
+        # GET /conversations (대화 목록 조회)
+        conversations_resource.add_method(
+            "GET",
+            apigateway.LambdaIntegration(self.conversation_lambda, proxy=True),
+            authorization_type=apigateway.AuthorizationType.NONE
+        )
+        
+        # POST /conversations (새 대화 생성)
+        conversations_resource.add_method(
+            "POST",
+            apigateway.LambdaIntegration(self.conversation_lambda, proxy=True),
+            authorization_type=apigateway.AuthorizationType.NONE
+        )
+        
+        # CORS 옵션 추가
+        self._create_cors_options_method(conversations_resource, "GET,POST,OPTIONS")
+        
+        # /conversations/{conversationId} 리소스
+        conversation_detail_resource = conversations_resource.add_resource("{conversationId}")
+        
+        # GET /conversations/{conversationId} (대화 상세 조회)
+        conversation_detail_resource.add_method(
+            "GET",
+            apigateway.LambdaIntegration(self.conversation_lambda, proxy=True),
+            authorization_type=apigateway.AuthorizationType.NONE
+        )
+        
+        # PUT /conversations/{conversationId} (대화 수정)
+        conversation_detail_resource.add_method(
+            "PUT",
+            apigateway.LambdaIntegration(self.conversation_lambda, proxy=True),
+            authorization_type=apigateway.AuthorizationType.NONE
+        )
+        
+        # DELETE /conversations/{conversationId} (대화 삭제)
+        conversation_detail_resource.add_method(
+            "DELETE",
+            apigateway.LambdaIntegration(self.conversation_lambda, proxy=True),
+            authorization_type=apigateway.AuthorizationType.NONE
+        )
+        
+        # CORS 옵션 추가
+        self._create_cors_options_method(conversation_detail_resource, "GET,PUT,DELETE,OPTIONS")
+        
+        # /conversations/{conversationId}/messages 리소스
+        messages_resource = conversation_detail_resource.add_resource("messages")
+        
+        # GET /conversations/{conversationId}/messages (메시지 목록 조회)
+        messages_resource.add_method(
+            "GET",
+            apigateway.LambdaIntegration(self.message_lambda, proxy=True),
+            authorization_type=apigateway.AuthorizationType.NONE
+        )
+        
+        # POST /conversations/{conversationId}/messages (새 메시지 추가)
+        messages_resource.add_method(
+            "POST",
+            apigateway.LambdaIntegration(self.message_lambda, proxy=True),
+            authorization_type=apigateway.AuthorizationType.NONE
+        )
+        
+        # CORS 옵션 추가
+        self._create_cors_options_method(messages_resource, "GET,POST,OPTIONS")
 
     # Step Functions 제거됨 - 단순화된 동적 프롬프트 시스템으로 불필요
     # def create_step_functions(self):
@@ -527,7 +666,7 @@ class BedrockDiyStack(Stack):
             self, "ApiGatewayUrl",
             value=self.api.url,
             description="API Gateway URL",
-            export_name="TitleGeneratorApiUrl"
+            export_name=f"{self.stack_name}-ApiUrl"
         )
 
         # S3 버킷 출력
@@ -535,14 +674,14 @@ class BedrockDiyStack(Stack):
             self, "PromptBucketName",
             value=self.prompt_bucket.bucket_name,
             description="프롬프트 S3 버킷 이름",
-            export_name="TitleGeneratorPromptBucketName"
+            export_name=f"{self.stack_name}-PromptBucketName"
         )
         
         CfnOutput(
             self, "ArticleBucketName",
             value=self.article_bucket.bucket_name,
             description="기사 S3 버킷 이름",
-            export_name="TitleGeneratorArticleBucketName"
+            export_name=f"{self.stack_name}-ArticleBucketName"
         )
         
         # Cognito 출력
@@ -550,14 +689,14 @@ class BedrockDiyStack(Stack):
             self, "UserPoolId",
             value=self.user_pool.user_pool_id,
             description="Cognito User Pool ID",
-            export_name="TitleGeneratorUserPoolId"
+            export_name=f"{self.stack_name}-UserPoolId"
         )
 
         CfnOutput(
             self, "UserPoolClientId", 
             value=self.user_pool_client.user_pool_client_id,
             description="Cognito User Pool Client ID",
-            export_name="TitleGeneratorUserPoolClientId"
+            export_name=f"{self.stack_name}-UserPoolClientId"
         )
 
     def create_websocket_api(self):
@@ -566,7 +705,7 @@ class BedrockDiyStack(Stack):
         # WebSocket 연결 테이블
         self.websocket_connections_table = dynamodb.Table(
             self, "WebSocketConnectionsTable",
-            table_name=f"nexus-title-generator-websocket-connections-{self.env_suffix}",
+            table_name=f"{self.project_prefix}-websocket-connections-{self.env_suffix}",
             partition_key=dynamodb.Attribute(
                 name="connectionId",
                 type=dynamodb.AttributeType.STRING
@@ -639,28 +778,30 @@ class BedrockDiyStack(Stack):
             }
         )
         
-        # Stream Lambda
+        # Stream Lambda - 대용량 처리를 위해 메모리 증가
         self.websocket_stream_lambda = lambda_.Function(
             self, "WebSocketStreamFunction",
             runtime=lambda_.Runtime.PYTHON_3_11,
             handler="stream.handler",
             code=lambda_.Code.from_asset("../lambda/websocket"),
             timeout=Duration.minutes(15),
-            memory_size=3008,
+            memory_size=10240,  # 10GB로 증가 (최대 허용치)
             role=websocket_lambda_role,
             environment={
                 "CONNECTIONS_TABLE": self.websocket_connections_table.table_name,
                 "PROMPT_META_TABLE": self.prompt_meta_table.table_name,
                 "PROMPT_BUCKET": self.prompt_bucket.bucket_name,
                 "REGION": self.region,
-                "USE_LANGGRAPH": "false"  # LangGraph 기능 비활성화 (우선 기본 스트리밍 테스트)
+                "USE_LANGGRAPH": "false",  # LangGraph 기능 비활성화 (우선 기본 스트리밍 테스트)
+                "CONVERSATIONS_TABLE": self.conversations_table.table_name,
+                "MESSAGES_TABLE": self.messages_table.table_name,
             }
         )
         
         # WebSocket API 생성
         self.websocket_api = apigatewayv2.WebSocketApi(
-            self, "BedrockDiyWebSocketApi",
-            api_name="title-generator-websocket-api",
+            self, "WebSocketApi",
+            api_name=f"{self.project_prefix}-websocket-api",
             description="실시간 스트리밍을 위한 WebSocket API",
             connect_route_options=apigatewayv2.WebSocketRouteOptions(
                 integration=integrations.WebSocketLambdaIntegration(
@@ -699,7 +840,77 @@ class BedrockDiyStack(Stack):
             self, "WebSocketApiUrl",
             value=websocket_url,
             description="WebSocket API URL with stage",
-            export_name="TitleGeneratorWebSocketApiUrl"
+            export_name=f"{self.stack_name}-WebSocketApiUrl"
         )
+
+    def create_batch_processing_system(self):
+        """대용량 문서 처리를 위한 SQS 및 배치 시스템 생성"""
+        
+        # 배치 작업 상태 추적 테이블
+        self.batch_jobs_table = dynamodb.Table(
+            self, "BatchJobsTable",
+            table_name=f"{self.project_prefix}-batch-jobs-{self.env_suffix}",
+            partition_key=dynamodb.Attribute(
+                name="job_id",
+                type=dynamodb.AttributeType.STRING
+            ),
+            billing_mode=dynamodb.BillingMode.PAY_PER_REQUEST,
+            removal_policy=RemovalPolicy.DESTROY,
+            time_to_live_attribute="ttl"
+        )
+        
+        # 대용량 처리용 SQS 큐
+        self.batch_queue = sqs.Queue(
+            self, "BatchQueue",
+            queue_name=f"{self.project_prefix}-batch-queue-{self.env_suffix}",
+            visibility_timeout=Duration.minutes(15),
+            receive_message_wait_time=Duration.seconds(20)
+        )
+        
+        # 배치 처리 Lambda 역할
+        batch_lambda_role = iam.Role(
+            self, "BatchLambdaRole",
+            assumed_by=iam.ServicePrincipal("lambda.amazonaws.com"),
+            managed_policies=[
+                iam.ManagedPolicy.from_aws_managed_policy_name("service-role/AWSLambdaBasicExecutionRole"),
+                iam.ManagedPolicy.from_aws_managed_policy_name("AmazonBedrockFullAccess")
+            ]
+        )
+        
+        # 배치 처리에 필요한 권한 추가
+        batch_lambda_role.add_to_policy(
+            iam.PolicyStatement(
+                actions=[
+                    "sqs:ReceiveMessage",
+                    "sqs:DeleteMessage",
+                    "sqs:GetQueueAttributes",
+                    "dynamodb:PutItem",
+                    "dynamodb:UpdateItem",
+                    "dynamodb:GetItem",
+                    "s3:GetObject",
+                    "bedrock:InvokeModel",
+                    "execute-api:ManageConnections"
+                ],
+                resources=[
+                    self.batch_queue.queue_arn,
+                    self.batch_jobs_table.table_arn,
+                    self.prompt_meta_table.table_arn,
+                    self.prompt_bucket.bucket_arn + "/*",
+                    f"arn:aws:execute-api:{self.region}:{self.account}:*/*/*"
+                ]
+            )
+        )
+        
+        # 기존 generate Lambda에 SQS 권한 추가
+        self.generate_lambda.role.add_to_policy(
+            iam.PolicyStatement(
+                actions=["sqs:SendMessage", "dynamodb:PutItem"],
+                resources=[self.batch_queue.queue_arn, self.batch_jobs_table.table_arn]
+            )
+        )
+        
+        # 환경 변수 추가
+        self.generate_lambda.add_environment("BATCH_QUEUE_URL", self.batch_queue.queue_url)
+        self.generate_lambda.add_environment("BATCH_JOBS_TABLE", self.batch_jobs_table.table_name)
 
  

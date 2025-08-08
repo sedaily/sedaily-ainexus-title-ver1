@@ -1,6 +1,6 @@
 """Cattrs validation."""
 
-from typing import Callable, List, Union
+from typing import Callable, Union
 
 from .errors import (
     ClassValidationError,
@@ -47,12 +47,6 @@ def format_exception(exc: BaseException, type: Union[type, None]) -> str:
     ):
         # This was supposed to be a mapping (and have .items()) but it something else.
         res = "expected a mapping"
-    elif isinstance(exc, AttributeError) and exc.args[0].endswith(
-        "object has no attribute 'copy'"
-    ):
-        # This was supposed to be a mapping (and have .copy()) but it something else.
-        # Used for TypedDicts.
-        res = "expected a mapping"
     else:
         res = f"unknown error ({exc})"
 
@@ -65,7 +59,7 @@ def transform_error(
     format_exception: Callable[
         [BaseException, Union[type, None]], str
     ] = format_exception,
-) -> List[str]:
+) -> list[str]:
     """Transform an exception into a list of error messages.
 
     To get detailed error messages, the exception should be produced by a converter

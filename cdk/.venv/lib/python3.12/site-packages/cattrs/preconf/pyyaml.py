@@ -2,7 +2,7 @@
 
 from datetime import date, datetime
 from functools import partial
-from typing import Any, Type, TypeVar, Union
+from typing import Any, TypeVar, Union
 
 from yaml import safe_dump, safe_load
 
@@ -12,10 +12,12 @@ from ..converters import BaseConverter, Converter
 from ..strategies import configure_union_passthrough
 from . import validate_datetime, wrap
 
+__all__ = ["PyyamlConverter", "configure_converter", "make_converter"]
+
 T = TypeVar("T")
 
 
-def validate_date(v, _):
+def validate_date(v: Any, _):
     if not isinstance(v, date):
         raise ValueError(f"Expected date, got {v}")
     return v
@@ -25,11 +27,11 @@ class PyyamlConverter(Converter):
     def dumps(self, obj: Any, unstructure_as: Any = None, **kwargs: Any) -> str:
         return safe_dump(self.unstructure(obj, unstructure_as=unstructure_as), **kwargs)
 
-    def loads(self, data: str, cl: Type[T]) -> T:
+    def loads(self, data: str, cl: type[T]) -> T:
         return self.structure(safe_load(data), cl)
 
 
-def configure_converter(converter: BaseConverter):
+def configure_converter(converter: BaseConverter) -> None:
     """
     Configure the converter for use with the pyyaml library.
 
@@ -38,7 +40,7 @@ def configure_converter(converter: BaseConverter):
     * datetimes and dates are validated
     * typed namedtuples are serialized as lists
 
-    .. versionchanged: 24.1.0
+    .. versionchanged:: 24.1.0
         Add support for typed namedtuples.
     """
     converter.register_unstructure_hook(

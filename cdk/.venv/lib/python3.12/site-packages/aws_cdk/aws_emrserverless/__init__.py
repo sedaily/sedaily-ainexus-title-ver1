@@ -221,7 +221,7 @@ class CfnApplication(
         :param architecture: The CPU architecture of an application.
         :param auto_start_configuration: The configuration for an application to automatically start on job submission.
         :param auto_stop_configuration: The configuration for an application to automatically stop after a certain amount of time being idle.
-        :param identity_center_configuration: The IAM IdentityCenter configuration for trusted-identity-propagation on this application. Supported with release labels emr-7.8.0 and above.
+        :param identity_center_configuration: A configuration specification to be used when provisioning an application. A configuration consists of a classification, properties, and optional nested configurations. A classification refers to an application-specific configuration file. Properties are the settings you want to change in that file.
         :param image_configuration: The image configuration applied to all worker types.
         :param initial_capacity: The initial capacity of the application.
         :param interactive_configuration: The interactive configuration object that enables the interactive use cases for an application.
@@ -399,7 +399,7 @@ class CfnApplication(
     def identity_center_configuration(
         self,
     ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnApplication.IdentityCenterConfigurationProperty"]]:
-        '''The IAM IdentityCenter configuration for trusted-identity-propagation on this application.'''
+        '''A configuration specification to be used when provisioning an application.'''
         return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnApplication.IdentityCenterConfigurationProperty"]], jsii.get(self, "identityCenterConfiguration"))
 
     @identity_center_configuration.setter
@@ -2201,7 +2201,7 @@ class CfnApplicationProps:
         :param architecture: The CPU architecture of an application.
         :param auto_start_configuration: The configuration for an application to automatically start on job submission.
         :param auto_stop_configuration: The configuration for an application to automatically stop after a certain amount of time being idle.
-        :param identity_center_configuration: The IAM IdentityCenter configuration for trusted-identity-propagation on this application. Supported with release labels emr-7.8.0 and above.
+        :param identity_center_configuration: A configuration specification to be used when provisioning an application. A configuration consists of a classification, properties, and optional nested configurations. A classification refers to an application-specific configuration file. Properties are the settings you want to change in that file.
         :param image_configuration: The image configuration applied to all worker types.
         :param initial_capacity: The initial capacity of the application.
         :param interactive_configuration: The interactive configuration object that enables the interactive use cases for an application.
@@ -2432,9 +2432,9 @@ class CfnApplicationProps:
     def identity_center_configuration(
         self,
     ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, CfnApplication.IdentityCenterConfigurationProperty]]:
-        '''The IAM IdentityCenter configuration for trusted-identity-propagation on this application.
+        '''A configuration specification to be used when provisioning an application.
 
-        Supported with release labels emr-7.8.0 and above.
+        A configuration consists of a classification, properties, and optional nested configurations. A classification refers to an application-specific configuration file. Properties are the settings you want to change in that file.
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-emrserverless-application.html#cfn-emrserverless-application-identitycenterconfiguration
         '''

@@ -2,9 +2,11 @@ from __future__ import annotations
 
 import re
 import sys
+from collections.abc import Mapping
 from typing import TYPE_CHECKING, Any, Callable, Literal, TypeVar
 
 from attrs import NOTHING, Attribute
+from typing_extensions import _TypedDictMeta
 
 try:
     from inspect import get_annotations
@@ -15,20 +17,10 @@ try:
 except ImportError:
     # https://docs.python.org/3/howto/annotations.html#accessing-the-annotations-dict-of-an-object-in-python-3-9-and-older
     def get_annots(cl) -> dict[str, Any]:
-        if isinstance(cl, type):
-            ann = cl.__dict__.get("__annotations__", {})
-        else:
-            ann = getattr(cl, "__annotations__", {})
-        return ann
+        return cl.__dict__.get("__annotations__", {})
 
-
-try:
-    from typing_extensions import _TypedDictMeta
-except ImportError:
-    _TypedDictMeta = None
 
 from .._compat import (
-    TypedDict,
     get_full_type_hints,
     get_notrequired_base,
     get_origin,
@@ -53,9 +45,9 @@ from ._shared import find_structure_handler
 if TYPE_CHECKING:
     from ..converters import BaseConverter
 
-__all__ = ["make_dict_unstructure_fn", "make_dict_structure_fn"]
+__all__ = ["make_dict_structure_fn", "make_dict_unstructure_fn"]
 
-T = TypeVar("T", bound=TypedDict)
+T = TypeVar("T")
 
 
 def make_dict_unstructure_fn(
@@ -130,7 +122,7 @@ def make_dict_unstructure_fn(
                     # Unbound typevars use late binding.
                     handler = converter.unstructure
             elif is_generic(t) and not is_bare(t) and not is_annotated(t):
-                t = deep_copy_with(t, mapping)
+                t = deep_copy_with(t, mapping, cl)
 
             if handler is None:
                 nrb = get_notrequired_base(t)
@@ -176,7 +168,7 @@ def make_dict_unstructure_fn(
                     else:
                         handler = converter.unstructure
                 elif is_generic(t) and not is_bare(t) and not is_annotated(t):
-                    t = deep_copy_with(t, mapping)
+                    t = deep_copy_with(t, mapping, cl)
 
                 if handler is None:
                     nrb = get_notrequired_base(t)
@@ -315,6 +307,16 @@ def make_dict_structure_fn(
         globs["__c_a"] = allowed_fields
         globs["__c_feke"] = ForbiddenExtraKeysError
 
+    if _cattrs_detailed_validation:
+        # When running under detailed validation, be extra careful about the
+        # input type so that the correct error is raised if the input isn't a dict.
+        internal_arg_parts["__c_mapping"] = Mapping
+        lines.append("  if not isinstance(o, __c_mapping):")
+        te = "TypeError(f'expected a mapping, not {o.__class__.__name__}')"
+        lines.append(
+            f"    raise __c_cve('While structuring ' + {cl.__name__!r}, [{te}], __cl)"
+        )
+
     lines.append("  res = o.copy()")
 
     if _cattrs_detailed_validation:
@@ -332,14 +334,14 @@ def make_dict_structure_fn(
             if isinstance(t, TypeVar):
                 t = mapping.get(t.__name__, t)
             elif is_generic(t) and not is_bare(t) and not is_annotated(t):
-                t = deep_copy_with(t, mapping)
+                t = deep_copy_with(t, mapping, cl)
 
             nrb = get_notrequired_base(t)
             if nrb is not NOTHING:
                 t = nrb
 
             if is_generic(t) and not is_bare(t) and not is_annotated(t):
-                t = deep_copy_with(t, mapping)
+                t = deep_copy_with(t, mapping, cl)
 
             # For each attribute, we try resolving the type here and now.
             # If a type is manually overwritten, this function should be
@@ -409,7 +411,7 @@ def make_dict_structure_fn(
             if isinstance(t, TypeVar):
                 t = mapping.get(t.__name__, t)
             elif is_generic(t) and not is_bare(t) and not is_annotated(t):
-                t = deep_copy_with(t, mapping)
+                t = deep_copy_with(t, mapping, cl)
 
             nrb = get_notrequired_base(t)
             if nrb is not NOTHING:
@@ -456,7 +458,7 @@ def make_dict_structure_fn(
                 if isinstance(t, TypeVar):
                     t = mapping.get(t.__name__, t)
                 elif is_generic(t) and not is_bare(t) and not is_annotated(t):
-                    t = deep_copy_with(t, mapping)
+                    t = deep_copy_with(t, mapping, cl)
 
                 if override.struct_hook is not None:
                     handler = override.struct_hook
@@ -535,8 +537,6 @@ def _adapted_fields(cls: Any) -> list[Attribute]:
 
 
 def _is_extensions_typeddict(cls) -> bool:
-    if _TypedDictMeta is None:
-        return False
     return cls.__class__ is _TypedDictMeta or (
         is_generic(cls) and (cls.__origin__.__class__ is _TypedDictMeta)
     )
@@ -547,8 +547,8 @@ if sys.version_info >= (3, 11):
     def _required_keys(cls: type) -> set[str]:
         return cls.__required_keys__
 
-elif sys.version_info >= (3, 9):
-    from typing_extensions import Annotated, NotRequired, Required, get_args
+else:
+    from typing_extensions import Annotated, NotRequired, get_args
 
     # Note that there is no `typing.Required` on 3.9 and 3.10, only in
     # `typing_extensions`. Therefore, `typing.TypedDict` will not honor this
@@ -563,7 +563,7 @@ elif sys.version_info >= (3, 9):
         # gathering required keys. *sigh*
         own_annotations = cls.__dict__.get("__annotations__", {})
         required_keys = set()
-        # On 3.8 - 3.10, typing.TypedDict doesn't put typeddict superclasses
+        # On 3.9 - 3.10, typing.TypedDict doesn't put typeddict superclasses
         # in the MRO, therefore we cannot handle non-required keys properly
         # in some situations. Oh well.
         for key in getattr(cls, "__required_keys__", []):
@@ -576,35 +576,6 @@ elif sys.version_info >= (3, 9):
                     annotation_origin = get_origin(annotation_type)
 
             if annotation_origin is NotRequired:
-                pass
-            elif cls.__total__:
-                required_keys.add(key)
-        return required_keys
-
-else:
-    from typing_extensions import Annotated, NotRequired, Required, get_args
-
-    # On 3.8, typing.TypedDicts do not have __required_keys__.
-
-    def _required_keys(cls: type) -> set[str]:
-        """Our own processor for required keys."""
-        if _is_extensions_typeddict(cls):
-            return cls.__required_keys__
-
-        own_annotations = cls.__dict__.get("__annotations__", {})
-        required_keys = set()
-        for key in own_annotations:
-            annotation_type = own_annotations[key]
-
-            if is_annotated(annotation_type):
-                # If this is `Annotated`, we need to get the origin twice.
-                annotation_type = get_origin(annotation_type)
-
-            annotation_origin = get_origin(annotation_type)
-
-            if annotation_origin is Required:
-                required_keys.add(key)
-            elif annotation_origin is NotRequired:
                 pass
             elif cls.__total__:
                 required_keys.add(key)

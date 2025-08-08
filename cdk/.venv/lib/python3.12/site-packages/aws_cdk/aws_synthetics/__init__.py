@@ -88,6 +88,28 @@ schedule = synthetics.Schedule.cron(
 
 If you want the canary to run just once upon deployment, you can use `Schedule.once()`.
 
+### Automatic Retries
+
+You can configure the canary to automatically retry failed runs by using the `maxRetries` property.
+
+This is only supported on the following runtimes or newer: `Runtime.SYNTHETICS_NODEJS_PUPPETEER_10_0`, `Runtime.SYNTHETICS_NODEJS_PLAYWRIGHT_2_0`, `Runtime.SYNTHETICS_PYTHON_SELENIUM_5_1`.
+
+Max retries can be set between 0 and 2. Canaries which time out after 10 minutes are automatically limited to one retry.
+
+For more information, see [Configuring your canary to retry automatically](https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Synthetics_Canaries_autoretry.html).
+
+```python
+canary = synthetics.Canary(self, "MyCanary",
+    schedule=synthetics.Schedule.rate(Duration.minutes(5)),
+    test=synthetics.Test.custom(
+        handler="canary.handler",
+        code=synthetics.Code.from_asset(path.join(__dirname, "canaries"))
+    ),
+    runtime=synthetics.Runtime.SYNTHETICS_PYTHON_SELENIUM_5_1,
+    max_retries=2
+)
+```
+
 ### Active Tracing
 
 You can choose to enable active AWS X-Ray tracing on canaries that use the `syn-nodejs-2.0` or later runtime by setting `activeTracing` to `true`.
@@ -372,6 +394,24 @@ canary = synthetics.Canary(self, "MyCanary",
     artifact_s3_kms_key=key
 )
 ```
+
+### Tag replication
+
+You can configure a canary to replicate its tags to the underlying Lambda function. This is useful when you want the same tags that are applied to the canary to also be applied to the Lambda function that the canary uses.
+
+```python
+canary = synthetics.Canary(self, "MyCanary",
+    schedule=synthetics.Schedule.rate(Duration.minutes(5)),
+    test=synthetics.Test.custom(
+        code=synthetics.Code.from_asset(path.join(__dirname, "canary")),
+        handler="index.handler"
+    ),
+    runtime=synthetics.Runtime.SYNTHETICS_NODEJS_PUPPETEER_7_0,
+    resources_to_replicate_tags=[synthetics.ResourceToReplicateTags.LAMBDA_FUNCTION]
+)
+```
+
+When you specify `ResourceToReplicateTags.LAMBDA_FUNCTION` in the `resourcesToReplicateTags` property, CloudWatch Synthetics will keep the tags of the canary and the Lambda function synchronized. Any future changes you make to the canary's tags will also be applied to the function.
 '''
 from pkgutil import extend_path
 __path__ = extend_path(__path__, __name__)
@@ -568,17 +608,14 @@ class Canary(
 
     Example::
 
-        import aws_cdk as cdk
-        
-        
         canary = synthetics.Canary(self, "MyCanary",
             schedule=synthetics.Schedule.rate(Duration.minutes(5)),
             test=synthetics.Test.custom(
                 code=synthetics.Code.from_asset(path.join(__dirname, "canary")),
                 handler="index.handler"
             ),
-            runtime=synthetics.Runtime.SYNTHETICS_NODEJS_PUPPETEER_6_2,
-            memory=cdk.Size.mebibytes(1024)
+            runtime=synthetics.Runtime.SYNTHETICS_NODEJS_PUPPETEER_7_0,
+            resources_to_replicate_tags=[synthetics.ResourceToReplicateTags.LAMBDA_FUNCTION]
         )
     '''
 
@@ -599,8 +636,10 @@ class Canary(
         dry_run_and_update: typing.Optional[builtins.bool] = None,
         environment_variables: typing.Optional[typing.Mapping[builtins.str, builtins.str]] = None,
         failure_retention_period: typing.Optional[_Duration_4839e8c3] = None,
+        max_retries: typing.Optional[jsii.Number] = None,
         memory: typing.Optional[_Size_7b441c34] = None,
         provisioned_resource_cleanup: typing.Optional[builtins.bool] = None,
+        resources_to_replicate_tags: typing.Optional[typing.Sequence["ResourceToReplicateTags"]] = None,
         role: typing.Optional[_IRole_235f5d8e] = None,
         schedule: typing.Optional["Schedule"] = None,
         security_groups: typing.Optional[typing.Sequence[_ISecurityGroup_acf8a799]] = None,
@@ -623,11 +662,13 @@ class Canary(
         :param artifacts_bucket_location: The s3 location that stores the data of the canary runs. Default: - A new s3 bucket will be created without a prefix.
         :param canary_name: The name of the canary. Be sure to give it a descriptive name that distinguishes it from other canaries in your account. Do not include secrets or proprietary information in your canary name. The canary name makes up part of the canary ARN, which is included in outbound calls over the internet. Default: - A unique name will be generated from the construct ID
         :param cleanup: (deprecated) Specify the underlying resources to be cleaned up when the canary is deleted. Using ``Cleanup.LAMBDA`` will create a Custom Resource to achieve this. Default: Cleanup.NOTHING
-        :param dry_run_and_update: Specifies whether to perform a dry run before updating the canary. If set to true, CDK will execute a dry run to validate the changes before applying them to the canary. If the dry run succeeds, the canary will be updated with the changes. If the dry run fails, the CloudFormation deployment will fail with the dry run’s failure reason. If set to false or omitted, the canary will be updated directly without first performing a dry run. Default: undefined - AWS CloudWatch default is false
+        :param dry_run_and_update: Specifies whether to perform a dry run before updating the canary. If set to true, CDK will execute a dry run to validate the changes before applying them to the canary. If the dry run succeeds, the canary will be updated with the changes. If the dry run fails, the CloudFormation deployment will fail with the dry run's failure reason. If set to false or omitted, the canary will be updated directly without first performing a dry run. Default: undefined - AWS CloudWatch default is false
         :param environment_variables: Key-value pairs that the Synthetics caches and makes available for your canary scripts. Use environment variables to apply configuration changes, such as test and production environment configurations, without changing your Canary script source code. Default: - No environment variables.
         :param failure_retention_period: How many days should failed runs be retained. Default: Duration.days(31)
+        :param max_retries: The amount of times the canary will automatically retry a failed run. This is only supported on the following runtimes or newer: ``Runtime.SYNTHETICS_NODEJS_PUPPETEER_10_0``, ``Runtime.SYNTHETICS_NODEJS_PLAYWRIGHT_2_0``, ``Runtime.SYNTHETICS_PYTHON_SELENIUM_5_1``. Max retries can be set between 0 and 2. Canaries which time out after 10 minutes are automatically limited to one retry. Default: 0
         :param memory: The maximum amount of memory that the canary can use while running. This value must be a multiple of 64 Mib. The range is 960 MiB to 3008 MiB. Default: Size.mebibytes(1024)
         :param provisioned_resource_cleanup: Whether to also delete the Lambda functions and layers used by this canary when the canary is deleted. Default: undefined - the default behavior is to not delete the Lambda functions and layers
+        :param resources_to_replicate_tags: Specifies which resources should have their tags replicated to this canary. To have the tags that you apply to this canary also be applied to the Lambda function that the canary uses, specify this property with the value ResourceToReplicateTags.LAMBDA_FUNCTION. If you do this, CloudWatch Synthetics will keep the tags of the canary and the Lambda function synchronized. Any future changes you make to the canary's tags will also be applied to the function. Default: - No resources will have their tags replicated to this canary
         :param role: Canary execution role. This is the role that will be assumed by the canary upon execution. It controls the permissions that the canary will have. The role must be assumable by the AWS Lambda service principal. If not supplied, a role will be created with all the required permissions. If you provide a Role, you must add the required permissions. Default: - A unique role will be generated for this canary. You can add permissions to roles by calling 'addToRolePolicy'.
         :param schedule: Specify the schedule for how often the canary runs. For example, if you set ``schedule`` to ``rate(10 minutes)``, then the canary will run every 10 minutes. You can set the schedule with ``Schedule.rate(Duration)`` (recommended) or you can specify an expression using ``Schedule.expression()``. Default: 'rate(5 minutes)'
         :param security_groups: The list of security groups to associate with the canary's network interfaces. You must provide ``vpc`` when using this prop. Default: - If the canary is placed within a VPC and a security group is not specified a dedicated security group will be created for this canary.
@@ -655,8 +696,10 @@ class Canary(
             dry_run_and_update=dry_run_and_update,
             environment_variables=environment_variables,
             failure_retention_period=failure_retention_period,
+            max_retries=max_retries,
             memory=memory,
             provisioned_resource_cleanup=provisioned_resource_cleanup,
+            resources_to_replicate_tags=resources_to_replicate_tags,
             role=role,
             schedule=schedule,
             security_groups=security_groups,
@@ -896,8 +939,10 @@ class Canary(
         "dry_run_and_update": "dryRunAndUpdate",
         "environment_variables": "environmentVariables",
         "failure_retention_period": "failureRetentionPeriod",
+        "max_retries": "maxRetries",
         "memory": "memory",
         "provisioned_resource_cleanup": "provisionedResourceCleanup",
+        "resources_to_replicate_tags": "resourcesToReplicateTags",
         "role": "role",
         "schedule": "schedule",
         "security_groups": "securityGroups",
@@ -925,8 +970,10 @@ class CanaryProps:
         dry_run_and_update: typing.Optional[builtins.bool] = None,
         environment_variables: typing.Optional[typing.Mapping[builtins.str, builtins.str]] = None,
         failure_retention_period: typing.Optional[_Duration_4839e8c3] = None,
+        max_retries: typing.Optional[jsii.Number] = None,
         memory: typing.Optional[_Size_7b441c34] = None,
         provisioned_resource_cleanup: typing.Optional[builtins.bool] = None,
+        resources_to_replicate_tags: typing.Optional[typing.Sequence["ResourceToReplicateTags"]] = None,
         role: typing.Optional[_IRole_235f5d8e] = None,
         schedule: typing.Optional["Schedule"] = None,
         security_groups: typing.Optional[typing.Sequence[_ISecurityGroup_acf8a799]] = None,
@@ -948,11 +995,13 @@ class CanaryProps:
         :param artifacts_bucket_location: The s3 location that stores the data of the canary runs. Default: - A new s3 bucket will be created without a prefix.
         :param canary_name: The name of the canary. Be sure to give it a descriptive name that distinguishes it from other canaries in your account. Do not include secrets or proprietary information in your canary name. The canary name makes up part of the canary ARN, which is included in outbound calls over the internet. Default: - A unique name will be generated from the construct ID
         :param cleanup: (deprecated) Specify the underlying resources to be cleaned up when the canary is deleted. Using ``Cleanup.LAMBDA`` will create a Custom Resource to achieve this. Default: Cleanup.NOTHING
-        :param dry_run_and_update: Specifies whether to perform a dry run before updating the canary. If set to true, CDK will execute a dry run to validate the changes before applying them to the canary. If the dry run succeeds, the canary will be updated with the changes. If the dry run fails, the CloudFormation deployment will fail with the dry run’s failure reason. If set to false or omitted, the canary will be updated directly without first performing a dry run. Default: undefined - AWS CloudWatch default is false
+        :param dry_run_and_update: Specifies whether to perform a dry run before updating the canary. If set to true, CDK will execute a dry run to validate the changes before applying them to the canary. If the dry run succeeds, the canary will be updated with the changes. If the dry run fails, the CloudFormation deployment will fail with the dry run's failure reason. If set to false or omitted, the canary will be updated directly without first performing a dry run. Default: undefined - AWS CloudWatch default is false
         :param environment_variables: Key-value pairs that the Synthetics caches and makes available for your canary scripts. Use environment variables to apply configuration changes, such as test and production environment configurations, without changing your Canary script source code. Default: - No environment variables.
         :param failure_retention_period: How many days should failed runs be retained. Default: Duration.days(31)
+        :param max_retries: The amount of times the canary will automatically retry a failed run. This is only supported on the following runtimes or newer: ``Runtime.SYNTHETICS_NODEJS_PUPPETEER_10_0``, ``Runtime.SYNTHETICS_NODEJS_PLAYWRIGHT_2_0``, ``Runtime.SYNTHETICS_PYTHON_SELENIUM_5_1``. Max retries can be set between 0 and 2. Canaries which time out after 10 minutes are automatically limited to one retry. Default: 0
         :param memory: The maximum amount of memory that the canary can use while running. This value must be a multiple of 64 Mib. The range is 960 MiB to 3008 MiB. Default: Size.mebibytes(1024)
         :param provisioned_resource_cleanup: Whether to also delete the Lambda functions and layers used by this canary when the canary is deleted. Default: undefined - the default behavior is to not delete the Lambda functions and layers
+        :param resources_to_replicate_tags: Specifies which resources should have their tags replicated to this canary. To have the tags that you apply to this canary also be applied to the Lambda function that the canary uses, specify this property with the value ResourceToReplicateTags.LAMBDA_FUNCTION. If you do this, CloudWatch Synthetics will keep the tags of the canary and the Lambda function synchronized. Any future changes you make to the canary's tags will also be applied to the function. Default: - No resources will have their tags replicated to this canary
         :param role: Canary execution role. This is the role that will be assumed by the canary upon execution. It controls the permissions that the canary will have. The role must be assumable by the AWS Lambda service principal. If not supplied, a role will be created with all the required permissions. If you provide a Role, you must add the required permissions. Default: - A unique role will be generated for this canary. You can add permissions to roles by calling 'addToRolePolicy'.
         :param schedule: Specify the schedule for how often the canary runs. For example, if you set ``schedule`` to ``rate(10 minutes)``, then the canary will run every 10 minutes. You can set the schedule with ``Schedule.rate(Duration)`` (recommended) or you can specify an expression using ``Schedule.expression()``. Default: 'rate(5 minutes)'
         :param security_groups: The list of security groups to associate with the canary's network interfaces. You must provide ``vpc`` when using this prop. Default: - If the canary is placed within a VPC and a security group is not specified a dedicated security group will be created for this canary.
@@ -967,17 +1016,14 @@ class CanaryProps:
 
         Example::
 
-            import aws_cdk as cdk
-            
-            
             canary = synthetics.Canary(self, "MyCanary",
                 schedule=synthetics.Schedule.rate(Duration.minutes(5)),
                 test=synthetics.Test.custom(
                     code=synthetics.Code.from_asset(path.join(__dirname, "canary")),
                     handler="index.handler"
                 ),
-                runtime=synthetics.Runtime.SYNTHETICS_NODEJS_PUPPETEER_6_2,
-                memory=cdk.Size.mebibytes(1024)
+                runtime=synthetics.Runtime.SYNTHETICS_NODEJS_PUPPETEER_7_0,
+                resources_to_replicate_tags=[synthetics.ResourceToReplicateTags.LAMBDA_FUNCTION]
             )
         '''
         if isinstance(artifacts_bucket_location, dict):
@@ -998,8 +1044,10 @@ class CanaryProps:
             check_type(argname="argument dry_run_and_update", value=dry_run_and_update, expected_type=type_hints["dry_run_and_update"])
             check_type(argname="argument environment_variables", value=environment_variables, expected_type=type_hints["environment_variables"])
             check_type(argname="argument failure_retention_period", value=failure_retention_period, expected_type=type_hints["failure_retention_period"])
+            check_type(argname="argument max_retries", value=max_retries, expected_type=type_hints["max_retries"])
             check_type(argname="argument memory", value=memory, expected_type=type_hints["memory"])
             check_type(argname="argument provisioned_resource_cleanup", value=provisioned_resource_cleanup, expected_type=type_hints["provisioned_resource_cleanup"])
+            check_type(argname="argument resources_to_replicate_tags", value=resources_to_replicate_tags, expected_type=type_hints["resources_to_replicate_tags"])
             check_type(argname="argument role", value=role, expected_type=type_hints["role"])
             check_type(argname="argument schedule", value=schedule, expected_type=type_hints["schedule"])
             check_type(argname="argument security_groups", value=security_groups, expected_type=type_hints["security_groups"])
@@ -1033,10 +1081,14 @@ class CanaryProps:
             self._values["environment_variables"] = environment_variables
         if failure_retention_period is not None:
             self._values["failure_retention_period"] = failure_retention_period
+        if max_retries is not None:
+            self._values["max_retries"] = max_retries
         if memory is not None:
             self._values["memory"] = memory
         if provisioned_resource_cleanup is not None:
             self._values["provisioned_resource_cleanup"] = provisioned_resource_cleanup
+        if resources_to_replicate_tags is not None:
+            self._values["resources_to_replicate_tags"] = resources_to_replicate_tags
         if role is not None:
             self._values["role"] = role
         if schedule is not None:
@@ -1178,7 +1230,7 @@ class CanaryProps:
 
         If set to true, CDK will execute a dry run to validate the changes before applying them to the canary.
         If the dry run succeeds, the canary will be updated with the changes.
-        If the dry run fails, the CloudFormation deployment will fail with the dry run’s failure reason.
+        If the dry run fails, the CloudFormation deployment will fail with the dry run's failure reason.
 
         If set to false or omitted, the canary will be updated directly without first performing a dry run.
 
@@ -1214,6 +1266,20 @@ class CanaryProps:
         return typing.cast(typing.Optional[_Duration_4839e8c3], result)
 
     @builtins.property
+    def max_retries(self) -> typing.Optional[jsii.Number]:
+        '''The amount of times the canary will automatically retry a failed run.
+
+        This is only supported on the following runtimes or newer: ``Runtime.SYNTHETICS_NODEJS_PUPPETEER_10_0``, ``Runtime.SYNTHETICS_NODEJS_PLAYWRIGHT_2_0``, ``Runtime.SYNTHETICS_PYTHON_SELENIUM_5_1``.
+        Max retries can be set between 0 and 2. Canaries which time out after 10 minutes are automatically limited to one retry.
+
+        :default: 0
+
+        :see: https://docs.aws.amazon.com/AmazonCloudWatch/latest/monitoring/CloudWatch_Synthetics_Canaries_autoretry.html
+        '''
+        result = self._values.get("max_retries")
+        return typing.cast(typing.Optional[jsii.Number], result)
+
+    @builtins.property
     def memory(self) -> typing.Optional[_Size_7b441c34]:
         '''The maximum amount of memory that the canary can use while running.
 
@@ -1233,6 +1299,23 @@ class CanaryProps:
         '''
         result = self._values.get("provisioned_resource_cleanup")
         return typing.cast(typing.Optional[builtins.bool], result)
+
+    @builtins.property
+    def resources_to_replicate_tags(
+        self,
+    ) -> typing.Optional[typing.List["ResourceToReplicateTags"]]:
+        '''Specifies which resources should have their tags replicated to this canary.
+
+        To have the tags that you apply to this canary also be applied to the Lambda
+        function that the canary uses, specify this property with the value
+        ResourceToReplicateTags.LAMBDA_FUNCTION. If you do this, CloudWatch Synthetics will keep the tags of the canary and the
+        Lambda function synchronized. Any future changes you make to the canary's tags
+        will also be applied to the function.
+
+        :default: - No resources will have their tags replicated to this canary
+        '''
+        result = self._values.get("resources_to_replicate_tags")
+        return typing.cast(typing.Optional[typing.List["ResourceToReplicateTags"]], result)
 
     @builtins.property
     def role(self) -> typing.Optional[_IRole_235f5d8e]:
@@ -3495,17 +3578,14 @@ class Code(
 
     Example::
 
-        import aws_cdk as cdk
-        
-        
         canary = synthetics.Canary(self, "MyCanary",
             schedule=synthetics.Schedule.rate(Duration.minutes(5)),
             test=synthetics.Test.custom(
                 code=synthetics.Code.from_asset(path.join(__dirname, "canary")),
                 handler="index.handler"
             ),
-            runtime=synthetics.Runtime.SYNTHETICS_NODEJS_PUPPETEER_6_2,
-            memory=cdk.Size.mebibytes(1024)
+            runtime=synthetics.Runtime.SYNTHETICS_NODEJS_PUPPETEER_7_0,
+            resources_to_replicate_tags=[synthetics.ResourceToReplicateTags.LAMBDA_FUNCTION]
         )
     '''
 
@@ -3871,17 +3951,14 @@ class CustomTestOptions:
 
         Example::
 
-            import aws_cdk as cdk
-            
-            
             canary = synthetics.Canary(self, "MyCanary",
                 schedule=synthetics.Schedule.rate(Duration.minutes(5)),
                 test=synthetics.Test.custom(
                     code=synthetics.Code.from_asset(path.join(__dirname, "canary")),
                     handler="index.handler"
                 ),
-                runtime=synthetics.Runtime.SYNTHETICS_NODEJS_PUPPETEER_6_2,
-                memory=cdk.Size.mebibytes(1024)
+                runtime=synthetics.Runtime.SYNTHETICS_NODEJS_PUPPETEER_7_0,
+                resources_to_replicate_tags=[synthetics.ResourceToReplicateTags.LAMBDA_FUNCTION]
             )
         '''
         if __debug__:
@@ -3973,6 +4050,34 @@ class InlineCode(
         return typing.cast(CodeConfig, jsii.invoke(self, "bind", [scope, handler, _family, _runtime_name]))
 
 
+@jsii.enum(jsii_type="aws-cdk-lib.aws_synthetics.ResourceToReplicateTags")
+class ResourceToReplicateTags(enum.Enum):
+    '''Resources that tags applied to a canary should be replicated to.
+
+    :exampleMetadata: infused
+
+    Example::
+
+        canary = synthetics.Canary(self, "MyCanary",
+            schedule=synthetics.Schedule.rate(Duration.minutes(5)),
+            test=synthetics.Test.custom(
+                code=synthetics.Code.from_asset(path.join(__dirname, "canary")),
+                handler="index.handler"
+            ),
+            runtime=synthetics.Runtime.SYNTHETICS_NODEJS_PUPPETEER_7_0,
+            resources_to_replicate_tags=[synthetics.ResourceToReplicateTags.LAMBDA_FUNCTION]
+        )
+    '''
+
+    LAMBDA_FUNCTION = "LAMBDA_FUNCTION"
+    '''Replicate canary tags to the Lambda function.
+
+    When specified, CloudWatch Synthetics will keep the tags of the canary
+    and the Lambda function synchronized. Any future changes made to the
+    canary's tags will also be applied to the function.
+    '''
+
+
 class Runtime(metaclass=jsii.JSIIMeta, jsii_type="aws-cdk-lib.aws_synthetics.Runtime"):
     '''Runtime options for a canary.
 
@@ -3980,17 +4085,14 @@ class Runtime(metaclass=jsii.JSIIMeta, jsii_type="aws-cdk-lib.aws_synthetics.Run
 
     Example::
 
-        import aws_cdk as cdk
-        
-        
         canary = synthetics.Canary(self, "MyCanary",
             schedule=synthetics.Schedule.rate(Duration.minutes(5)),
             test=synthetics.Test.custom(
                 code=synthetics.Code.from_asset(path.join(__dirname, "canary")),
                 handler="index.handler"
             ),
-            runtime=synthetics.Runtime.SYNTHETICS_NODEJS_PUPPETEER_6_2,
-            memory=cdk.Size.mebibytes(1024)
+            runtime=synthetics.Runtime.SYNTHETICS_NODEJS_PUPPETEER_7_0,
+            resources_to_replicate_tags=[synthetics.ResourceToReplicateTags.LAMBDA_FUNCTION]
         )
     '''
 
@@ -4556,11 +4658,11 @@ class Schedule(
         canary = synthetics.Canary(self, "MyCanary",
             schedule=synthetics.Schedule.rate(Duration.minutes(5)),
             test=synthetics.Test.custom(
-                code=synthetics.Code.from_asset(path.join(__dirname, "canary")),
-                handler="index.handler"
+                handler="canary.handler",
+                code=synthetics.Code.from_asset(path.join(__dirname, "canaries"))
             ),
-            runtime=synthetics.Runtime.SYNTHETICS_NODEJS_PUPPETEER_6_2,
-            active_tracing=True
+            runtime=synthetics.Runtime.SYNTHETICS_PYTHON_SELENIUM_5_1,
+            max_retries=2
         )
     '''
 
@@ -4639,17 +4741,14 @@ class Test(metaclass=jsii.JSIIMeta, jsii_type="aws-cdk-lib.aws_synthetics.Test")
 
     Example::
 
-        import aws_cdk as cdk
-        
-        
         canary = synthetics.Canary(self, "MyCanary",
             schedule=synthetics.Schedule.rate(Duration.minutes(5)),
             test=synthetics.Test.custom(
                 code=synthetics.Code.from_asset(path.join(__dirname, "canary")),
                 handler="index.handler"
             ),
-            runtime=synthetics.Runtime.SYNTHETICS_NODEJS_PUPPETEER_6_2,
-            memory=cdk.Size.mebibytes(1024)
+            runtime=synthetics.Runtime.SYNTHETICS_NODEJS_PUPPETEER_7_0,
+            resources_to_replicate_tags=[synthetics.ResourceToReplicateTags.LAMBDA_FUNCTION]
         )
     '''
 
@@ -4828,6 +4927,7 @@ __all__ = [
     "CronOptions",
     "CustomTestOptions",
     "InlineCode",
+    "ResourceToReplicateTags",
     "Runtime",
     "RuntimeFamily",
     "S3Code",
@@ -4861,8 +4961,10 @@ def _typecheckingstub__b3b6d76e5f93e31884e16cc00a9b4fc93e6782ff7db09c74aa1ef9346
     dry_run_and_update: typing.Optional[builtins.bool] = None,
     environment_variables: typing.Optional[typing.Mapping[builtins.str, builtins.str]] = None,
     failure_retention_period: typing.Optional[_Duration_4839e8c3] = None,
+    max_retries: typing.Optional[jsii.Number] = None,
     memory: typing.Optional[_Size_7b441c34] = None,
     provisioned_resource_cleanup: typing.Optional[builtins.bool] = None,
+    resources_to_replicate_tags: typing.Optional[typing.Sequence[ResourceToReplicateTags]] = None,
     role: typing.Optional[_IRole_235f5d8e] = None,
     schedule: typing.Optional[Schedule] = None,
     security_groups: typing.Optional[typing.Sequence[_ISecurityGroup_acf8a799]] = None,
@@ -4890,8 +4992,10 @@ def _typecheckingstub__44ec0b14d52b66927d4daebe6f97bb070f3629bb0eb86e21668ca7862
     dry_run_and_update: typing.Optional[builtins.bool] = None,
     environment_variables: typing.Optional[typing.Mapping[builtins.str, builtins.str]] = None,
     failure_retention_period: typing.Optional[_Duration_4839e8c3] = None,
+    max_retries: typing.Optional[jsii.Number] = None,
     memory: typing.Optional[_Size_7b441c34] = None,
     provisioned_resource_cleanup: typing.Optional[builtins.bool] = None,
+    resources_to_replicate_tags: typing.Optional[typing.Sequence[ResourceToReplicateTags]] = None,
     role: typing.Optional[_IRole_235f5d8e] = None,
     schedule: typing.Optional[Schedule] = None,
     security_groups: typing.Optional[typing.Sequence[_ISecurityGroup_acf8a799]] = None,

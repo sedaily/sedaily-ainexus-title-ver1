@@ -187,11 +187,12 @@ if __name__ == "__main__":
     # Test handler locally
     test_event = {
         "type": "REQUEST",
-        "methodArn": "arn:aws:execute-api:us-east-1:123456789012:abcdef123/prod/POST/chat",
+        "methodArn": "arn:aws:execute-api:REGION:ACCOUNT_ID:API_ID/STAGE/METHOD/RESOURCE",
         "headers": {
-            "Authorization": "Bearer eyJhbGciOiJSUzI1NiJ9..."  # Replace with actual token
+            "Authorization": "Bearer YOUR_TOKEN_HERE"
         }
     }
     
-    result = handler(test_event, None)
-    print(json.dumps(result, indent=2))
+    # Uncomment to test
+    # result = handler(test_event, None)
+    # print(json.dumps(result, indent=2))

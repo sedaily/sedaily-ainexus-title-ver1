@@ -527,6 +527,12 @@ class CfnTable(
                     write_capacity_units=123
                 )
             ),
+            cdc_specification=cassandra.CfnTable.CdcSpecificationProperty(
+                status="status",
+        
+                # the properties below are optional
+                view_type="viewType"
+            ),
             client_side_timestamps_enabled=False,
             clustering_key_columns=[cassandra.CfnTable.ClusteringKeyColumnProperty(
                 column=cassandra.CfnTable.ColumnProperty(
@@ -587,6 +593,7 @@ class CfnTable(
         partition_key_columns: typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union["CfnTable.ColumnProperty", typing.Dict[builtins.str, typing.Any]]]]],
         auto_scaling_specifications: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnTable.AutoScalingSpecificationProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
         billing_mode: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnTable.BillingModeProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
+        cdc_specification: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnTable.CdcSpecificationProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
         client_side_timestamps_enabled: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
         clustering_key_columns: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union["CfnTable.ClusteringKeyColumnProperty", typing.Dict[builtins.str, typing.Any]]]]]] = None,
         default_time_to_live: typing.Optional[jsii.Number] = None,
@@ -604,6 +611,7 @@ class CfnTable(
         :param partition_key_columns: One or more columns that uniquely identify every row in the table. Every table must have a partition key.
         :param auto_scaling_specifications: The optional auto scaling capacity settings for a table in provisioned capacity mode.
         :param billing_mode: The billing mode for the table, which determines how you'll be charged for reads and writes:. - *On-demand mode* (default) - You pay based on the actual reads and writes your application performs. - *Provisioned mode* - Lets you specify the number of reads and writes per second that you need for your application. If you don't specify a value for this property, then the table will use on-demand mode.
+        :param cdc_specification: The settings for the CDC stream of a table. For more information about CDC streams, see `Working with change data capture (CDC) streams in Amazon Keyspaces <https://docs.aws.amazon.com/keyspaces/latest/devguide/cdc.html>`_ in the *Amazon Keyspaces Developer Guide* .
         :param client_side_timestamps_enabled: Enables client-side timestamps for the table. By default, the setting is disabled. You can enable client-side timestamps with the following option: - ``status: "enabled"`` After client-side timestamps are enabled for a table, you can't disable this setting.
         :param clustering_key_columns: One or more columns that determine how the table data is sorted.
         :param default_time_to_live: The default Time To Live (TTL) value for all rows in a table in seconds. The maximum configurable value is 630,720,000 seconds, which is the equivalent of 20 years. By default, the TTL value for a table is 0, which means data does not expire. For more information, see `Setting the default TTL value for a table <https://docs.aws.amazon.com/keyspaces/latest/devguide/TTL-how-it-works.html#ttl-howitworks_default_ttl>`_ in the *Amazon Keyspaces Developer Guide* .
@@ -623,6 +631,7 @@ class CfnTable(
             partition_key_columns=partition_key_columns,
             auto_scaling_specifications=auto_scaling_specifications,
             billing_mode=billing_mode,
+            cdc_specification=cdc_specification,
             client_side_timestamps_enabled=client_side_timestamps_enabled,
             clustering_key_columns=clustering_key_columns,
             default_time_to_live=default_time_to_live,
@@ -743,6 +752,24 @@ class CfnTable(
             type_hints = typing.get_type_hints(_typecheckingstub__b2219a43361bf3ff1d1bf29e1b2907d75a53df3b7016d534579938eea5d4e91d)
             check_type(argname="argument value", value=value, expected_type=type_hints["value"])
         jsii.set(self, "billingMode", value) # pyright: ignore[reportArgumentType]
+
+    @builtins.property
+    @jsii.member(jsii_name="cdcSpecification")
+    def cdc_specification(
+        self,
+    ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnTable.CdcSpecificationProperty"]]:
+        '''The settings for the CDC stream of a table.'''
+        return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnTable.CdcSpecificationProperty"]], jsii.get(self, "cdcSpecification"))
+
+    @cdc_specification.setter
+    def cdc_specification(
+        self,
+        value: typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnTable.CdcSpecificationProperty"]],
+    ) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__6d6f243fb6b53b3d40f8fc1ed0b3c81e11937e534f5c4e508a4afcf41e5bb3b5)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "cdcSpecification", value) # pyright: ignore[reportArgumentType]
 
     @builtins.property
     @jsii.member(jsii_name="clientSideTimestampsEnabled")
@@ -1223,6 +1250,94 @@ class CfnTable(
 
         def __repr__(self) -> str:
             return "BillingModeProperty(%s)" % ", ".join(
+                k + "=" + repr(v) for k, v in self._values.items()
+            )
+
+    @jsii.data_type(
+        jsii_type="aws-cdk-lib.aws_cassandra.CfnTable.CdcSpecificationProperty",
+        jsii_struct_bases=[],
+        name_mapping={"status": "status", "view_type": "viewType"},
+    )
+    class CdcSpecificationProperty:
+        def __init__(
+            self,
+            *,
+            status: builtins.str,
+            view_type: typing.Optional[builtins.str] = None,
+        ) -> None:
+            '''The settings for the CDC stream of a table.
+
+            For more information about CDC streams, see `Working with change data capture (CDC) streams in Amazon Keyspaces <https://docs.aws.amazon.com/keyspaces/latest/devguide/cdc.html>`_ in the *Amazon Keyspaces Developer Guide* .
+
+            :param status: The status of the CDC stream. You can enable or disable a stream for a table.
+            :param view_type: The view type specifies the changes Amazon Keyspaces records for each changed row in the stream. After you create the stream, you can't make changes to this selection. The options are: - ``NEW_AND_OLD_IMAGES`` - both versions of the row, before and after the change. This is the default. - ``NEW_IMAGE`` - the version of the row after the change. - ``OLD_IMAGE`` - the version of the row before the change. - ``KEYS_ONLY`` - the partition and clustering keys of the row that was changed. Default: - "NEW_AND_OLD_IMAGES"
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cassandra-table-cdcspecification.html
+            :exampleMetadata: fixture=_generated
+
+            Example::
+
+                # The code below shows an example of how to instantiate this type.
+                # The values are placeholders you should change.
+                from aws_cdk import aws_cassandra as cassandra
+                
+                cdc_specification_property = cassandra.CfnTable.CdcSpecificationProperty(
+                    status="status",
+                
+                    # the properties below are optional
+                    view_type="viewType"
+                )
+            '''
+            if __debug__:
+                type_hints = typing.get_type_hints(_typecheckingstub__504eaef70818f1cb4ead5434397a50494cf33314a00fe4e3045dad5cdcd7b160)
+                check_type(argname="argument status", value=status, expected_type=type_hints["status"])
+                check_type(argname="argument view_type", value=view_type, expected_type=type_hints["view_type"])
+            self._values: typing.Dict[builtins.str, typing.Any] = {
+                "status": status,
+            }
+            if view_type is not None:
+                self._values["view_type"] = view_type
+
+        @builtins.property
+        def status(self) -> builtins.str:
+            '''The status of the CDC stream.
+
+            You can enable or disable a stream for a table.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cassandra-table-cdcspecification.html#cfn-cassandra-table-cdcspecification-status
+            '''
+            result = self._values.get("status")
+            assert result is not None, "Required property 'status' is missing"
+            return typing.cast(builtins.str, result)
+
+        @builtins.property
+        def view_type(self) -> typing.Optional[builtins.str]:
+            '''The view type specifies the changes Amazon Keyspaces records for each changed row in the stream.
+
+            After you create the stream, you can't make changes to this selection.
+
+            The options are:
+
+            - ``NEW_AND_OLD_IMAGES`` - both versions of the row, before and after the change. This is the default.
+            - ``NEW_IMAGE`` - the version of the row after the change.
+            - ``OLD_IMAGE`` - the version of the row before the change.
+            - ``KEYS_ONLY`` - the partition and clustering keys of the row that was changed.
+
+            :default: - "NEW_AND_OLD_IMAGES"
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cassandra-table-cdcspecification.html#cfn-cassandra-table-cdcspecification-viewtype
+            '''
+            result = self._values.get("view_type")
+            return typing.cast(typing.Optional[builtins.str], result)
+
+        def __eq__(self, rhs: typing.Any) -> builtins.bool:
+            return isinstance(rhs, self.__class__) and rhs._values == self._values
+
+        def __ne__(self, rhs: typing.Any) -> builtins.bool:
+            return not (rhs == self)
+
+        def __repr__(self) -> str:
+            return "CdcSpecificationProperty(%s)" % ", ".join(
                 k + "=" + repr(v) for k, v in self._values.items()
             )
 
@@ -1875,6 +1990,7 @@ class CfnTable(
         "partition_key_columns": "partitionKeyColumns",
         "auto_scaling_specifications": "autoScalingSpecifications",
         "billing_mode": "billingMode",
+        "cdc_specification": "cdcSpecification",
         "client_side_timestamps_enabled": "clientSideTimestampsEnabled",
         "clustering_key_columns": "clusteringKeyColumns",
         "default_time_to_live": "defaultTimeToLive",
@@ -1894,6 +2010,7 @@ class CfnTableProps:
         partition_key_columns: typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnTable.ColumnProperty, typing.Dict[builtins.str, typing.Any]]]]],
         auto_scaling_specifications: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnTable.AutoScalingSpecificationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
         billing_mode: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnTable.BillingModeProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
+        cdc_specification: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnTable.CdcSpecificationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
         client_side_timestamps_enabled: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
         clustering_key_columns: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnTable.ClusteringKeyColumnProperty, typing.Dict[builtins.str, typing.Any]]]]]] = None,
         default_time_to_live: typing.Optional[jsii.Number] = None,
@@ -1910,6 +2027,7 @@ class CfnTableProps:
         :param partition_key_columns: One or more columns that uniquely identify every row in the table. Every table must have a partition key.
         :param auto_scaling_specifications: The optional auto scaling capacity settings for a table in provisioned capacity mode.
         :param billing_mode: The billing mode for the table, which determines how you'll be charged for reads and writes:. - *On-demand mode* (default) - You pay based on the actual reads and writes your application performs. - *Provisioned mode* - Lets you specify the number of reads and writes per second that you need for your application. If you don't specify a value for this property, then the table will use on-demand mode.
+        :param cdc_specification: The settings for the CDC stream of a table. For more information about CDC streams, see `Working with change data capture (CDC) streams in Amazon Keyspaces <https://docs.aws.amazon.com/keyspaces/latest/devguide/cdc.html>`_ in the *Amazon Keyspaces Developer Guide* .
         :param client_side_timestamps_enabled: Enables client-side timestamps for the table. By default, the setting is disabled. You can enable client-side timestamps with the following option: - ``status: "enabled"`` After client-side timestamps are enabled for a table, you can't disable this setting.
         :param clustering_key_columns: One or more columns that determine how the table data is sorted.
         :param default_time_to_live: The default Time To Live (TTL) value for all rows in a table in seconds. The maximum configurable value is 630,720,000 seconds, which is the equivalent of 20 years. By default, the TTL value for a table is 0, which means data does not expire. For more information, see `Setting the default TTL value for a table <https://docs.aws.amazon.com/keyspaces/latest/devguide/TTL-how-it-works.html#ttl-howitworks_default_ttl>`_ in the *Amazon Keyspaces Developer Guide* .
@@ -1978,6 +2096,12 @@ class CfnTableProps:
                         write_capacity_units=123
                     )
                 ),
+                cdc_specification=cassandra.CfnTable.CdcSpecificationProperty(
+                    status="status",
+            
+                    # the properties below are optional
+                    view_type="viewType"
+                ),
                 client_side_timestamps_enabled=False,
                 clustering_key_columns=[cassandra.CfnTable.ClusteringKeyColumnProperty(
                     column=cassandra.CfnTable.ColumnProperty(
@@ -2034,6 +2158,7 @@ class CfnTableProps:
             check_type(argname="argument partition_key_columns", value=partition_key_columns, expected_type=type_hints["partition_key_columns"])
             check_type(argname="argument auto_scaling_specifications", value=auto_scaling_specifications, expected_type=type_hints["auto_scaling_specifications"])
             check_type(argname="argument billing_mode", value=billing_mode, expected_type=type_hints["billing_mode"])
+            check_type(argname="argument cdc_specification", value=cdc_specification, expected_type=type_hints["cdc_specification"])
             check_type(argname="argument client_side_timestamps_enabled", value=client_side_timestamps_enabled, expected_type=type_hints["client_side_timestamps_enabled"])
             check_type(argname="argument clustering_key_columns", value=clustering_key_columns, expected_type=type_hints["clustering_key_columns"])
             check_type(argname="argument default_time_to_live", value=default_time_to_live, expected_type=type_hints["default_time_to_live"])
@@ -2051,6 +2176,8 @@ class CfnTableProps:
             self._values["auto_scaling_specifications"] = auto_scaling_specifications
         if billing_mode is not None:
             self._values["billing_mode"] = billing_mode
+        if cdc_specification is not None:
+            self._values["cdc_specification"] = cdc_specification
         if client_side_timestamps_enabled is not None:
             self._values["client_side_timestamps_enabled"] = client_side_timestamps_enabled
         if clustering_key_columns is not None:
@@ -2122,6 +2249,19 @@ class CfnTableProps:
         '''
         result = self._values.get("billing_mode")
         return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, CfnTable.BillingModeProperty]], result)
+
+    @builtins.property
+    def cdc_specification(
+        self,
+    ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, CfnTable.CdcSpecificationProperty]]:
+        '''The settings for the CDC stream of a table.
+
+        For more information about CDC streams, see `Working with change data capture (CDC) streams in Amazon Keyspaces <https://docs.aws.amazon.com/keyspaces/latest/devguide/cdc.html>`_ in the *Amazon Keyspaces Developer Guide* .
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cassandra-table.html#cfn-cassandra-table-cdcspecification
+        '''
+        result = self._values.get("cdc_specification")
+        return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, CfnTable.CdcSpecificationProperty]], result)
 
     @builtins.property
     def client_side_timestamps_enabled(
@@ -2713,6 +2853,7 @@ def _typecheckingstub__9d6fd025c7c0c8d4a27519b568ec6952b027c14ffb932a0cd5e53f0aa
     partition_key_columns: typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnTable.ColumnProperty, typing.Dict[builtins.str, typing.Any]]]]],
     auto_scaling_specifications: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnTable.AutoScalingSpecificationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
     billing_mode: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnTable.BillingModeProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
+    cdc_specification: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnTable.CdcSpecificationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
     client_side_timestamps_enabled: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
     clustering_key_columns: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnTable.ClusteringKeyColumnProperty, typing.Dict[builtins.str, typing.Any]]]]]] = None,
     default_time_to_live: typing.Optional[jsii.Number] = None,
@@ -2758,6 +2899,12 @@ def _typecheckingstub__3195a4a3cd982603dec093989818a9b10de0aea3609d08a8cb43f320b
 
 def _typecheckingstub__b2219a43361bf3ff1d1bf29e1b2907d75a53df3b7016d534579938eea5d4e91d(
     value: typing.Optional[typing.Union[_IResolvable_da3f097b, CfnTable.BillingModeProperty]],
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__6d6f243fb6b53b3d40f8fc1ed0b3c81e11937e534f5c4e508a4afcf41e5bb3b5(
+    value: typing.Optional[typing.Union[_IResolvable_da3f097b, CfnTable.CdcSpecificationProperty]],
 ) -> None:
     """Type checking stubs"""
     pass
@@ -2842,6 +2989,14 @@ def _typecheckingstub__1b57c6da9515480ece2b86b6971f8563bcf0c49dab50c8c6e234c443b
     """Type checking stubs"""
     pass
 
+def _typecheckingstub__504eaef70818f1cb4ead5434397a50494cf33314a00fe4e3045dad5cdcd7b160(
+    *,
+    status: builtins.str,
+    view_type: typing.Optional[builtins.str] = None,
+) -> None:
+    """Type checking stubs"""
+    pass
+
 def _typecheckingstub__0c4989a761d5af337ce8ad918b2d543390cab5ea5d5ea82741f1c3416e00d794(
     *,
     column: typing.Union[_IResolvable_da3f097b, typing.Union[CfnTable.ColumnProperty, typing.Dict[builtins.str, typing.Any]]],
@@ -2906,6 +3061,7 @@ def _typecheckingstub__bd1ff29b1ec22382a7c3d14031657668106b0fcd843c06a96897bcadf
     partition_key_columns: typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnTable.ColumnProperty, typing.Dict[builtins.str, typing.Any]]]]],
     auto_scaling_specifications: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnTable.AutoScalingSpecificationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
     billing_mode: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnTable.BillingModeProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
+    cdc_specification: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnTable.CdcSpecificationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
     client_side_timestamps_enabled: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
     clustering_key_columns: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnTable.ClusteringKeyColumnProperty, typing.Dict[builtins.str, typing.Any]]]]]] = None,
     default_time_to_live: typing.Optional[jsii.Number] = None,

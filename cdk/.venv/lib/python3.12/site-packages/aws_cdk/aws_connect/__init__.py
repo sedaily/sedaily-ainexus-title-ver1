@@ -2281,7 +2281,7 @@ class CfnEvaluationForm(
             enabled: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
         ) -> None:
             '''
-            :param enabled: Auto Evaluation enablement status.
+            :param enabled: 
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-connect-evaluationform-autoevaluationconfiguration.html
             :exampleMetadata: fixture=_generated
@@ -2307,8 +2307,7 @@ class CfnEvaluationForm(
         def enabled(
             self,
         ) -> typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]]:
-            '''Auto Evaluation enablement status.
-
+            '''
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-connect-evaluationform-autoevaluationconfiguration.html#cfn-connect-evaluationform-autoevaluationconfiguration-enabled
             '''
             result = self._values.get("enabled")
@@ -5276,6 +5275,11 @@ class CfnInstance(
                 contactflow_logs=False,
                 contact_lens=False,
                 early_media=False,
+                enhanced_chat_monitoring=False,
+                enhanced_contact_monitoring=False,
+                high_volume_out_bound=False,
+                multi_party_chat_conference=False,
+                multi_party_conference=False,
                 use_custom_tts_voices=False
             ),
             identity_management_type="identityManagementType",
@@ -5492,6 +5496,11 @@ class CfnInstance(
             "contactflow_logs": "contactflowLogs",
             "contact_lens": "contactLens",
             "early_media": "earlyMedia",
+            "enhanced_chat_monitoring": "enhancedChatMonitoring",
+            "enhanced_contact_monitoring": "enhancedContactMonitoring",
+            "high_volume_out_bound": "highVolumeOutBound",
+            "multi_party_chat_conference": "multiPartyChatConference",
+            "multi_party_conference": "multiPartyConference",
             "use_custom_tts_voices": "useCustomTtsVoices",
         },
     )
@@ -5505,6 +5514,11 @@ class CfnInstance(
             contactflow_logs: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
             contact_lens: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
             early_media: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
+            enhanced_chat_monitoring: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
+            enhanced_contact_monitoring: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
+            high_volume_out_bound: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
+            multi_party_chat_conference: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
+            multi_party_conference: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
             use_custom_tts_voices: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
         ) -> None:
             '''*This is a preview release for Amazon Connect .
@@ -5517,6 +5531,11 @@ class CfnInstance(
             :param contactflow_logs: Boolean flag which enables CONTACTFLOW_LOGS on an instance.
             :param contact_lens: Boolean flag which enables CONTACT_LENS on an instance.
             :param early_media: Boolean flag which enables EARLY_MEDIA on an instance.
+            :param enhanced_chat_monitoring: Boolean flag which enables ENHANCED_CHAT_MONITORING on an instance.
+            :param enhanced_contact_monitoring: Boolean flag which enables ENHANCED_CONTACT_MONITORING on an instance.
+            :param high_volume_out_bound: Boolean flag which enables HIGH_VOLUME_OUTBOUND on an instance.
+            :param multi_party_chat_conference: Boolean flag which enables MULTI_PARTY_CHAT_CONFERENCE on an instance.
+            :param multi_party_conference: Boolean flag which enables MULTI_PARTY_CONFERENCE on an instance.
             :param use_custom_tts_voices: Boolean flag which enables USE_CUSTOM_TTS_VOICES on an instance.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-connect-instance-attributes.html
@@ -5537,6 +5556,11 @@ class CfnInstance(
                     contactflow_logs=False,
                     contact_lens=False,
                     early_media=False,
+                    enhanced_chat_monitoring=False,
+                    enhanced_contact_monitoring=False,
+                    high_volume_out_bound=False,
+                    multi_party_chat_conference=False,
+                    multi_party_conference=False,
                     use_custom_tts_voices=False
                 )
             '''
@@ -5548,6 +5572,11 @@ class CfnInstance(
                 check_type(argname="argument contactflow_logs", value=contactflow_logs, expected_type=type_hints["contactflow_logs"])
                 check_type(argname="argument contact_lens", value=contact_lens, expected_type=type_hints["contact_lens"])
                 check_type(argname="argument early_media", value=early_media, expected_type=type_hints["early_media"])
+                check_type(argname="argument enhanced_chat_monitoring", value=enhanced_chat_monitoring, expected_type=type_hints["enhanced_chat_monitoring"])
+                check_type(argname="argument enhanced_contact_monitoring", value=enhanced_contact_monitoring, expected_type=type_hints["enhanced_contact_monitoring"])
+                check_type(argname="argument high_volume_out_bound", value=high_volume_out_bound, expected_type=type_hints["high_volume_out_bound"])
+                check_type(argname="argument multi_party_chat_conference", value=multi_party_chat_conference, expected_type=type_hints["multi_party_chat_conference"])
+                check_type(argname="argument multi_party_conference", value=multi_party_conference, expected_type=type_hints["multi_party_conference"])
                 check_type(argname="argument use_custom_tts_voices", value=use_custom_tts_voices, expected_type=type_hints["use_custom_tts_voices"])
             self._values: typing.Dict[builtins.str, typing.Any] = {
                 "inbound_calls": inbound_calls,
@@ -5561,6 +5590,16 @@ class CfnInstance(
                 self._values["contact_lens"] = contact_lens
             if early_media is not None:
                 self._values["early_media"] = early_media
+            if enhanced_chat_monitoring is not None:
+                self._values["enhanced_chat_monitoring"] = enhanced_chat_monitoring
+            if enhanced_contact_monitoring is not None:
+                self._values["enhanced_contact_monitoring"] = enhanced_contact_monitoring
+            if high_volume_out_bound is not None:
+                self._values["high_volume_out_bound"] = high_volume_out_bound
+            if multi_party_chat_conference is not None:
+                self._values["multi_party_chat_conference"] = multi_party_chat_conference
+            if multi_party_conference is not None:
+                self._values["multi_party_conference"] = multi_party_conference
             if use_custom_tts_voices is not None:
                 self._values["use_custom_tts_voices"] = use_custom_tts_voices
 
@@ -5626,6 +5665,61 @@ class CfnInstance(
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-connect-instance-attributes.html#cfn-connect-instance-attributes-earlymedia
             '''
             result = self._values.get("early_media")
+            return typing.cast(typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]], result)
+
+        @builtins.property
+        def enhanced_chat_monitoring(
+            self,
+        ) -> typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]]:
+            '''Boolean flag which enables ENHANCED_CHAT_MONITORING on an instance.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-connect-instance-attributes.html#cfn-connect-instance-attributes-enhancedchatmonitoring
+            '''
+            result = self._values.get("enhanced_chat_monitoring")
+            return typing.cast(typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]], result)
+
+        @builtins.property
+        def enhanced_contact_monitoring(
+            self,
+        ) -> typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]]:
+            '''Boolean flag which enables ENHANCED_CONTACT_MONITORING on an instance.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-connect-instance-attributes.html#cfn-connect-instance-attributes-enhancedcontactmonitoring
+            '''
+            result = self._values.get("enhanced_contact_monitoring")
+            return typing.cast(typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]], result)
+
+        @builtins.property
+        def high_volume_out_bound(
+            self,
+        ) -> typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]]:
+            '''Boolean flag which enables HIGH_VOLUME_OUTBOUND on an instance.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-connect-instance-attributes.html#cfn-connect-instance-attributes-highvolumeoutbound
+            '''
+            result = self._values.get("high_volume_out_bound")
+            return typing.cast(typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]], result)
+
+        @builtins.property
+        def multi_party_chat_conference(
+            self,
+        ) -> typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]]:
+            '''Boolean flag which enables MULTI_PARTY_CHAT_CONFERENCE on an instance.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-connect-instance-attributes.html#cfn-connect-instance-attributes-multipartychatconference
+            '''
+            result = self._values.get("multi_party_chat_conference")
+            return typing.cast(typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]], result)
+
+        @builtins.property
+        def multi_party_conference(
+            self,
+        ) -> typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]]:
+            '''Boolean flag which enables MULTI_PARTY_CONFERENCE on an instance.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-connect-instance-attributes.html#cfn-connect-instance-attributes-multipartyconference
+            '''
+            result = self._values.get("multi_party_conference")
             return typing.cast(typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]], result)
 
         @builtins.property
@@ -5699,6 +5793,11 @@ class CfnInstanceProps:
                     contactflow_logs=False,
                     contact_lens=False,
                     early_media=False,
+                    enhanced_chat_monitoring=False,
+                    enhanced_contact_monitoring=False,
+                    high_volume_out_bound=False,
+                    multi_party_chat_conference=False,
+                    multi_party_conference=False,
                     use_custom_tts_voices=False
                 ),
                 identity_management_type="identityManagementType",
@@ -17456,6 +17555,11 @@ def _typecheckingstub__c40aedafdc4ea4fb2b717cc5c6ef0e2db4eb7490be99c35b78dc90f18
     contactflow_logs: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
     contact_lens: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
     early_media: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
+    enhanced_chat_monitoring: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
+    enhanced_contact_monitoring: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
+    high_volume_out_bound: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
+    multi_party_chat_conference: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
+    multi_party_conference: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
     use_custom_tts_voices: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
 ) -> None:
     """Type checking stubs"""

@@ -1452,45 +1452,46 @@ class CfnGlobalTable(
     You should be aware of the following behaviors when working with DynamoDB global tables.
 
     - The IAM Principal executing the stack operation must have the permissions listed below in all regions where you plan to have a global table replica. The IAM Principal's permissions should not have restrictions based on IP source address. Some global tables operations (for example, adding a replica) are asynchronous, and require that the IAM Principal is valid until they complete. You should not delete the Principal (user or IAM role) until CloudFormation has finished updating your stack.
+    - ``application-autoscaling:DeleteScalingPolicy``
+    - ``application-autoscaling:DeleteScheduledAction``
+    - ``application-autoscaling:DeregisterScalableTarget``
+    - ``application-autoscaling:DescribeScalableTargets``
+    - ``application-autoscaling:DescribeScalingPolicies``
+    - ``application-autoscaling:PutScalingPolicy``
+    - ``application-autoscaling:PutScheduledAction``
+    - ``application-autoscaling:RegisterScalableTarget``
+    - ``dynamodb:BatchWriteItem``
+    - ``dynamodb:CreateGlobalTableWitness``
     - ``dynamodb:CreateTable``
-    - ``dynamodb:UpdateTable``
+    - ``dynamodb:CreateTableReplica``
+    - ``dynamodb:DeleteGlobalTableWitness``
+    - ``dynamodb:DeleteItem``
     - ``dynamodb:DeleteTable``
+    - ``dynamodb:DeleteTableReplica``
     - ``dynamodb:DescribeContinuousBackups``
     - ``dynamodb:DescribeContributorInsights``
     - ``dynamodb:DescribeTable``
     - ``dynamodb:DescribeTableReplicaAutoScaling``
     - ``dynamodb:DescribeTimeToLive``
-    - ``dynamodb:ListTables``
-    - ``dynamodb:UpdateTimeToLive``
-    - ``dynamodb:UpdateContributorInsights``
-    - ``dynamodb:UpdateContinuousBackups``
-    - ``dynamodb:ListTagsOfResource``
-    - ``dynamodb:TagResource``
-    - ``dynamodb:UntagResource``
-    - ``dynamodb:BatchWriteItem``
-    - ``dynamodb:CreateTableReplica``
-    - ``dynamodb:DeleteItem``
-    - ``dynamodb:DeleteTableReplica``
     - ``dynamodb:DisableKinesisStreamingDestination``
     - ``dynamodb:EnableKinesisStreamingDestination``
     - ``dynamodb:GetItem``
+    - ``dynamodb:ListTables``
+    - ``dynamodb:ListTagsOfResource``
     - ``dynamodb:PutItem``
     - ``dynamodb:Query``
     - ``dynamodb:Scan``
+    - ``dynamodb:TagResource``
+    - ``dynamodb:UntagResource``
+    - ``dynamodb:UpdateContinuousBackups``
+    - ``dynamodb:UpdateContributorInsights``
     - ``dynamodb:UpdateItem``
-    - ``dynamodb:DescribeTableReplicaAutoScaling``
+    - ``dynamodb:UpdateTable``
     - ``dynamodb:UpdateTableReplicaAutoScaling``
+    - ``dynamodb:UpdateTimeToLive``
     - ``iam:CreateServiceLinkedRole``
     - ``kms:CreateGrant``
     - ``kms:DescribeKey``
-    - ``application-autoscaling:DeleteScalingPolicy``
-    - ``application-autoscaling:DeleteScheduledAction``
-    - ``application-autoscaling:DeregisterScalableTarget``
-    - ``application-autoscaling:DescribeScalingPolicies``
-    - ``application-autoscaling:DescribeScalableTargets``
-    - ``application-autoscaling:PutScalingPolicy``
-    - ``application-autoscaling:PutScheduledAction``
-    - ``application-autoscaling:RegisterScalableTarget``
     - When using provisioned billing mode, CloudFormation will create an auto scaling policy on each of your replicas to control their write capacities. You must configure this policy using the ``WriteProvisionedThroughputSettings`` property. CloudFormation will ensure that all replicas have the same write capacity auto scaling property. You cannot directly specify a value for write capacity for a global table.
     - If your table uses provisioned capacity, you must configure auto scaling directly in the ``AWS::DynamoDB::GlobalTable`` resource. You should not configure additional auto scaling policies on any of the table replicas or global secondary indexes, either via API or via ``AWS::ApplicationAutoScaling::ScalableTarget`` or ``AWS::ApplicationAutoScaling::ScalingPolicy`` . Doing so might result in unexpected behavior and is unsupported.
     - In AWS CloudFormation , each global table is controlled by a single stack, in a single region, regardless of the number of replicas. When you deploy your template, CloudFormation will create/update all replicas as part of a single stack operation. You should not deploy the same ``AWS::DynamoDB::GlobalTable`` resource in multiple regions. Doing so will result in errors, and is unsupported. If you deploy your application template in multiple regions, you can use conditions to only create the resource in a single region. Alternatively, you can choose to define your ``AWS::DynamoDB::GlobalTable`` resources in a stack separate from your application stack, and make sure it is only deployed to a single region.
@@ -1641,6 +1642,9 @@ class CfnGlobalTable(
                     )
                 )
             )],
+            global_table_witnesses=[dynamodb.CfnGlobalTable.GlobalTableWitnessProperty(
+                region="region"
+            )],
             local_secondary_indexes=[dynamodb.CfnGlobalTable.LocalSecondaryIndexProperty(
                 index_name="indexName",
                 key_schema=[dynamodb.CfnGlobalTable.KeySchemaProperty(
@@ -1652,6 +1656,7 @@ class CfnGlobalTable(
                     projection_type="projectionType"
                 )
             )],
+            multi_region_consistency="multiRegionConsistency",
             sse_specification=dynamodb.CfnGlobalTable.SSESpecificationProperty(
                 sse_enabled=False,
         
@@ -1705,7 +1710,9 @@ class CfnGlobalTable(
         replicas: typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union["CfnGlobalTable.ReplicaSpecificationProperty", typing.Dict[builtins.str, typing.Any]]]]],
         billing_mode: typing.Optional[builtins.str] = None,
         global_secondary_indexes: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union["CfnGlobalTable.GlobalSecondaryIndexProperty", typing.Dict[builtins.str, typing.Any]]]]]] = None,
+        global_table_witnesses: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union["CfnGlobalTable.GlobalTableWitnessProperty", typing.Dict[builtins.str, typing.Any]]]]]] = None,
         local_secondary_indexes: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union["CfnGlobalTable.LocalSecondaryIndexProperty", typing.Dict[builtins.str, typing.Any]]]]]] = None,
+        multi_region_consistency: typing.Optional[builtins.str] = None,
         sse_specification: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnGlobalTable.SSESpecificationProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
         stream_specification: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnGlobalTable.StreamSpecificationProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
         table_name: typing.Optional[builtins.str] = None,
@@ -1719,12 +1726,14 @@ class CfnGlobalTable(
         :param id: Construct identifier for this resource (unique in its scope).
         :param attribute_definitions: A list of attributes that describe the key schema for the global table and indexes.
         :param key_schema: Specifies the attributes that make up the primary key for the table. The attributes in the ``KeySchema`` property must also be defined in the ``AttributeDefinitions`` property.
-        :param replicas: Specifies the list of replicas for your global table. The list must contain at least one element, the region where the stack defining the global table is deployed. For example, if you define your table in a stack deployed to us-east-1, you must have an entry in ``Replicas`` with the region us-east-1. You cannot remove the replica in the stack region. .. epigraph:: Adding a replica might take a few minutes for an empty table, or up to several hours for large tables. If you want to add or remove a replica, we recommend submitting an ``UpdateStack`` operation containing only that change. If you add or delete a replica during an update, we recommend that you don't update any other resources. If your stack fails to update and is rolled back while adding a new replica, you might need to manually delete the replica. You can create a new global table with as many replicas as needed. You can add or remove replicas after table creation, but you can only add or remove a single replica in each update.
+        :param replicas: Specifies the list of replicas for your global table. The list must contain at least one element, the region where the stack defining the global table is deployed. For example, if you define your table in a stack deployed to us-east-1, you must have an entry in ``Replicas`` with the region us-east-1. You cannot remove the replica in the stack region. .. epigraph:: Adding a replica might take a few minutes for an empty table, or up to several hours for large tables. If you want to add or remove a replica, we recommend submitting an ``UpdateStack`` operation containing only that change. If you add or delete a replica during an update, we recommend that you don't update any other resources. If your stack fails to update and is rolled back while adding a new replica, you might need to manually delete the replica. You can create a new global table with as many replicas as needed. You can add or remove replicas after table creation, but you can only add or remove a single replica in each update. For Multi-Region Strong Consistency (MRSC), you can add or remove up to 3 replicas, or 2 replicas plus a witness Region.
         :param billing_mode: Specifies how you are charged for read and write throughput and how you manage capacity. Valid values are:. - ``PAY_PER_REQUEST`` - ``PROVISIONED`` All replicas in your global table will have the same billing mode. If you use ``PROVISIONED`` billing mode, you must provide an auto scaling configuration via the ``WriteProvisionedThroughputSettings`` property. The default value of this property is ``PROVISIONED`` .
         :param global_secondary_indexes: Global secondary indexes to be created on the global table. You can create up to 20 global secondary indexes. Each replica in your global table will have the same global secondary index settings. You can only create or delete one global secondary index in a single stack operation. Since the backfilling of an index could take a long time, CloudFormation does not wait for the index to become active. If a stack operation rolls back, CloudFormation might not delete an index that has been added. In that case, you will need to delete the index manually.
+        :param global_table_witnesses: The list of witnesses of the MRSC global table. Only one witness Region can be configured per MRSC global table.
         :param local_secondary_indexes: Local secondary indexes to be created on the table. You can create up to five local secondary indexes. Each index is scoped to a given hash key value. The size of each hash key can be up to 10 gigabytes. Each replica in your global table will have the same local secondary index settings.
+        :param multi_region_consistency: Specifies the consistency mode for a new global table. You can specify one of the following consistency modes: - ``EVENTUAL`` : Configures a new global table for multi-Region eventual consistency (MREC). - ``STRONG`` : Configures a new global table for multi-Region strong consistency (MRSC). If you don't specify this field, the global table consistency mode defaults to ``EVENTUAL`` . For more information about global tables consistency modes, see `Consistency modes <https://docs.aws.amazon.com/V2globaltables_HowItWorks.html#V2globaltables_HowItWorks.consistency-modes>`_ in DynamoDB developer guide.
         :param sse_specification: Specifies the settings to enable server-side encryption. These settings will be applied to all replicas. If you plan to use customer-managed KMS keys, you must provide a key for each replica using the ``ReplicaSpecification.ReplicaSSESpecification`` property.
-        :param stream_specification: Specifies the streams settings on your global table. You must provide a value for this property if your global table contains more than one replica. You can only change the streams settings if your global table has only one replica.
+        :param stream_specification: Specifies the streams settings on your global table. You must provide a value for this property if your global table contains more than one replica. You can only change the streams settings if your global table has only one replica. For Multi-Region Strong Consistency (MRSC), you do not need to provide a value for this property and can change the settings at any time.
         :param table_name: A name for the global table. If you don't specify a name, AWS CloudFormation generates a unique ID and uses that ID as the table name. For more information, see `Name type <https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-name.html>`_ . .. epigraph:: If you specify a name, you cannot perform updates that require replacement of this resource. You can perform updates that require no or some interruption. If you must replace the resource, specify a new name.
         :param time_to_live_specification: Specifies the time to live (TTL) settings for the table. This setting will be applied to all replicas.
         :param warm_throughput: Provides visibility into the number of read and write operations your table or secondary index can instantaneously support. The settings can be modified using the ``UpdateTable`` operation to meet the throughput requirements of an upcoming peak event.
@@ -1741,7 +1750,9 @@ class CfnGlobalTable(
             replicas=replicas,
             billing_mode=billing_mode,
             global_secondary_indexes=global_secondary_indexes,
+            global_table_witnesses=global_table_witnesses,
             local_secondary_indexes=local_secondary_indexes,
+            multi_region_consistency=multi_region_consistency,
             sse_specification=sse_specification,
             stream_specification=stream_specification,
             table_name=table_name,
@@ -1912,6 +1923,24 @@ class CfnGlobalTable(
         jsii.set(self, "globalSecondaryIndexes", value) # pyright: ignore[reportArgumentType]
 
     @builtins.property
+    @jsii.member(jsii_name="globalTableWitnesses")
+    def global_table_witnesses(
+        self,
+    ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, "CfnGlobalTable.GlobalTableWitnessProperty"]]]]:
+        '''The list of witnesses of the MRSC global table.'''
+        return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, "CfnGlobalTable.GlobalTableWitnessProperty"]]]], jsii.get(self, "globalTableWitnesses"))
+
+    @global_table_witnesses.setter
+    def global_table_witnesses(
+        self,
+        value: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, "CfnGlobalTable.GlobalTableWitnessProperty"]]]],
+    ) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__12c424a307d05c5f02c5d3df3ad420cd4151741010ad7531cd1fdc24fa467f2a)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "globalTableWitnesses", value) # pyright: ignore[reportArgumentType]
+
+    @builtins.property
     @jsii.member(jsii_name="localSecondaryIndexes")
     def local_secondary_indexes(
         self,
@@ -1928,6 +1957,19 @@ class CfnGlobalTable(
             type_hints = typing.get_type_hints(_typecheckingstub__a0b3191b7117186bc41f62e22fff4e4f50d0835a5f174dde9b2b8188ceee5162)
             check_type(argname="argument value", value=value, expected_type=type_hints["value"])
         jsii.set(self, "localSecondaryIndexes", value) # pyright: ignore[reportArgumentType]
+
+    @builtins.property
+    @jsii.member(jsii_name="multiRegionConsistency")
+    def multi_region_consistency(self) -> typing.Optional[builtins.str]:
+        '''Specifies the consistency mode for a new global table.'''
+        return typing.cast(typing.Optional[builtins.str], jsii.get(self, "multiRegionConsistency"))
+
+    @multi_region_consistency.setter
+    def multi_region_consistency(self, value: typing.Optional[builtins.str]) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__9fa800c2b80560454a211edac5215563ba994d97da2fc12e542c8f064daf753d)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "multiRegionConsistency", value) # pyright: ignore[reportArgumentType]
 
     @builtins.property
     @jsii.member(jsii_name="sseSpecification")
@@ -2498,6 +2540,65 @@ class CfnGlobalTable(
 
         def __repr__(self) -> str:
             return "GlobalSecondaryIndexProperty(%s)" % ", ".join(
+                k + "=" + repr(v) for k, v in self._values.items()
+            )
+
+    @jsii.data_type(
+        jsii_type="aws-cdk-lib.aws_dynamodb.CfnGlobalTable.GlobalTableWitnessProperty",
+        jsii_struct_bases=[],
+        name_mapping={"region": "region"},
+    )
+    class GlobalTableWitnessProperty:
+        def __init__(self, *, region: typing.Optional[builtins.str] = None) -> None:
+            '''The witness Region for the MRSC global table.
+
+            A MRSC global table can be configured with either three replicas, or with two replicas and one witness.
+
+            The witness must be in a different Region than the replicas and within the same Region set:
+
+            - US Region set: US East (N. Virginia), US East (Ohio), US West (Oregon)
+            - EU Region set: Europe (Ireland), Europe (London), Europe (Paris), Europe (Frankfurt)
+            - AP Region set: Asia Pacific (Tokyo), Asia Pacific (Seoul), Asia Pacific (Osaka)
+
+            :param region: The name of the AWS Region that serves as a witness for the MRSC global table.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-dynamodb-globaltable-globaltablewitness.html
+            :exampleMetadata: fixture=_generated
+
+            Example::
+
+                # The code below shows an example of how to instantiate this type.
+                # The values are placeholders you should change.
+                from aws_cdk import aws_dynamodb as dynamodb
+                
+                global_table_witness_property = dynamodb.CfnGlobalTable.GlobalTableWitnessProperty(
+                    region="region"
+                )
+            '''
+            if __debug__:
+                type_hints = typing.get_type_hints(_typecheckingstub__b7628b4fa51cd4a5f8c1253b45a920f7c03001298e758a5d6592641047f1b8e9)
+                check_type(argname="argument region", value=region, expected_type=type_hints["region"])
+            self._values: typing.Dict[builtins.str, typing.Any] = {}
+            if region is not None:
+                self._values["region"] = region
+
+        @builtins.property
+        def region(self) -> typing.Optional[builtins.str]:
+            '''The name of the AWS Region that serves as a witness for the MRSC global table.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-dynamodb-globaltable-globaltablewitness.html#cfn-dynamodb-globaltable-globaltablewitness-region
+            '''
+            result = self._values.get("region")
+            return typing.cast(typing.Optional[builtins.str], result)
+
+        def __eq__(self, rhs: typing.Any) -> builtins.bool:
+            return isinstance(rhs, self.__class__) and rhs._values == self._values
+
+        def __ne__(self, rhs: typing.Any) -> builtins.bool:
+            return not (rhs == self)
+
+        def __repr__(self) -> str:
+            return "GlobalTableWitnessProperty(%s)" % ", ".join(
                 k + "=" + repr(v) for k, v in self._values.items()
             )
 
@@ -3866,9 +3967,9 @@ class CfnGlobalTable(
     )
     class StreamSpecificationProperty:
         def __init__(self, *, stream_view_type: builtins.str) -> None:
-            '''Represents the DynamoDB Streams configuration for a table in DynamoDB.
+            '''Represents the DynamoDB Streams configuration for a table in DynamoDB .
 
-            You can only modify this value if your ``AWS::DynamoDB::GlobalTable`` contains only one entry in ``Replicas`` . You must specify a value for this property if your ``AWS::DynamoDB::GlobalTable`` contains more than one replica.
+            You can only modify this value for a ``AWS::DynamoDB::GlobalTable`` resource configured for multi-Region eventual consistency (MREC, the default) if that resource contains only one entry in ``Replicas`` . You must specify a value for this property for a ``AWS::DynamoDB::GlobalTable`` resource configured for MREC with more than one entry in ``Replicas`` . For Multi-Region Strong Consistency (MRSC), Streams are not required and can be changed for existing tables.
 
             :param stream_view_type: When an item in the table is modified, ``StreamViewType`` determines what information is written to the stream for this table. Valid values for ``StreamViewType`` are: - ``KEYS_ONLY`` - Only the key attributes of the modified item are written to the stream. - ``NEW_IMAGE`` - The entire item, as it appears after it was modified, is written to the stream. - ``OLD_IMAGE`` - The entire item, as it appeared before it was modified, is written to the stream. - ``NEW_AND_OLD_IMAGES`` - Both the new and the old item images of the item are written to the stream.
 
@@ -4326,7 +4427,9 @@ class CfnGlobalTable(
         "replicas": "replicas",
         "billing_mode": "billingMode",
         "global_secondary_indexes": "globalSecondaryIndexes",
+        "global_table_witnesses": "globalTableWitnesses",
         "local_secondary_indexes": "localSecondaryIndexes",
+        "multi_region_consistency": "multiRegionConsistency",
         "sse_specification": "sseSpecification",
         "stream_specification": "streamSpecification",
         "table_name": "tableName",
@@ -4345,7 +4448,9 @@ class CfnGlobalTableProps:
         replicas: typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.ReplicaSpecificationProperty, typing.Dict[builtins.str, typing.Any]]]]],
         billing_mode: typing.Optional[builtins.str] = None,
         global_secondary_indexes: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.GlobalSecondaryIndexProperty, typing.Dict[builtins.str, typing.Any]]]]]] = None,
+        global_table_witnesses: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.GlobalTableWitnessProperty, typing.Dict[builtins.str, typing.Any]]]]]] = None,
         local_secondary_indexes: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.LocalSecondaryIndexProperty, typing.Dict[builtins.str, typing.Any]]]]]] = None,
+        multi_region_consistency: typing.Optional[builtins.str] = None,
         sse_specification: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.SSESpecificationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
         stream_specification: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.StreamSpecificationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
         table_name: typing.Optional[builtins.str] = None,
@@ -4358,12 +4463,14 @@ class CfnGlobalTableProps:
 
         :param attribute_definitions: A list of attributes that describe the key schema for the global table and indexes.
         :param key_schema: Specifies the attributes that make up the primary key for the table. The attributes in the ``KeySchema`` property must also be defined in the ``AttributeDefinitions`` property.
-        :param replicas: Specifies the list of replicas for your global table. The list must contain at least one element, the region where the stack defining the global table is deployed. For example, if you define your table in a stack deployed to us-east-1, you must have an entry in ``Replicas`` with the region us-east-1. You cannot remove the replica in the stack region. .. epigraph:: Adding a replica might take a few minutes for an empty table, or up to several hours for large tables. If you want to add or remove a replica, we recommend submitting an ``UpdateStack`` operation containing only that change. If you add or delete a replica during an update, we recommend that you don't update any other resources. If your stack fails to update and is rolled back while adding a new replica, you might need to manually delete the replica. You can create a new global table with as many replicas as needed. You can add or remove replicas after table creation, but you can only add or remove a single replica in each update.
+        :param replicas: Specifies the list of replicas for your global table. The list must contain at least one element, the region where the stack defining the global table is deployed. For example, if you define your table in a stack deployed to us-east-1, you must have an entry in ``Replicas`` with the region us-east-1. You cannot remove the replica in the stack region. .. epigraph:: Adding a replica might take a few minutes for an empty table, or up to several hours for large tables. If you want to add or remove a replica, we recommend submitting an ``UpdateStack`` operation containing only that change. If you add or delete a replica during an update, we recommend that you don't update any other resources. If your stack fails to update and is rolled back while adding a new replica, you might need to manually delete the replica. You can create a new global table with as many replicas as needed. You can add or remove replicas after table creation, but you can only add or remove a single replica in each update. For Multi-Region Strong Consistency (MRSC), you can add or remove up to 3 replicas, or 2 replicas plus a witness Region.
         :param billing_mode: Specifies how you are charged for read and write throughput and how you manage capacity. Valid values are:. - ``PAY_PER_REQUEST`` - ``PROVISIONED`` All replicas in your global table will have the same billing mode. If you use ``PROVISIONED`` billing mode, you must provide an auto scaling configuration via the ``WriteProvisionedThroughputSettings`` property. The default value of this property is ``PROVISIONED`` .
         :param global_secondary_indexes: Global secondary indexes to be created on the global table. You can create up to 20 global secondary indexes. Each replica in your global table will have the same global secondary index settings. You can only create or delete one global secondary index in a single stack operation. Since the backfilling of an index could take a long time, CloudFormation does not wait for the index to become active. If a stack operation rolls back, CloudFormation might not delete an index that has been added. In that case, you will need to delete the index manually.
+        :param global_table_witnesses: The list of witnesses of the MRSC global table. Only one witness Region can be configured per MRSC global table.
         :param local_secondary_indexes: Local secondary indexes to be created on the table. You can create up to five local secondary indexes. Each index is scoped to a given hash key value. The size of each hash key can be up to 10 gigabytes. Each replica in your global table will have the same local secondary index settings.
+        :param multi_region_consistency: Specifies the consistency mode for a new global table. You can specify one of the following consistency modes: - ``EVENTUAL`` : Configures a new global table for multi-Region eventual consistency (MREC). - ``STRONG`` : Configures a new global table for multi-Region strong consistency (MRSC). If you don't specify this field, the global table consistency mode defaults to ``EVENTUAL`` . For more information about global tables consistency modes, see `Consistency modes <https://docs.aws.amazon.com/V2globaltables_HowItWorks.html#V2globaltables_HowItWorks.consistency-modes>`_ in DynamoDB developer guide.
         :param sse_specification: Specifies the settings to enable server-side encryption. These settings will be applied to all replicas. If you plan to use customer-managed KMS keys, you must provide a key for each replica using the ``ReplicaSpecification.ReplicaSSESpecification`` property.
-        :param stream_specification: Specifies the streams settings on your global table. You must provide a value for this property if your global table contains more than one replica. You can only change the streams settings if your global table has only one replica.
+        :param stream_specification: Specifies the streams settings on your global table. You must provide a value for this property if your global table contains more than one replica. You can only change the streams settings if your global table has only one replica. For Multi-Region Strong Consistency (MRSC), you do not need to provide a value for this property and can change the settings at any time.
         :param table_name: A name for the global table. If you don't specify a name, AWS CloudFormation generates a unique ID and uses that ID as the table name. For more information, see `Name type <https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-name.html>`_ . .. epigraph:: If you specify a name, you cannot perform updates that require replacement of this resource. You can perform updates that require no or some interruption. If you must replace the resource, specify a new name.
         :param time_to_live_specification: Specifies the time to live (TTL) settings for the table. This setting will be applied to all replicas.
         :param warm_throughput: Provides visibility into the number of read and write operations your table or secondary index can instantaneously support. The settings can be modified using the ``UpdateTable`` operation to meet the throughput requirements of an upcoming peak event.
@@ -4515,6 +4622,9 @@ class CfnGlobalTableProps:
                         )
                     )
                 )],
+                global_table_witnesses=[dynamodb.CfnGlobalTable.GlobalTableWitnessProperty(
+                    region="region"
+                )],
                 local_secondary_indexes=[dynamodb.CfnGlobalTable.LocalSecondaryIndexProperty(
                     index_name="indexName",
                     key_schema=[dynamodb.CfnGlobalTable.KeySchemaProperty(
@@ -4526,6 +4636,7 @@ class CfnGlobalTableProps:
                         projection_type="projectionType"
                     )
                 )],
+                multi_region_consistency="multiRegionConsistency",
                 sse_specification=dynamodb.CfnGlobalTable.SSESpecificationProperty(
                     sse_enabled=False,
             
@@ -4575,7 +4686,9 @@ class CfnGlobalTableProps:
             check_type(argname="argument replicas", value=replicas, expected_type=type_hints["replicas"])
             check_type(argname="argument billing_mode", value=billing_mode, expected_type=type_hints["billing_mode"])
             check_type(argname="argument global_secondary_indexes", value=global_secondary_indexes, expected_type=type_hints["global_secondary_indexes"])
+            check_type(argname="argument global_table_witnesses", value=global_table_witnesses, expected_type=type_hints["global_table_witnesses"])
             check_type(argname="argument local_secondary_indexes", value=local_secondary_indexes, expected_type=type_hints["local_secondary_indexes"])
+            check_type(argname="argument multi_region_consistency", value=multi_region_consistency, expected_type=type_hints["multi_region_consistency"])
             check_type(argname="argument sse_specification", value=sse_specification, expected_type=type_hints["sse_specification"])
             check_type(argname="argument stream_specification", value=stream_specification, expected_type=type_hints["stream_specification"])
             check_type(argname="argument table_name", value=table_name, expected_type=type_hints["table_name"])
@@ -4592,8 +4705,12 @@ class CfnGlobalTableProps:
             self._values["billing_mode"] = billing_mode
         if global_secondary_indexes is not None:
             self._values["global_secondary_indexes"] = global_secondary_indexes
+        if global_table_witnesses is not None:
+            self._values["global_table_witnesses"] = global_table_witnesses
         if local_secondary_indexes is not None:
             self._values["local_secondary_indexes"] = local_secondary_indexes
+        if multi_region_consistency is not None:
+            self._values["multi_region_consistency"] = multi_region_consistency
         if sse_specification is not None:
             self._values["sse_specification"] = sse_specification
         if stream_specification is not None:
@@ -4648,7 +4765,7 @@ class CfnGlobalTableProps:
 
            If you add or delete a replica during an update, we recommend that you don't update any other resources. If your stack fails to update and is rolled back while adding a new replica, you might need to manually delete the replica.
 
-        You can create a new global table with as many replicas as needed. You can add or remove replicas after table creation, but you can only add or remove a single replica in each update.
+        You can create a new global table with as many replicas as needed. You can add or remove replicas after table creation, but you can only add or remove a single replica in each update. For Multi-Region Strong Consistency (MRSC), you can add or remove up to 3 replicas, or 2 replicas plus a witness Region.
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-dynamodb-globaltable.html#cfn-dynamodb-globaltable-replicas
         '''
@@ -4686,6 +4803,19 @@ class CfnGlobalTableProps:
         return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, CfnGlobalTable.GlobalSecondaryIndexProperty]]]], result)
 
     @builtins.property
+    def global_table_witnesses(
+        self,
+    ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, CfnGlobalTable.GlobalTableWitnessProperty]]]]:
+        '''The list of witnesses of the MRSC global table.
+
+        Only one witness Region can be configured per MRSC global table.
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-dynamodb-globaltable.html#cfn-dynamodb-globaltable-globaltablewitnesses
+        '''
+        result = self._values.get("global_table_witnesses")
+        return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, CfnGlobalTable.GlobalTableWitnessProperty]]]], result)
+
+    @builtins.property
     def local_secondary_indexes(
         self,
     ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, CfnGlobalTable.LocalSecondaryIndexProperty]]]]:
@@ -4697,6 +4827,22 @@ class CfnGlobalTableProps:
         '''
         result = self._values.get("local_secondary_indexes")
         return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, CfnGlobalTable.LocalSecondaryIndexProperty]]]], result)
+
+    @builtins.property
+    def multi_region_consistency(self) -> typing.Optional[builtins.str]:
+        '''Specifies the consistency mode for a new global table.
+
+        You can specify one of the following consistency modes:
+
+        - ``EVENTUAL`` : Configures a new global table for multi-Region eventual consistency (MREC).
+        - ``STRONG`` : Configures a new global table for multi-Region strong consistency (MRSC).
+
+        If you don't specify this field, the global table consistency mode defaults to ``EVENTUAL`` . For more information about global tables consistency modes, see `Consistency modes <https://docs.aws.amazon.com/V2globaltables_HowItWorks.html#V2globaltables_HowItWorks.consistency-modes>`_ in DynamoDB developer guide.
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-dynamodb-globaltable.html#cfn-dynamodb-globaltable-multiregionconsistency
+        '''
+        result = self._values.get("multi_region_consistency")
+        return typing.cast(typing.Optional[builtins.str], result)
 
     @builtins.property
     def sse_specification(
@@ -4717,7 +4863,7 @@ class CfnGlobalTableProps:
     ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, CfnGlobalTable.StreamSpecificationProperty]]:
         '''Specifies the streams settings on your global table.
 
-        You must provide a value for this property if your global table contains more than one replica. You can only change the streams settings if your global table has only one replica.
+        You must provide a value for this property if your global table contains more than one replica. You can only change the streams settings if your global table has only one replica. For Multi-Region Strong Consistency (MRSC), you do not need to provide a value for this property and can change the settings at any time.
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-dynamodb-globaltable.html#cfn-dynamodb-globaltable-streamspecification
         '''
@@ -5000,7 +5146,7 @@ class CfnTable(
         :param on_demand_throughput: Sets the maximum number of read and write units for the specified on-demand table. If you use this property, you must specify ``MaxReadRequestUnits`` , ``MaxWriteRequestUnits`` , or both.
         :param point_in_time_recovery_specification: The settings used to enable point in time recovery.
         :param provisioned_throughput: Throughput for the specified table, which consists of values for ``ReadCapacityUnits`` and ``WriteCapacityUnits`` . For more information about the contents of a provisioned throughput structure, see `Amazon DynamoDB Table ProvisionedThroughput <https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ProvisionedThroughput.html>`_ . If you set ``BillingMode`` as ``PROVISIONED`` , you must specify this property. If you set ``BillingMode`` as ``PAY_PER_REQUEST`` , you cannot specify this property.
-        :param resource_policy: A resource-based policy document that contains permissions to add to the specified table. In a CloudFormation template, you can provide the policy in JSON or YAML format because CloudFormation converts YAML to JSON before submitting it to DynamoDB . For more information about resource-based policies, see `Using resource-based policies for DynamoDB <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/access-control-resource-based.html>`_ and `Resource-based policy examples <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/rbac-examples.html>`_ . When you attach a resource-based policy while creating a table, the policy creation is *strongly consistent* . For information about the considerations that you should keep in mind while attaching a resource-based policy, see `Resource-based policy considerations <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/rbac-considerations.html>`_ .
+        :param resource_policy: An AWS resource-based policy document in JSON format that will be attached to the table. When you attach a resource-based policy while creating a table, the policy application is *strongly consistent* . The maximum size supported for a resource-based policy document is 20 KB. DynamoDB counts whitespaces when calculating the size of a policy against this limit. For a full list of all considerations that apply for resource-based policies, see `Resource-based policy considerations <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/rbac-considerations.html>`_ . .. epigraph:: You need to specify the ``CreateTable`` and ``PutResourcePolicy`` IAM actions for authorizing a user to create a table with a resource-based policy.
         :param sse_specification: Specifies the settings to enable server-side encryption.
         :param stream_specification: The settings for the DynamoDB table stream, which capture changes to items stored in the table.
         :param table_class: The table class of the new table. Valid values are ``STANDARD`` and ``STANDARD_INFREQUENT_ACCESS`` .
@@ -5320,7 +5466,7 @@ class CfnTable(
     def resource_policy(
         self,
     ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnTable.ResourcePolicyProperty"]]:
-        '''A resource-based policy document that contains permissions to add to the specified table.'''
+        '''An AWS resource-based policy document in JSON format that will be attached to the table.'''
         return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnTable.ResourcePolicyProperty"]], jsii.get(self, "resourcePolicy"))
 
     @resource_policy.setter
@@ -7219,7 +7365,7 @@ class CfnTableProps:
         :param on_demand_throughput: Sets the maximum number of read and write units for the specified on-demand table. If you use this property, you must specify ``MaxReadRequestUnits`` , ``MaxWriteRequestUnits`` , or both.
         :param point_in_time_recovery_specification: The settings used to enable point in time recovery.
         :param provisioned_throughput: Throughput for the specified table, which consists of values for ``ReadCapacityUnits`` and ``WriteCapacityUnits`` . For more information about the contents of a provisioned throughput structure, see `Amazon DynamoDB Table ProvisionedThroughput <https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_ProvisionedThroughput.html>`_ . If you set ``BillingMode`` as ``PROVISIONED`` , you must specify this property. If you set ``BillingMode`` as ``PAY_PER_REQUEST`` , you cannot specify this property.
-        :param resource_policy: A resource-based policy document that contains permissions to add to the specified table. In a CloudFormation template, you can provide the policy in JSON or YAML format because CloudFormation converts YAML to JSON before submitting it to DynamoDB . For more information about resource-based policies, see `Using resource-based policies for DynamoDB <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/access-control-resource-based.html>`_ and `Resource-based policy examples <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/rbac-examples.html>`_ . When you attach a resource-based policy while creating a table, the policy creation is *strongly consistent* . For information about the considerations that you should keep in mind while attaching a resource-based policy, see `Resource-based policy considerations <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/rbac-considerations.html>`_ .
+        :param resource_policy: An AWS resource-based policy document in JSON format that will be attached to the table. When you attach a resource-based policy while creating a table, the policy application is *strongly consistent* . The maximum size supported for a resource-based policy document is 20 KB. DynamoDB counts whitespaces when calculating the size of a policy against this limit. For a full list of all considerations that apply for resource-based policies, see `Resource-based policy considerations <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/rbac-considerations.html>`_ . .. epigraph:: You need to specify the ``CreateTable`` and ``PutResourcePolicy`` IAM actions for authorizing a user to create a table with a resource-based policy.
         :param sse_specification: Specifies the settings to enable server-side encryption.
         :param stream_specification: The settings for the DynamoDB table stream, which capture changes to items stored in the table.
         :param table_class: The table class of the new table. Valid values are ``STANDARD`` and ``STANDARD_INFREQUENT_ACCESS`` .
@@ -7604,11 +7750,14 @@ class CfnTableProps:
     def resource_policy(
         self,
     ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, CfnTable.ResourcePolicyProperty]]:
-        '''A resource-based policy document that contains permissions to add to the specified table.
+        '''An AWS resource-based policy document in JSON format that will be attached to the table.
 
-        In a CloudFormation template, you can provide the policy in JSON or YAML format because CloudFormation converts YAML to JSON before submitting it to DynamoDB . For more information about resource-based policies, see `Using resource-based policies for DynamoDB <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/access-control-resource-based.html>`_ and `Resource-based policy examples <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/rbac-examples.html>`_ .
+        When you attach a resource-based policy while creating a table, the policy application is *strongly consistent* .
 
-        When you attach a resource-based policy while creating a table, the policy creation is *strongly consistent* . For information about the considerations that you should keep in mind while attaching a resource-based policy, see `Resource-based policy considerations <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/rbac-considerations.html>`_ .
+        The maximum size supported for a resource-based policy document is 20 KB. DynamoDB counts whitespaces when calculating the size of a policy against this limit. For a full list of all considerations that apply for resource-based policies, see `Resource-based policy considerations <https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/rbac-considerations.html>`_ .
+        .. epigraph::
+
+           You need to specify the ``CreateTable`` and ``PutResourcePolicy`` IAM actions for authorizing a user to create a table with a resource-based policy.
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-dynamodb-table.html#cfn-dynamodb-table-resourcepolicy
         '''
@@ -16467,7 +16616,9 @@ def _typecheckingstub__751414def1994180982879a700bdaa6afcf528def91a672904946db1b
     replicas: typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.ReplicaSpecificationProperty, typing.Dict[builtins.str, typing.Any]]]]],
     billing_mode: typing.Optional[builtins.str] = None,
     global_secondary_indexes: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.GlobalSecondaryIndexProperty, typing.Dict[builtins.str, typing.Any]]]]]] = None,
+    global_table_witnesses: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.GlobalTableWitnessProperty, typing.Dict[builtins.str, typing.Any]]]]]] = None,
     local_secondary_indexes: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.LocalSecondaryIndexProperty, typing.Dict[builtins.str, typing.Any]]]]]] = None,
+    multi_region_consistency: typing.Optional[builtins.str] = None,
     sse_specification: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.SSESpecificationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
     stream_specification: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.StreamSpecificationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
     table_name: typing.Optional[builtins.str] = None,
@@ -16521,8 +16672,20 @@ def _typecheckingstub__484436e7e1867a9d477f3fa0bdee0dfdfb2646ba7497c71d398076d98
     """Type checking stubs"""
     pass
 
+def _typecheckingstub__12c424a307d05c5f02c5d3df3ad420cd4151741010ad7531cd1fdc24fa467f2a(
+    value: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, CfnGlobalTable.GlobalTableWitnessProperty]]]],
+) -> None:
+    """Type checking stubs"""
+    pass
+
 def _typecheckingstub__a0b3191b7117186bc41f62e22fff4e4f50d0835a5f174dde9b2b8188ceee5162(
     value: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, CfnGlobalTable.LocalSecondaryIndexProperty]]]],
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__9fa800c2b80560454a211edac5215563ba994d97da2fc12e542c8f064daf753d(
+    value: typing.Optional[builtins.str],
 ) -> None:
     """Type checking stubs"""
     pass
@@ -16602,6 +16765,13 @@ def _typecheckingstub__e4c0e93a19b9176fd628b4a4e5a1bb2ecabf4d1960e7d8fd138a1ecf0
     warm_throughput: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.WarmThroughputProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
     write_on_demand_throughput_settings: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.WriteOnDemandThroughputSettingsProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
     write_provisioned_throughput_settings: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.WriteProvisionedThroughputSettingsProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__b7628b4fa51cd4a5f8c1253b45a920f7c03001298e758a5d6592641047f1b8e9(
+    *,
+    region: typing.Optional[builtins.str] = None,
 ) -> None:
     """Type checking stubs"""
     pass
@@ -16774,7 +16944,9 @@ def _typecheckingstub__ca0383ad91536c26961e85e52a3e6a3d2d74db3c4d430cbbe3d9f42e2
     replicas: typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.ReplicaSpecificationProperty, typing.Dict[builtins.str, typing.Any]]]]],
     billing_mode: typing.Optional[builtins.str] = None,
     global_secondary_indexes: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.GlobalSecondaryIndexProperty, typing.Dict[builtins.str, typing.Any]]]]]] = None,
+    global_table_witnesses: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.GlobalTableWitnessProperty, typing.Dict[builtins.str, typing.Any]]]]]] = None,
     local_secondary_indexes: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.LocalSecondaryIndexProperty, typing.Dict[builtins.str, typing.Any]]]]]] = None,
+    multi_region_consistency: typing.Optional[builtins.str] = None,
     sse_specification: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.SSESpecificationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
     stream_specification: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnGlobalTable.StreamSpecificationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
     table_name: typing.Optional[builtins.str] = None,

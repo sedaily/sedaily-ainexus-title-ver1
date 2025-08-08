@@ -61,11 +61,11 @@ const processMultiAgentResponse = (result) => {
  */
 const getAgentName = (agentType) => {
   const agentNames = {
-    journalism: "📰 저널리즘 충실형",
-    balanced: "⚖️ 균형잡힌 후킹형",
-    click: "🎯 클릭유도형",
-    seo: "🔍 SEO/AEO 최적화형",
-    social: "📱 소셜미디어 공유형",
+    journalism: "📰 저널리즘 충실형 (Journalism Type)",
+    balanced: "⚖️ 균형잡힌 후킹형 (Balanced Hook Type)",
+    click: "🎯 클릭유도형 (Click-bait Type)",
+    seo: "🔍 SEO/AEO 최적화형 (SEO/AEO Type)",
+    social: "📱 소셜미디어 공유형 (Social Media Type)",
   };
   return agentNames[agentType] || `🤖 ${agentType}`;
 };
@@ -691,20 +691,26 @@ export const useChat = (
   /**
    * 메시지 전송
    */
-  const handleSendMessage = useCallback(async () => {
+  const handleSendMessage = useCallback(async (inputOverride, attachedFiles = []) => {
+    // inputOverride가 있으면 그것을 사용, 아니면 state의 inputValue 사용
+    const messageContent = typeof inputOverride === 'string' ? inputOverride : inputValue;
+    
     console.log("🚀 [DEBUG] useChat handleSendMessage 호출:", {
-      inputValue: inputValue.trim(),
+      messageContent: messageContent.trim(),
+      attachedFilesCount: attachedFiles.length,
       isGenerating,
       canSendMessage,
       conversationId,
       hasCreateConversationFn: !!createConversationFn,
     });
 
-    if (!inputValue.trim() || isGenerating) {
-      console.log("🚨 [DEBUG] 전송 중단: 조건 부족:", {
-        hasInput: !!inputValue.trim(),
-        isGenerating,
-      });
+    if (!messageContent.trim() && attachedFiles.length === 0) {
+      console.log("🚨 [DEBUG] 전송 중단: 내용 없음");
+      return;
+    }
+    
+    if (isGenerating) {
+      console.log("🚨 [DEBUG] 전송 중단: 이미 생성 중");
       return;
     }
 
@@ -715,13 +721,18 @@ export const useChat = (
       createConversationFn &&
       setCurrentConversationFn
     ) {
+      // 첨부파일이 있으면 그 이름으로, 아니면 메시지 내용으로 제목 생성
+      const titleSource = attachedFiles.length > 0 ? 
+        `[첨부] ${attachedFiles[0].name}` : 
+        messageContent;
+      
       console.log(
         "🔍 [DEBUG] 새 대화 생성 시작 - 제목:",
-        generateConversationTitle(inputValue)
+        generateConversationTitle(titleSource)
       );
 
       try {
-        const newTitle = generateConversationTitle(inputValue);
+        const newTitle = generateConversationTitle(titleSource);
         const newConversation = await createConversationFn(newTitle);
         console.log("🔍 [DEBUG] 새 대화 생성 완료:", newConversation);
 
@@ -748,11 +759,30 @@ export const useChat = (
     console.log("입력 비활성화");
     setCanSendMessage(false);
 
+    // 첨부파일 내용을 메시지에 추가
+    let fullContent = messageContent.trim();
+    if (attachedFiles.length > 0) {
+      const fileContents = attachedFiles.map(file => {
+        return `[첨부 파일: ${file.name}]\n${file.content}`;
+      }).join('\n\n');
+      
+      if (fullContent) {
+        fullContent = fullContent + '\n\n' + fileContents;
+      } else {
+        fullContent = fileContents;
+      }
+    }
+
     const userMessage = {
       id: "user-" + Date.now(),
       type: "user",
-      content: inputValue.trim(),
+      content: messageContent.trim(), // 화면에는 원본 메시지만 표시
       timestamp: new Date().toISOString(),
+      attachedFiles: attachedFiles.length > 0 ? attachedFiles.map(f => ({ 
+        name: f.name, 
+        type: f.type,
+        size: f.size 
+      })) : undefined // 첨부파일 메타데이터 저장
     };
 
     // 스트리밍 메시지 ID 생성
@@ -849,11 +879,20 @@ export const useChat = (
         fullPromptCards: activePromptCards,
       });
 
+      // 대용량 텍스트 확인 로그
+      console.log("🔍 [DEBUG] 입력 텍스트 크기 확인:", {
+        textLength: userMessage.content.length,
+        textSizeKB: (userMessage.content.length / 1024).toFixed(2) + "KB",
+        isLargeText: userMessage.content.length > 100000,
+        willBeChunked: userMessage.content.length > 100000
+      });
+
       // WebSocket 연결 확인 및 실시간 스트리밍 시도
       if (wsConnected) {
         console.log("WebSocket을 통한 실시간 스트리밍 시작");
         console.log("🔍 [DEBUG] 스트리밍 매개변수 상세 확인:", {
-          userInput: userMessage.content,
+          userInput: userMessage.content.substring(0, 100) + "...",
+          userInputLength: userMessage.content.length,
           conversationId: conversationIdToUse,
           userSub: user?.id,
           historyLength: trimmedChatHistory.length,
@@ -866,7 +905,7 @@ export const useChat = (
         });
 
         const success = wsStartStreaming(
-          userMessage.content,
+          fullContent, // 첨부파일 내용이 포함된 전체 콘텐츠
           trimmedChatHistory,
           activePromptCards,
           selectedModel,
@@ -895,7 +934,7 @@ export const useChat = (
       // 간단한 AI 응답 생성
       const { generateAPI } = await import("../services/api");
       const aiResult = await generateAPI.generateTitle({
-        userInput: userMessage.content,
+        userInput: fullContent, // 첨부파일 내용이 포함된 전체 콘텐츠
         chat_history: trimmedChatHistory,
         prompt_cards: activePromptCards,
       });
@@ -999,7 +1038,7 @@ export const useChat = (
     (e) => {
       if (e.key === "Enter" && !e.shiftKey) {
         e.preventDefault();
-        handleSendMessage();
+        handleSendMessage(); // 기본 동작 - 첨부파일이 있는 경우 ChatWindow에서 처리
       }
     },
     [handleSendMessage]

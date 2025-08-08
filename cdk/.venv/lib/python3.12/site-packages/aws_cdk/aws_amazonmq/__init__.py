@@ -122,7 +122,6 @@ class CfnBroker(
                 # the properties below are optional
                 console_access=False,
                 groups=["groups"],
-                jolokia_api_access="jolokiaApiAccess",
                 replication_user=False
             )],
         
@@ -328,6 +327,14 @@ class CfnBroker(
         :cloudformationAttribute: ConfigurationRevision
         '''
         return typing.cast(jsii.Number, jsii.get(self, "attrConfigurationRevision"))
+
+    @builtins.property
+    @jsii.member(jsii_name="attrConsoleUrLs")
+    def attr_console_ur_ls(self) -> typing.List[builtins.str]:
+        '''
+        :cloudformationAttribute: ConsoleURLs
+        '''
+        return typing.cast(typing.List[builtins.str], jsii.get(self, "attrConsoleUrLs"))
 
     @builtins.property
     @jsii.member(jsii_name="attrId")
@@ -1359,7 +1366,6 @@ class CfnBroker(
             "username": "username",
             "console_access": "consoleAccess",
             "groups": "groups",
-            "jolokia_api_access": "jolokiaApiAccess",
             "replication_user": "replicationUser",
         },
     )
@@ -1371,7 +1377,6 @@ class CfnBroker(
             username: builtins.str,
             console_access: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
             groups: typing.Optional[typing.Sequence[builtins.str]] = None,
-            jolokia_api_access: typing.Optional[builtins.str] = None,
             replication_user: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
         ) -> None:
             '''The list of broker users (persons or applications) who can access queues and topics.
@@ -1382,7 +1387,6 @@ class CfnBroker(
             :param username: The username of the broker user. For Amazon MQ for ActiveMQ brokers, this value can contain only alphanumeric characters, dashes, periods, underscores, and tildes (- . _ ~). For Amazon MQ for RabbitMQ brokers, this value can contain only alphanumeric characters, dashes, periods, underscores (- . _). This value must not contain a tilde (~) character. Amazon MQ prohibts using guest as a valid usename. This value must be 2-100 characters long. .. epigraph:: Do not add personally identifiable information (PII) or other confidential or sensitive information in broker usernames. Broker usernames are accessible to other AWS services, including CloudWatch Logs . Broker usernames are not intended to be used for private or sensitive data.
             :param console_access: Enables access to the ActiveMQ web console for the ActiveMQ user. Does not apply to RabbitMQ brokers.
             :param groups: The list of groups (20 maximum) to which the ActiveMQ user belongs. This value can contain only alphanumeric characters, dashes, periods, underscores, and tildes (- . _ ~). This value must be 2-100 characters long. Does not apply to RabbitMQ brokers.
-            :param jolokia_api_access: 
             :param replication_user: Defines if this user is intended for CRDR replication purposes.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-amazonmq-broker-user.html
@@ -1401,7 +1405,6 @@ class CfnBroker(
                     # the properties below are optional
                     console_access=False,
                     groups=["groups"],
-                    jolokia_api_access="jolokiaApiAccess",
                     replication_user=False
                 )
             '''
@@ -1411,7 +1414,6 @@ class CfnBroker(
                 check_type(argname="argument username", value=username, expected_type=type_hints["username"])
                 check_type(argname="argument console_access", value=console_access, expected_type=type_hints["console_access"])
                 check_type(argname="argument groups", value=groups, expected_type=type_hints["groups"])
-                check_type(argname="argument jolokia_api_access", value=jolokia_api_access, expected_type=type_hints["jolokia_api_access"])
                 check_type(argname="argument replication_user", value=replication_user, expected_type=type_hints["replication_user"])
             self._values: typing.Dict[builtins.str, typing.Any] = {
                 "password": password,
@@ -1421,8 +1423,6 @@ class CfnBroker(
                 self._values["console_access"] = console_access
             if groups is not None:
                 self._values["groups"] = groups
-            if jolokia_api_access is not None:
-                self._values["jolokia_api_access"] = jolokia_api_access
             if replication_user is not None:
                 self._values["replication_user"] = replication_user
 
@@ -1476,14 +1476,6 @@ class CfnBroker(
             '''
             result = self._values.get("groups")
             return typing.cast(typing.Optional[typing.List[builtins.str]], result)
-
-        @builtins.property
-        def jolokia_api_access(self) -> typing.Optional[builtins.str]:
-            '''
-            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-amazonmq-broker-user.html#cfn-amazonmq-broker-user-jolokiaapiaccess
-            '''
-            result = self._values.get("jolokia_api_access")
-            return typing.cast(typing.Optional[builtins.str], result)
 
         @builtins.property
         def replication_user(
@@ -1604,7 +1596,6 @@ class CfnBrokerProps:
                     # the properties below are optional
                     console_access=False,
                     groups=["groups"],
-                    jolokia_api_access="jolokiaApiAccess",
                     replication_user=False
                 )],
             
@@ -2955,7 +2946,6 @@ def _typecheckingstub__8a458786a0cd0d4269adef0bf3c85862386851ab69649004d5d3dcba4
     username: builtins.str,
     console_access: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
     groups: typing.Optional[typing.Sequence[builtins.str]] = None,
-    jolokia_api_access: typing.Optional[builtins.str] = None,
     replication_user: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
 ) -> None:
     """Type checking stubs"""

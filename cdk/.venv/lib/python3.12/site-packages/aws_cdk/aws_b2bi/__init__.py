@@ -1009,11 +1009,11 @@ class CfnPartnership(
         :param scope: Scope in which this resource is defined.
         :param id: Construct identifier for this resource (unique in its scope).
         :param capabilities: Returns one or more capabilities associated with this partnership.
-        :param email: 
+        :param email: Specifies the email address associated with this trading partner.
         :param name: Returns the name of the partnership.
         :param profile_id: Returns the unique, system-generated identifier for the profile connected to this partnership.
         :param capability_options: Contains the details for an Outbound EDI capability.
-        :param phone: 
+        :param phone: Specifies the phone number associated with the partnership.
         :param tags: A key-value pair for a specific partnership. Tags are metadata that you can use to search for and group capabilities for various purposes.
         '''
         if __debug__:
@@ -1134,6 +1134,7 @@ class CfnPartnership(
     @builtins.property
     @jsii.member(jsii_name="email")
     def email(self) -> builtins.str:
+        '''Specifies the email address associated with this trading partner.'''
         return typing.cast(builtins.str, jsii.get(self, "email"))
 
     @email.setter
@@ -1190,6 +1191,7 @@ class CfnPartnership(
     @builtins.property
     @jsii.member(jsii_name="phone")
     def phone(self) -> typing.Optional[builtins.str]:
+        '''Specifies the phone number associated with the partnership.'''
         return typing.cast(typing.Optional[builtins.str], jsii.get(self, "phone"))
 
     @phone.setter
@@ -1226,7 +1228,7 @@ class CfnPartnership(
         ) -> None:
             '''Contains the details for an Outbound EDI capability.
 
-            :param inbound_edi: 
+            :param inbound_edi: A structure that contains the inbound EDI options for the capability.
             :param outbound_edi: A structure that contains the outbound EDI options.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-b2bi-partnership-capabilityoptions.html
@@ -1300,7 +1302,8 @@ class CfnPartnership(
         def inbound_edi(
             self,
         ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnPartnership.InboundEdiOptionsProperty"]]:
-            '''
+            '''A structure that contains the inbound EDI options for the capability.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-b2bi-partnership-capabilityoptions.html#cfn-b2bi-partnership-capabilityoptions-inboundedi
             '''
             result = self._values.get("inbound_edi")
@@ -1339,8 +1342,11 @@ class CfnPartnership(
             *,
             x12: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnPartnership.X12InboundEdiOptionsProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
         ) -> None:
-            '''
-            :param x12: 
+            '''Contains options for processing inbound EDI files.
+
+            These options allow for customizing how incoming EDI documents are processed.
+
+            :param x12: A structure that contains X12-specific options for processing inbound X12 EDI files.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-b2bi-partnership-inboundedioptions.html
             :exampleMetadata: fixture=_generated
@@ -1371,7 +1377,8 @@ class CfnPartnership(
         def x12(
             self,
         ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnPartnership.X12InboundEdiOptionsProperty"]]:
-            '''
+            '''A structure that contains X12-specific options for processing inbound X12 EDI files.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-b2bi-partnership-inboundedioptions.html#cfn-b2bi-partnership-inboundedioptions-x12
             '''
             result = self._values.get("x12")
@@ -2016,8 +2023,9 @@ class CfnPartnership(
             *,
             acknowledgment_options: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnPartnership.X12AcknowledgmentOptionsProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
         ) -> None:
-            '''
-            :param acknowledgment_options: 
+            '''Contains options specific to processing inbound X12 EDI files.
+
+            :param acknowledgment_options: Specifies acknowledgment options for inbound X12 EDI files. These options control how functional and technical acknowledgments are handled.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-b2bi-partnership-x12inboundedioptions.html
             :exampleMetadata: fixture=_generated
@@ -2046,7 +2054,10 @@ class CfnPartnership(
         def acknowledgment_options(
             self,
         ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnPartnership.X12AcknowledgmentOptionsProperty"]]:
-            '''
+            '''Specifies acknowledgment options for inbound X12 EDI files.
+
+            These options control how functional and technical acknowledgments are handled.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-b2bi-partnership-x12inboundedioptions.html#cfn-b2bi-partnership-x12inboundedioptions-acknowledgmentoptions
             '''
             result = self._values.get("acknowledgment_options")
@@ -2233,7 +2244,7 @@ class CfnPartnership(
         ) -> None:
             '''A structure containing the details for an outbound EDI object.
 
-            :param control_numbers: 
+            :param control_numbers: Specifies control number configuration for outbound X12 EDI headers. These settings determine the starting values for interchange, functional group, and transaction set control numbers.
             :param delimiters: The delimiters, for example semicolon ( ``;`` ), that separates sections of the headers for the X12 object.
             :param functional_group_headers: The functional group headers for the X12 object.
             :param gs05_time_format: 
@@ -2304,7 +2315,10 @@ class CfnPartnership(
         def control_numbers(
             self,
         ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnPartnership.X12ControlNumbersProperty"]]:
-            '''
+            '''Specifies control number configuration for outbound X12 EDI headers.
+
+            These settings determine the starting values for interchange, functional group, and transaction set control numbers.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-b2bi-partnership-x12outboundediheaders.html#cfn-b2bi-partnership-x12outboundediheaders-controlnumbers
             '''
             result = self._values.get("control_numbers")
@@ -2402,11 +2416,11 @@ class CfnPartnershipProps:
         '''Properties for defining a ``CfnPartnership``.
 
         :param capabilities: Returns one or more capabilities associated with this partnership.
-        :param email: 
+        :param email: Specifies the email address associated with this trading partner.
         :param name: Returns the name of the partnership.
         :param profile_id: Returns the unique, system-generated identifier for the profile connected to this partnership.
         :param capability_options: Contains the details for an Outbound EDI capability.
-        :param phone: 
+        :param phone: Specifies the phone number associated with the partnership.
         :param tags: A key-value pair for a specific partnership. Tags are metadata that you can use to search for and group capabilities for various purposes.
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-b2bi-partnership.html
@@ -2513,7 +2527,8 @@ class CfnPartnershipProps:
 
     @builtins.property
     def email(self) -> builtins.str:
-        '''
+        '''Specifies the email address associated with this trading partner.
+
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-b2bi-partnership.html#cfn-b2bi-partnership-email
         '''
         result = self._values.get("email")
@@ -2553,7 +2568,8 @@ class CfnPartnershipProps:
 
     @builtins.property
     def phone(self) -> typing.Optional[builtins.str]:
-        '''
+        '''Specifies the phone number associated with the partnership.
+
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-b2bi-partnership.html#cfn-b2bi-partnership-phone
         '''
         result = self._values.get("phone")

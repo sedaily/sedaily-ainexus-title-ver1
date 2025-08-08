@@ -1169,15 +1169,15 @@ class CfnFileSystem(
         :param subnet_ids: Specifies the IDs of the subnets that the file system will be accessible from. For Windows and ONTAP ``MULTI_AZ_1`` deployment types,provide exactly two subnet IDs, one for the preferred file server and one for the standby file server. You specify one of these subnets as the preferred subnet using the ``WindowsConfiguration > PreferredSubnetID`` or ``OntapConfiguration > PreferredSubnetID`` properties. For more information about Multi-AZ file system configuration, see `Availability and durability: Single-AZ and Multi-AZ file systems <https://docs.aws.amazon.com/fsx/latest/WindowsGuide/high-availability-multiAZ.html>`_ in the *Amazon FSx for Windows User Guide* and `Availability and durability <https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/high-availability-multiAZ.html>`_ in the *Amazon FSx for ONTAP User Guide* . For Windows ``SINGLE_AZ_1`` and ``SINGLE_AZ_2`` and all Lustre deployment types, provide exactly one subnet ID. The file server is launched in that subnet's Availability Zone.
         :param backup_id: The ID of the file system backup that you are using to create a file system. For more information, see `CreateFileSystemFromBackup <https://docs.aws.amazon.com/fsx/latest/APIReference/API_CreateFileSystemFromBackup.html>`_ .
         :param file_system_type_version: For FSx for Lustre file systems, sets the Lustre version for the file system that you're creating. Valid values are ``2.10`` , ``2.12`` , and ``2.15`` : - ``2.10`` is supported by the Scratch and Persistent_1 Lustre deployment types. - ``2.12`` is supported by all Lustre deployment types, except for ``PERSISTENT_2`` with a metadata configuration mode. - ``2.15`` is supported by all Lustre deployment types and is recommended for all new file systems. Default value is ``2.10`` , except for the following deployments: - Default value is ``2.12`` when ``DeploymentType`` is set to ``PERSISTENT_2`` without a metadata configuration mode. - Default value is ``2.15`` when ``DeploymentType`` is set to ``PERSISTENT_2`` with a metadata configuration mode.
-        :param kms_key_id: The ID of the AWS Key Management Service ( AWS KMS ) key used to encrypt Amazon FSx file system data. Used as follows with Amazon FSx file system types: - Amazon FSx for Lustre ``PERSISTENT_1`` and ``PERSISTENT_2`` deployment types only. ``SCRATCH_1`` and ``SCRATCH_2`` types are encrypted using the Amazon FSx service AWS KMS key for your account. - Amazon FSx for NetApp ONTAP - Amazon FSx for OpenZFS - Amazon FSx for Windows File Server
-        :param lustre_configuration: The Lustre configuration for the file system being created. .. epigraph:: The following parameters are not supported when creating Lustre file systems with a data repository association. - ``AutoImportPolicy`` - ``ExportPath`` - ``ImportedChunkSize`` - ``ImportPath``
-        :param ontap_configuration: The ONTAP configuration properties of the FSx for ONTAP file system that you are creating.
-        :param open_zfs_configuration: The Amazon FSx for OpenZFS configuration properties for the file system that you are creating.
+        :param kms_key_id: The ID of the AWS Key Management Service ( AWS KMS ) key used to encrypt Amazon FSx file system data. Used as follows with Amazon FSx file system types: - Amazon FSx for Lustre ``PERSISTENT_1`` and ``PERSISTENT_2`` deployment types only. ``SCRATCH_1`` and ``SCRATCH_2`` types are encrypted using the Amazon FSx service AWS KMS key for your account. - Amazon FSx for NetApp ONTAP - Amazon FSx for OpenZFS - Amazon FSx for Windows File Server If this ID isn't specified, the Amazon FSx-managed key for your account is used. For more information, see `Encrypt <https://docs.aws.amazon.com//kms/latest/APIReference/API_Encrypt.html>`_ in the *AWS Key Management Service API Reference* .
+        :param lustre_configuration: The Lustre configuration for the file system being created. This configuration is required if the ``FileSystemType`` is set to ``LUSTRE`` . .. epigraph:: The following parameters are not supported when creating Lustre file systems with a data repository association. - ``AutoImportPolicy`` - ``ExportPath`` - ``ImportedChunkSize`` - ``ImportPath``
+        :param ontap_configuration: The ONTAP configuration properties of the FSx for ONTAP file system that you are creating. This configuration is required if the ``FileSystemType`` is set to ``ONTAP`` .
+        :param open_zfs_configuration: The Amazon FSx for OpenZFS configuration properties for the file system that you are creating. This configuration is required if the ``FileSystemType`` is set to ``OPENZFS`` .
         :param security_group_ids: A list of IDs specifying the security groups to apply to all network interfaces created for file system access. This list isn't returned in later requests to describe the file system. .. epigraph:: You must specify a security group if you are creating a Multi-AZ FSx for ONTAP file system in a VPC subnet that has been shared with you.
         :param storage_capacity: Sets the storage capacity of the file system that you're creating. ``StorageCapacity`` is required if you are creating a new file system. It is not required if you are creating a file system by restoring a backup. *FSx for Lustre file systems* - The amount of storage capacity that you can configure depends on the value that you set for ``StorageType`` and the Lustre ``DeploymentType`` , as follows: - For ``SCRATCH_2`` , ``PERSISTENT_2`` and ``PERSISTENT_1`` deployment types using SSD storage type, the valid values are 1200 GiB, 2400 GiB, and increments of 2400 GiB. - For ``PERSISTENT_1`` HDD file systems, valid values are increments of 6000 GiB for 12 MB/s/TiB file systems and increments of 1800 GiB for 40 MB/s/TiB file systems. - For ``SCRATCH_1`` deployment type, valid values are 1200 GiB, 2400 GiB, and increments of 3600 GiB. *FSx for ONTAP file systems* - The amount of SSD storage capacity that you can configure depends on the value of the ``HAPairs`` property. The minimum value is calculated as 1,024 GiB * HAPairs and the maximum is calculated as 524,288 GiB * HAPairs, up to a maximum amount of SSD storage capacity of 1,048,576 GiB (1 pebibyte). *FSx for OpenZFS file systems* - The amount of storage capacity that you can configure is from 64 GiB up to 524,288 GiB (512 TiB). If you are creating a file system from a backup, you can specify a storage capacity equal to or greater than the original file system's storage capacity. *FSx for Windows File Server file systems* - The amount of storage capacity that you can configure depends on the value that you set for ``StorageType`` as follows: - For SSD storage, valid values are 32 GiB-65,536 GiB (64 TiB). - For HDD storage, valid values are 2000 GiB-65,536 GiB (64 TiB).
         :param storage_type: Sets the storage class for the file system that you're creating. Valid values are ``SSD`` , ``HDD`` , and ``INTELLIGENT_TIERING`` . - Set to ``SSD`` to use solid state drive storage. SSD is supported on all Windows, Lustre, ONTAP, and OpenZFS deployment types. - Set to ``HDD`` to use hard disk drive storage, which is supported on ``SINGLE_AZ_2`` and ``MULTI_AZ_1`` Windows file system deployment types, and on ``PERSISTENT_1`` Lustre file system deployment types. - Set to ``INTELLIGENT_TIERING`` to use fully elastic, intelligently-tiered storage. Intelligent-Tiering is only available for OpenZFS file systems with the Multi-AZ deployment type and for Lustre file systems with the Persistent_2 deployment type. Default value is ``SSD`` . For more information, see `Storage type options <https://docs.aws.amazon.com/fsx/latest/WindowsGuide/optimize-fsx-costs.html#storage-type-options>`_ in the *FSx for Windows File Server User Guide* , `FSx for Lustre storage classes <https://docs.aws.amazon.com/fsx/latest/LustreGuide/using-fsx-lustre.html#lustre-storage-classes>`_ in the *FSx for Lustre User Guide* , and `Working with Intelligent-Tiering <https://docs.aws.amazon.com/fsx/latest/OpenZFSGuide/performance-intelligent-tiering>`_ in the *Amazon FSx for OpenZFS User Guide* .
         :param tags: The tags to associate with the file system. For more information, see `Tagging your Amazon FSx resources <https://docs.aws.amazon.com/fsx/latest/LustreGuide/tag-resources.html>`_ in the *Amazon FSx for Lustre User Guide* .
-        :param windows_configuration: The configuration object for the Microsoft Windows file system you are creating. This value is required if ``FileSystemType`` is set to ``WINDOWS`` .
+        :param windows_configuration: The configuration object for the Microsoft Windows file system you are creating. This configuration is required if ``FileSystemType`` is set to ``WINDOWS`` .
         '''
         if __debug__:
             type_hints = typing.get_type_hints(_typecheckingstub__2d13764c3dcb8d96799af4fa191d042ff4511c33cfd1aecbf235dded3234d3c5)
@@ -1685,9 +1685,10 @@ class CfnFileSystem(
             size_gib: typing.Optional[jsii.Number] = None,
             sizing_mode: typing.Optional[builtins.str] = None,
         ) -> None:
-            '''
-            :param size_gib: 
-            :param sizing_mode: 
+            '''The configuration for the optional provisioned SSD read cache on Amazon FSx for Lustre file systems that use the Intelligent-Tiering storage class.
+
+            :param size_gib: Required if ``SizingMode`` is set to ``USER_PROVISIONED`` . Specifies the size of the file system's SSD read cache, in gibibytes (GiB).
+            :param sizing_mode: Specifies how the provisioned SSD read cache is sized, as follows:. - Set to ``NO_CACHE`` if you do not want to use an SSD read cache with your Intelligent-Tiering file system. - Set to ``USER_PROVISIONED`` to specify the exact size of your SSD read cache. - Set to ``PROPORTIONAL_TO_THROUGHPUT_CAPACITY`` to have your SSD read cache automatically sized based on your throughput capacity.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-filesystem-datareadcacheconfiguration.html
             :exampleMetadata: fixture=_generated
@@ -1715,7 +1716,10 @@ class CfnFileSystem(
 
         @builtins.property
         def size_gib(self) -> typing.Optional[jsii.Number]:
-            '''
+            '''Required if ``SizingMode`` is set to ``USER_PROVISIONED`` .
+
+            Specifies the size of the file system's SSD read cache, in gibibytes (GiB).
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-filesystem-datareadcacheconfiguration.html#cfn-fsx-filesystem-datareadcacheconfiguration-sizegib
             '''
             result = self._values.get("size_gib")
@@ -1723,7 +1727,12 @@ class CfnFileSystem(
 
         @builtins.property
         def sizing_mode(self) -> typing.Optional[builtins.str]:
-            '''
+            '''Specifies how the provisioned SSD read cache is sized, as follows:.
+
+            - Set to ``NO_CACHE`` if you do not want to use an SSD read cache with your Intelligent-Tiering file system.
+            - Set to ``USER_PROVISIONED`` to specify the exact size of your SSD read cache.
+            - Set to ``PROPORTIONAL_TO_THROUGHPUT_CAPACITY`` to have your SSD read cache automatically sized based on your throughput capacity.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-filesystem-datareadcacheconfiguration.html#cfn-fsx-filesystem-datareadcacheconfiguration-sizingmode
             '''
             result = self._values.get("sizing_mode")
@@ -1866,16 +1875,16 @@ class CfnFileSystem(
             :param copy_tags_to_backups: (Optional) Not available for use with file systems that are linked to a data repository. A boolean flag indicating whether tags for the file system should be copied to backups. The default value is false. If ``CopyTagsToBackups`` is set to true, all file system tags are copied to all automatic and user-initiated backups when the user doesn't specify any backup-specific tags. If ``CopyTagsToBackups`` is set to true and you specify one or more backup tags, only the specified tags are copied to backups. If you specify one or more tags when creating a user-initiated backup, no tags are copied from the file system, regardless of this value. (Default = ``false`` ) For more information, see `Working with backups <https://docs.aws.amazon.com/fsx/latest/LustreGuide/using-backups-fsx.html>`_ in the *Amazon FSx for Lustre User Guide* .
             :param daily_automatic_backup_start_time: A recurring daily time, in the format ``HH:MM`` . ``HH`` is the zero-padded hour of the day (0-23), and ``MM`` is the zero-padded minute of the hour. For example, ``05:00`` specifies 5 AM daily.
             :param data_compression_type: Sets the data compression configuration for the file system. ``DataCompressionType`` can have the following values:. - ``NONE`` - (Default) Data compression is turned off when the file system is created. - ``LZ4`` - Data compression is turned on with the LZ4 algorithm. For more information, see `Lustre data compression <https://docs.aws.amazon.com/fsx/latest/LustreGuide/data-compression.html>`_ in the *Amazon FSx for Lustre User Guide* .
-            :param data_read_cache_configuration: 
+            :param data_read_cache_configuration: Specifies the optional provisioned SSD read cache on FSx for Lustre file systems that use the Intelligent-Tiering storage class. Required when ``StorageType`` is set to ``INTELLIGENT_TIERING`` .
             :param deployment_type: (Optional) Choose ``SCRATCH_1`` and ``SCRATCH_2`` deployment types when you need temporary storage and shorter-term processing of data. The ``SCRATCH_2`` deployment type provides in-transit encryption of data and higher burst throughput capacity than ``SCRATCH_1`` . Choose ``PERSISTENT_1`` for longer-term storage and for throughput-focused workloads that aren’t latency-sensitive. ``PERSISTENT_1`` supports encryption of data in transit, and is available in all AWS Regions in which FSx for Lustre is available. Choose ``PERSISTENT_2`` for longer-term storage and for latency-sensitive workloads that require the highest levels of IOPS/throughput. ``PERSISTENT_2`` supports the SSD and Intelligent-Tiering storage classes. You can optionally specify a metadata configuration mode for ``PERSISTENT_2`` which supports increasing metadata performance. ``PERSISTENT_2`` is available in a limited number of AWS Regions . For more information, and an up-to-date list of AWS Regions in which ``PERSISTENT_2`` is available, see `Deployment and storage class options for FSx for Lustre file systems <https://docs.aws.amazon.com/fsx/latest/LustreGuide/using-fsx-lustre.html>`_ in the *Amazon FSx for Lustre User Guide* . .. epigraph:: If you choose ``PERSISTENT_2`` , and you set ``FileSystemTypeVersion`` to ``2.10`` , the ``CreateFileSystem`` operation fails. Encryption of data in transit is automatically turned on when you access ``SCRATCH_2`` , ``PERSISTENT_1`` , and ``PERSISTENT_2`` file systems from Amazon EC2 instances that support automatic encryption in the AWS Regions where they are available. For more information about encryption in transit for FSx for Lustre file systems, see `Encrypting data in transit <https://docs.aws.amazon.com/fsx/latest/LustreGuide/encryption-in-transit-fsxl.html>`_ in the *Amazon FSx for Lustre User Guide* . (Default = ``SCRATCH_1`` )
             :param drive_cache_type: The type of drive cache used by ``PERSISTENT_1`` file systems that are provisioned with HDD storage devices. This parameter is required when storage type is HDD. Set this property to ``READ`` to improve the performance for frequently accessed files by caching up to 20% of the total storage capacity of the file system. This parameter is required when ``StorageType`` is set to ``HDD`` and ``DeploymentType`` is ``PERSISTENT_1`` .
-            :param efa_enabled: 
+            :param efa_enabled: (Optional) Specifies whether Elastic Fabric Adapter (EFA) and GPUDirect Storage (GDS) support is enabled for the Amazon FSx for Lustre file system. (Default = ``false`` )
             :param export_path: (Optional) Specifies the path in the Amazon S3 bucket where the root of your Amazon FSx file system is exported. The path must use the same Amazon S3 bucket as specified in ImportPath. You can provide an optional prefix to which new and changed data is to be exported from your Amazon FSx for Lustre file system. If an ``ExportPath`` value is not provided, Amazon FSx sets a default export path, ``s3://import-bucket/FSxLustre[creation-timestamp]`` . The timestamp is in UTC format, for example ``s3://import-bucket/FSxLustre20181105T222312Z`` . The Amazon S3 export bucket must be the same as the import bucket specified by ``ImportPath`` . If you specify only a bucket name, such as ``s3://import-bucket`` , you get a 1:1 mapping of file system objects to S3 bucket objects. This mapping means that the input data in S3 is overwritten on export. If you provide a custom prefix in the export path, such as ``s3://import-bucket/[custom-optional-prefix]`` , Amazon FSx exports the contents of your file system to that export prefix in the Amazon S3 bucket. .. epigraph:: This parameter is not supported for file systems with a data repository association.
             :param imported_file_chunk_size: (Optional) For files imported from a data repository, this value determines the stripe count and maximum amount of data per file (in MiB) stored on a single physical disk. The maximum number of disks that a single file can be striped across is limited by the total number of disks that make up the file system. The default chunk size is 1,024 MiB (1 GiB) and can go as high as 512,000 MiB (500 GiB). Amazon S3 objects have a maximum size of 5 TB. .. epigraph:: This parameter is not supported for Lustre file systems with a data repository association.
             :param import_path: (Optional) The path to the Amazon S3 bucket (including the optional prefix) that you're using as the data repository for your Amazon FSx for Lustre file system. The root of your FSx for Lustre file system will be mapped to the root of the Amazon S3 bucket you select. An example is ``s3://import-bucket/optional-prefix`` . If you specify a prefix after the Amazon S3 bucket name, only object keys with that prefix are loaded into the file system. .. epigraph:: This parameter is not supported for Lustre file systems with a data repository association.
-            :param metadata_configuration: 
+            :param metadata_configuration: The Lustre metadata performance configuration for the creation of an FSx for Lustre file system using a ``PERSISTENT_2`` deployment type.
             :param per_unit_storage_throughput: Required with ``PERSISTENT_1`` and ``PERSISTENT_2`` deployment types, provisions the amount of read and write throughput for each 1 tebibyte (TiB) of file system storage capacity, in MB/s/TiB. File system throughput capacity is calculated by multiplying ﬁle system storage capacity (TiB) by the ``PerUnitStorageThroughput`` (MB/s/TiB). For a 2.4-TiB ﬁle system, provisioning 50 MB/s/TiB of ``PerUnitStorageThroughput`` yields 120 MB/s of ﬁle system throughput. You pay for the amount of throughput that you provision. Valid values: - For ``PERSISTENT_1`` SSD storage: 50, 100, 200 MB/s/TiB. - For ``PERSISTENT_1`` HDD storage: 12, 40 MB/s/TiB. - For ``PERSISTENT_2`` SSD storage: 125, 250, 500, 1000 MB/s/TiB.
-            :param throughput_capacity: 
+            :param throughput_capacity: Specifies the throughput of an FSx for Lustre file system using the Intelligent-Tiering storage class, measured in megabytes per second (MBps). Valid values are 4000 MBps or multiples of 4000 MBps. You pay for the amount of throughput that you provision.
             :param weekly_maintenance_start_time: The preferred start time to perform weekly maintenance, formatted d:HH:MM in the UTC time zone, where d is the weekday number, from 1 through 7, beginning with Monday and ending with Sunday. For example, ``1:05:00`` specifies maintenance at 5 AM Monday.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-filesystem-lustreconfiguration.html
@@ -2042,7 +2051,10 @@ class CfnFileSystem(
         def data_read_cache_configuration(
             self,
         ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnFileSystem.DataReadCacheConfigurationProperty"]]:
-            '''
+            '''Specifies the optional provisioned SSD read cache on FSx for Lustre file systems that use the Intelligent-Tiering storage class.
+
+            Required when ``StorageType`` is set to ``INTELLIGENT_TIERING`` .
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-filesystem-lustreconfiguration.html#cfn-fsx-filesystem-lustreconfiguration-datareadcacheconfiguration
             '''
             result = self._values.get("data_read_cache_configuration")
@@ -2087,7 +2099,10 @@ class CfnFileSystem(
         def efa_enabled(
             self,
         ) -> typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]]:
-            '''
+            '''(Optional) Specifies whether Elastic Fabric Adapter (EFA) and GPUDirect Storage (GDS) support is enabled for the Amazon FSx for Lustre file system.
+
+            (Default = ``false`` )
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-filesystem-lustreconfiguration.html#cfn-fsx-filesystem-lustreconfiguration-efaenabled
             '''
             result = self._values.get("efa_enabled")
@@ -2143,7 +2158,8 @@ class CfnFileSystem(
         def metadata_configuration(
             self,
         ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnFileSystem.MetadataConfigurationProperty"]]:
-            '''
+            '''The Lustre metadata performance configuration for the creation of an FSx for Lustre file system using a ``PERSISTENT_2`` deployment type.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-filesystem-lustreconfiguration.html#cfn-fsx-filesystem-lustreconfiguration-metadataconfiguration
             '''
             result = self._values.get("metadata_configuration")
@@ -2168,7 +2184,10 @@ class CfnFileSystem(
 
         @builtins.property
         def throughput_capacity(self) -> typing.Optional[jsii.Number]:
-            '''
+            '''Specifies the throughput of an FSx for Lustre file system using the Intelligent-Tiering storage class, measured in megabytes per second (MBps).
+
+            Valid values are 4000 MBps or multiples of 4000 MBps. You pay for the amount of throughput that you provision.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-filesystem-lustreconfiguration.html#cfn-fsx-filesystem-lustreconfiguration-throughputcapacity
             '''
             result = self._values.get("throughput_capacity")
@@ -2208,9 +2227,10 @@ class CfnFileSystem(
             iops: typing.Optional[jsii.Number] = None,
             mode: typing.Optional[builtins.str] = None,
         ) -> None:
-            '''
-            :param iops: 
-            :param mode: 
+            '''The configuration that allows you to specify the performance of metadata operations for an FSx for Lustre file system.
+
+            :param iops: The number of Metadata IOPS provisioned for the file system.
+            :param mode: Specifies whether the file system is using the AUTOMATIC setting of metadata IOPS or if it is using a USER_PROVISIONED value.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-filesystem-metadataconfiguration.html
             :exampleMetadata: fixture=_generated
@@ -2238,7 +2258,8 @@ class CfnFileSystem(
 
         @builtins.property
         def iops(self) -> typing.Optional[jsii.Number]:
-            '''
+            '''The number of Metadata IOPS provisioned for the file system.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-filesystem-metadataconfiguration.html#cfn-fsx-filesystem-metadataconfiguration-iops
             '''
             result = self._values.get("iops")
@@ -2246,7 +2267,8 @@ class CfnFileSystem(
 
         @builtins.property
         def mode(self) -> typing.Optional[builtins.str]:
-            '''
+            '''Specifies whether the file system is using the AUTOMATIC setting of metadata IOPS or if it is using a USER_PROVISIONED value.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-filesystem-metadataconfiguration.html#cfn-fsx-filesystem-metadataconfiguration-mode
             '''
             result = self._values.get("mode")
@@ -2667,7 +2689,7 @@ class CfnFileSystem(
             :param read_cache_configuration: Specifies the optional provisioned SSD read cache on file systems that use the Intelligent-Tiering storage class.
             :param root_volume_configuration: The configuration Amazon FSx uses when creating the root value of the Amazon FSx for OpenZFS file system. All volumes are children of the root volume.
             :param route_table_ids: (Multi-AZ only) Specifies the route tables in which Amazon FSx creates the rules for routing traffic to the correct file server. You should specify all virtual private cloud (VPC) route tables associated with the subnets in which your clients are located. By default, Amazon FSx selects your VPC's default route table.
-            :param throughput_capacity: Specifies the throughput of an Amazon FSx for OpenZFS file system, measured in megabytes per second (MBps). Valid values depend on the ``DeploymentType`` that you choose, as follows: - For ``MULTI_AZ_1`` and ``SINGLE_AZ_2`` , valid values are 160, 320, 640, 1280, 2560, 3840, 5120, 7680, or 10240 MBps. - For ``SINGLE_AZ_1`` , valid values are 64, 128, 256, 512, 1024, 2048, 3072, or 4096 MBps. You pay for additional throughput capacity that you provision.
+            :param throughput_capacity: Specifies the throughput of an Amazon FSx for OpenZFS file system, measured in megabytes per second (MBps). Required if you are creating a new file system. Valid values depend on the ``DeploymentType`` that you choose, as follows: - For ``MULTI_AZ_1`` and ``SINGLE_AZ_2`` , valid values are 160, 320, 640, 1280, 2560, 3840, 5120, 7680, or 10240 MBps. - For ``SINGLE_AZ_1`` , valid values are 64, 128, 256, 512, 1024, 2048, 3072, or 4096 MBps. You pay for additional throughput capacity that you provision.
             :param weekly_maintenance_start_time: The preferred start time to perform weekly maintenance, formatted d:HH:MM in the UTC time zone, where d is the weekday number, from 1 through 7, beginning with Monday and ending with Sunday. For example, ``1:05:00`` specifies maintenance at 5 AM Monday.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-filesystem-openzfsconfiguration.html
@@ -2916,6 +2938,8 @@ class CfnFileSystem(
         @builtins.property
         def throughput_capacity(self) -> typing.Optional[jsii.Number]:
             '''Specifies the throughput of an Amazon FSx for OpenZFS file system, measured in megabytes per second (MBps).
+
+            Required if you are creating a new file system.
 
             Valid values depend on the ``DeploymentType`` that you choose, as follows:
 
@@ -3773,15 +3797,15 @@ class CfnFileSystemProps:
         :param subnet_ids: Specifies the IDs of the subnets that the file system will be accessible from. For Windows and ONTAP ``MULTI_AZ_1`` deployment types,provide exactly two subnet IDs, one for the preferred file server and one for the standby file server. You specify one of these subnets as the preferred subnet using the ``WindowsConfiguration > PreferredSubnetID`` or ``OntapConfiguration > PreferredSubnetID`` properties. For more information about Multi-AZ file system configuration, see `Availability and durability: Single-AZ and Multi-AZ file systems <https://docs.aws.amazon.com/fsx/latest/WindowsGuide/high-availability-multiAZ.html>`_ in the *Amazon FSx for Windows User Guide* and `Availability and durability <https://docs.aws.amazon.com/fsx/latest/ONTAPGuide/high-availability-multiAZ.html>`_ in the *Amazon FSx for ONTAP User Guide* . For Windows ``SINGLE_AZ_1`` and ``SINGLE_AZ_2`` and all Lustre deployment types, provide exactly one subnet ID. The file server is launched in that subnet's Availability Zone.
         :param backup_id: The ID of the file system backup that you are using to create a file system. For more information, see `CreateFileSystemFromBackup <https://docs.aws.amazon.com/fsx/latest/APIReference/API_CreateFileSystemFromBackup.html>`_ .
         :param file_system_type_version: For FSx for Lustre file systems, sets the Lustre version for the file system that you're creating. Valid values are ``2.10`` , ``2.12`` , and ``2.15`` : - ``2.10`` is supported by the Scratch and Persistent_1 Lustre deployment types. - ``2.12`` is supported by all Lustre deployment types, except for ``PERSISTENT_2`` with a metadata configuration mode. - ``2.15`` is supported by all Lustre deployment types and is recommended for all new file systems. Default value is ``2.10`` , except for the following deployments: - Default value is ``2.12`` when ``DeploymentType`` is set to ``PERSISTENT_2`` without a metadata configuration mode. - Default value is ``2.15`` when ``DeploymentType`` is set to ``PERSISTENT_2`` with a metadata configuration mode.
-        :param kms_key_id: The ID of the AWS Key Management Service ( AWS KMS ) key used to encrypt Amazon FSx file system data. Used as follows with Amazon FSx file system types: - Amazon FSx for Lustre ``PERSISTENT_1`` and ``PERSISTENT_2`` deployment types only. ``SCRATCH_1`` and ``SCRATCH_2`` types are encrypted using the Amazon FSx service AWS KMS key for your account. - Amazon FSx for NetApp ONTAP - Amazon FSx for OpenZFS - Amazon FSx for Windows File Server
-        :param lustre_configuration: The Lustre configuration for the file system being created. .. epigraph:: The following parameters are not supported when creating Lustre file systems with a data repository association. - ``AutoImportPolicy`` - ``ExportPath`` - ``ImportedChunkSize`` - ``ImportPath``
-        :param ontap_configuration: The ONTAP configuration properties of the FSx for ONTAP file system that you are creating.
-        :param open_zfs_configuration: The Amazon FSx for OpenZFS configuration properties for the file system that you are creating.
+        :param kms_key_id: The ID of the AWS Key Management Service ( AWS KMS ) key used to encrypt Amazon FSx file system data. Used as follows with Amazon FSx file system types: - Amazon FSx for Lustre ``PERSISTENT_1`` and ``PERSISTENT_2`` deployment types only. ``SCRATCH_1`` and ``SCRATCH_2`` types are encrypted using the Amazon FSx service AWS KMS key for your account. - Amazon FSx for NetApp ONTAP - Amazon FSx for OpenZFS - Amazon FSx for Windows File Server If this ID isn't specified, the Amazon FSx-managed key for your account is used. For more information, see `Encrypt <https://docs.aws.amazon.com//kms/latest/APIReference/API_Encrypt.html>`_ in the *AWS Key Management Service API Reference* .
+        :param lustre_configuration: The Lustre configuration for the file system being created. This configuration is required if the ``FileSystemType`` is set to ``LUSTRE`` . .. epigraph:: The following parameters are not supported when creating Lustre file systems with a data repository association. - ``AutoImportPolicy`` - ``ExportPath`` - ``ImportedChunkSize`` - ``ImportPath``
+        :param ontap_configuration: The ONTAP configuration properties of the FSx for ONTAP file system that you are creating. This configuration is required if the ``FileSystemType`` is set to ``ONTAP`` .
+        :param open_zfs_configuration: The Amazon FSx for OpenZFS configuration properties for the file system that you are creating. This configuration is required if the ``FileSystemType`` is set to ``OPENZFS`` .
         :param security_group_ids: A list of IDs specifying the security groups to apply to all network interfaces created for file system access. This list isn't returned in later requests to describe the file system. .. epigraph:: You must specify a security group if you are creating a Multi-AZ FSx for ONTAP file system in a VPC subnet that has been shared with you.
         :param storage_capacity: Sets the storage capacity of the file system that you're creating. ``StorageCapacity`` is required if you are creating a new file system. It is not required if you are creating a file system by restoring a backup. *FSx for Lustre file systems* - The amount of storage capacity that you can configure depends on the value that you set for ``StorageType`` and the Lustre ``DeploymentType`` , as follows: - For ``SCRATCH_2`` , ``PERSISTENT_2`` and ``PERSISTENT_1`` deployment types using SSD storage type, the valid values are 1200 GiB, 2400 GiB, and increments of 2400 GiB. - For ``PERSISTENT_1`` HDD file systems, valid values are increments of 6000 GiB for 12 MB/s/TiB file systems and increments of 1800 GiB for 40 MB/s/TiB file systems. - For ``SCRATCH_1`` deployment type, valid values are 1200 GiB, 2400 GiB, and increments of 3600 GiB. *FSx for ONTAP file systems* - The amount of SSD storage capacity that you can configure depends on the value of the ``HAPairs`` property. The minimum value is calculated as 1,024 GiB * HAPairs and the maximum is calculated as 524,288 GiB * HAPairs, up to a maximum amount of SSD storage capacity of 1,048,576 GiB (1 pebibyte). *FSx for OpenZFS file systems* - The amount of storage capacity that you can configure is from 64 GiB up to 524,288 GiB (512 TiB). If you are creating a file system from a backup, you can specify a storage capacity equal to or greater than the original file system's storage capacity. *FSx for Windows File Server file systems* - The amount of storage capacity that you can configure depends on the value that you set for ``StorageType`` as follows: - For SSD storage, valid values are 32 GiB-65,536 GiB (64 TiB). - For HDD storage, valid values are 2000 GiB-65,536 GiB (64 TiB).
         :param storage_type: Sets the storage class for the file system that you're creating. Valid values are ``SSD`` , ``HDD`` , and ``INTELLIGENT_TIERING`` . - Set to ``SSD`` to use solid state drive storage. SSD is supported on all Windows, Lustre, ONTAP, and OpenZFS deployment types. - Set to ``HDD`` to use hard disk drive storage, which is supported on ``SINGLE_AZ_2`` and ``MULTI_AZ_1`` Windows file system deployment types, and on ``PERSISTENT_1`` Lustre file system deployment types. - Set to ``INTELLIGENT_TIERING`` to use fully elastic, intelligently-tiered storage. Intelligent-Tiering is only available for OpenZFS file systems with the Multi-AZ deployment type and for Lustre file systems with the Persistent_2 deployment type. Default value is ``SSD`` . For more information, see `Storage type options <https://docs.aws.amazon.com/fsx/latest/WindowsGuide/optimize-fsx-costs.html#storage-type-options>`_ in the *FSx for Windows File Server User Guide* , `FSx for Lustre storage classes <https://docs.aws.amazon.com/fsx/latest/LustreGuide/using-fsx-lustre.html#lustre-storage-classes>`_ in the *FSx for Lustre User Guide* , and `Working with Intelligent-Tiering <https://docs.aws.amazon.com/fsx/latest/OpenZFSGuide/performance-intelligent-tiering>`_ in the *Amazon FSx for OpenZFS User Guide* .
         :param tags: The tags to associate with the file system. For more information, see `Tagging your Amazon FSx resources <https://docs.aws.amazon.com/fsx/latest/LustreGuide/tag-resources.html>`_ in the *Amazon FSx for Lustre User Guide* .
-        :param windows_configuration: The configuration object for the Microsoft Windows file system you are creating. This value is required if ``FileSystemType`` is set to ``WINDOWS`` .
+        :param windows_configuration: The configuration object for the Microsoft Windows file system you are creating. This configuration is required if ``FileSystemType`` is set to ``WINDOWS`` .
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-fsx-filesystem.html
         :exampleMetadata: fixture=_generated
@@ -4035,6 +4059,8 @@ class CfnFileSystemProps:
         - Amazon FSx for OpenZFS
         - Amazon FSx for Windows File Server
 
+        If this ID isn't specified, the Amazon FSx-managed key for your account is used. For more information, see `Encrypt <https://docs.aws.amazon.com//kms/latest/APIReference/API_Encrypt.html>`_ in the *AWS Key Management Service API Reference* .
+
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-fsx-filesystem.html#cfn-fsx-filesystem-kmskeyid
         '''
         result = self._values.get("kms_key_id")
@@ -4046,6 +4072,7 @@ class CfnFileSystemProps:
     ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, CfnFileSystem.LustreConfigurationProperty]]:
         '''The Lustre configuration for the file system being created.
 
+        This configuration is required if the ``FileSystemType`` is set to ``LUSTRE`` .
         .. epigraph::
 
            The following parameters are not supported when creating Lustre file systems with a data repository association.
@@ -4066,6 +4093,8 @@ class CfnFileSystemProps:
     ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, CfnFileSystem.OntapConfigurationProperty]]:
         '''The ONTAP configuration properties of the FSx for ONTAP file system that you are creating.
 
+        This configuration is required if the ``FileSystemType`` is set to ``ONTAP`` .
+
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-fsx-filesystem.html#cfn-fsx-filesystem-ontapconfiguration
         '''
         result = self._values.get("ontap_configuration")
@@ -4076,6 +4105,8 @@ class CfnFileSystemProps:
         self,
     ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, CfnFileSystem.OpenZFSConfigurationProperty]]:
         '''The Amazon FSx for OpenZFS configuration properties for the file system that you are creating.
+
+        This configuration is required if the ``FileSystemType`` is set to ``OPENZFS`` .
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-fsx-filesystem.html#cfn-fsx-filesystem-openzfsconfiguration
         '''
@@ -4156,7 +4187,7 @@ class CfnFileSystemProps:
     ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, CfnFileSystem.WindowsConfigurationProperty]]:
         '''The configuration object for the Microsoft Windows file system you are creating.
 
-        This value is required if ``FileSystemType`` is set to ``WINDOWS`` .
+        This configuration is required if ``FileSystemType`` is set to ``WINDOWS`` .
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-fsx-filesystem.html#cfn-fsx-filesystem-windowsconfiguration
         '''
@@ -4181,7 +4212,7 @@ class CfnS3AccessPointAttachment(
     metaclass=jsii.JSIIMeta,
     jsii_type="aws-cdk-lib.aws_fsx.CfnS3AccessPointAttachment",
 ):
-    '''Resource type definition for AWS::FSx::S3AccessPointAttachment.
+    '''An S3 access point attached to an Amazon FSx volume.
 
     :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-fsx-s3accesspointattachment.html
     :cloudformationResource: AWS::FSx::S3AccessPointAttachment
@@ -4239,10 +4270,10 @@ class CfnS3AccessPointAttachment(
         '''
         :param scope: Scope in which this resource is defined.
         :param id: Construct identifier for this resource (unique in its scope).
-        :param name: The Name of the S3AccessPointAttachment.
-        :param open_zfs_configuration: 
-        :param type: 
-        :param s3_access_point: 
+        :param name: The name of the S3 access point attachment; also used for the name of the S3 access point.
+        :param open_zfs_configuration: The OpenZFSConfiguration of the S3 access point attachment.
+        :param type: The type of Amazon FSx volume that the S3 access point is attached to.
+        :param s3_access_point: The S3 access point configuration of the S3 access point attachment.
         '''
         if __debug__:
             type_hints = typing.get_type_hints(_typecheckingstub__f51e0b107c6c6ca8bc284dbcf4013f6c7bcdd088cb084476fdf615b4d8ae257e)
@@ -4290,7 +4321,8 @@ class CfnS3AccessPointAttachment(
     @builtins.property
     @jsii.member(jsii_name="attrS3AccessPointAlias")
     def attr_s3_access_point_alias(self) -> builtins.str:
-        '''
+        '''The S3 access point's alias.
+
         :cloudformationAttribute: S3AccessPoint.Alias
         '''
         return typing.cast(builtins.str, jsii.get(self, "attrS3AccessPointAlias"))
@@ -4298,7 +4330,8 @@ class CfnS3AccessPointAttachment(
     @builtins.property
     @jsii.member(jsii_name="attrS3AccessPointResourceArn")
     def attr_s3_access_point_resource_arn(self) -> builtins.str:
-        '''
+        '''The S3 access point's ARN.
+
         :cloudformationAttribute: S3AccessPoint.ResourceARN
         '''
         return typing.cast(builtins.str, jsii.get(self, "attrS3AccessPointResourceArn"))
@@ -4311,7 +4344,7 @@ class CfnS3AccessPointAttachment(
     @builtins.property
     @jsii.member(jsii_name="name")
     def name(self) -> builtins.str:
-        '''The Name of the S3AccessPointAttachment.'''
+        '''The name of the S3 access point attachment;'''
         return typing.cast(builtins.str, jsii.get(self, "name"))
 
     @name.setter
@@ -4326,6 +4359,7 @@ class CfnS3AccessPointAttachment(
     def open_zfs_configuration(
         self,
     ) -> typing.Union[_IResolvable_da3f097b, "CfnS3AccessPointAttachment.S3AccessPointOpenZFSConfigurationProperty"]:
+        '''The OpenZFSConfiguration of the S3 access point attachment.'''
         return typing.cast(typing.Union[_IResolvable_da3f097b, "CfnS3AccessPointAttachment.S3AccessPointOpenZFSConfigurationProperty"], jsii.get(self, "openZfsConfiguration"))
 
     @open_zfs_configuration.setter
@@ -4341,6 +4375,7 @@ class CfnS3AccessPointAttachment(
     @builtins.property
     @jsii.member(jsii_name="type")
     def type(self) -> builtins.str:
+        '''The type of Amazon FSx volume that the S3 access point is attached to.'''
         return typing.cast(builtins.str, jsii.get(self, "type"))
 
     @type.setter
@@ -4355,6 +4390,7 @@ class CfnS3AccessPointAttachment(
     def s3_access_point(
         self,
     ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnS3AccessPointAttachment.S3AccessPointProperty"]]:
+        '''The S3 access point configuration of the S3 access point attachment.'''
         return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnS3AccessPointAttachment.S3AccessPointProperty"]], jsii.get(self, "s3AccessPoint"))
 
     @s3_access_point.setter
@@ -4374,8 +4410,9 @@ class CfnS3AccessPointAttachment(
     )
     class FileSystemGIDProperty:
         def __init__(self, *, gid: jsii.Number) -> None:
-            '''
-            :param gid: 
+            '''The GID of the file system user.
+
+            :param gid: The GID of the file system user.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-s3accesspointattachment-filesystemgid.html
             :exampleMetadata: fixture=_generated
@@ -4399,7 +4436,8 @@ class CfnS3AccessPointAttachment(
 
         @builtins.property
         def gid(self) -> jsii.Number:
-            '''
+            '''The GID of the file system user.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-s3accesspointattachment-filesystemgid.html#cfn-fsx-s3accesspointattachment-filesystemgid-gid
             '''
             result = self._values.get("gid")
@@ -4429,9 +4467,10 @@ class CfnS3AccessPointAttachment(
             posix_user: typing.Union[_IResolvable_da3f097b, typing.Union["CfnS3AccessPointAttachment.OpenZFSPosixFileSystemUserProperty", typing.Dict[builtins.str, typing.Any]]],
             type: builtins.str,
         ) -> None:
-            '''
-            :param posix_user: 
-            :param type: 
+            '''Specifies the file system user identity that will be used for authorizing all file access requests that are made using the S3 access point.
+
+            :param posix_user: Specifies the UID and GIDs of the file system POSIX user.
+            :param type: Specifies the FSx for OpenZFS user identity type, accepts only ``POSIX`` .
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-s3accesspointattachment-openzfsfilesystemidentity.html
             :exampleMetadata: fixture=_generated
@@ -4468,7 +4507,8 @@ class CfnS3AccessPointAttachment(
         def posix_user(
             self,
         ) -> typing.Union[_IResolvable_da3f097b, "CfnS3AccessPointAttachment.OpenZFSPosixFileSystemUserProperty"]:
-            '''
+            '''Specifies the UID and GIDs of the file system POSIX user.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-s3accesspointattachment-openzfsfilesystemidentity.html#cfn-fsx-s3accesspointattachment-openzfsfilesystemidentity-posixuser
             '''
             result = self._values.get("posix_user")
@@ -4477,7 +4517,8 @@ class CfnS3AccessPointAttachment(
 
         @builtins.property
         def type(self) -> builtins.str:
-            '''
+            '''Specifies the FSx for OpenZFS user identity type, accepts only ``POSIX`` .
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-s3accesspointattachment-openzfsfilesystemidentity.html#cfn-fsx-s3accesspointattachment-openzfsfilesystemidentity-type
             '''
             result = self._values.get("type")
@@ -4508,10 +4549,11 @@ class CfnS3AccessPointAttachment(
             uid: jsii.Number,
             secondary_gids: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union["CfnS3AccessPointAttachment.FileSystemGIDProperty", typing.Dict[builtins.str, typing.Any]]]]]] = None,
         ) -> None:
-            '''
-            :param gid: 
-            :param uid: 
-            :param secondary_gids: 
+            '''The FSx for OpenZFS file system user that is used for authorizing all file access requests that are made using the S3 access point.
+
+            :param gid: The GID of the file system user.
+            :param uid: The UID of the file system user.
+            :param secondary_gids: The list of secondary GIDs for the file system user.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-s3accesspointattachment-openzfsposixfilesystemuser.html
             :exampleMetadata: fixture=_generated
@@ -4546,7 +4588,8 @@ class CfnS3AccessPointAttachment(
 
         @builtins.property
         def gid(self) -> jsii.Number:
-            '''
+            '''The GID of the file system user.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-s3accesspointattachment-openzfsposixfilesystemuser.html#cfn-fsx-s3accesspointattachment-openzfsposixfilesystemuser-gid
             '''
             result = self._values.get("gid")
@@ -4555,7 +4598,8 @@ class CfnS3AccessPointAttachment(
 
         @builtins.property
         def uid(self) -> jsii.Number:
-            '''
+            '''The UID of the file system user.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-s3accesspointattachment-openzfsposixfilesystemuser.html#cfn-fsx-s3accesspointattachment-openzfsposixfilesystemuser-uid
             '''
             result = self._values.get("uid")
@@ -4566,7 +4610,8 @@ class CfnS3AccessPointAttachment(
         def secondary_gids(
             self,
         ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, "CfnS3AccessPointAttachment.FileSystemGIDProperty"]]]]:
-            '''
+            '''The list of secondary GIDs for the file system user.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-s3accesspointattachment-openzfsposixfilesystemuser.html#cfn-fsx-s3accesspointattachment-openzfsposixfilesystemuser-secondarygids
             '''
             result = self._values.get("secondary_gids")
@@ -4598,9 +4643,10 @@ class CfnS3AccessPointAttachment(
             file_system_identity: typing.Union[_IResolvable_da3f097b, typing.Union["CfnS3AccessPointAttachment.OpenZFSFileSystemIdentityProperty", typing.Dict[builtins.str, typing.Any]]],
             volume_id: builtins.str,
         ) -> None:
-            '''
-            :param file_system_identity: 
-            :param volume_id: 
+            '''Describes the FSx for OpenZFS attachment configuration of an S3 access point attachment.
+
+            :param file_system_identity: The file system identity used to authorize file access requests made using the S3 access point.
+            :param volume_id: The ID of the FSx for OpenZFS volume that the S3 access point is attached to.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-s3accesspointattachment-s3accesspointopenzfsconfiguration.html
             :exampleMetadata: fixture=_generated
@@ -4640,7 +4686,8 @@ class CfnS3AccessPointAttachment(
         def file_system_identity(
             self,
         ) -> typing.Union[_IResolvable_da3f097b, "CfnS3AccessPointAttachment.OpenZFSFileSystemIdentityProperty"]:
-            '''
+            '''The file system identity used to authorize file access requests made using the S3 access point.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-s3accesspointattachment-s3accesspointopenzfsconfiguration.html#cfn-fsx-s3accesspointattachment-s3accesspointopenzfsconfiguration-filesystemidentity
             '''
             result = self._values.get("file_system_identity")
@@ -4649,7 +4696,8 @@ class CfnS3AccessPointAttachment(
 
         @builtins.property
         def volume_id(self) -> builtins.str:
-            '''
+            '''The ID of the FSx for OpenZFS volume that the S3 access point is attached to.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-s3accesspointattachment-s3accesspointopenzfsconfiguration.html#cfn-fsx-s3accesspointattachment-s3accesspointopenzfsconfiguration-volumeid
             '''
             result = self._values.get("volume_id")
@@ -4686,11 +4734,12 @@ class CfnS3AccessPointAttachment(
             resource_arn: typing.Optional[builtins.str] = None,
             vpc_configuration: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnS3AccessPointAttachment.S3AccessPointVpcConfigurationProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
         ) -> None:
-            '''
-            :param alias: 
-            :param policy: 
-            :param resource_arn: 
-            :param vpc_configuration: 
+            '''Describes the S3 access point configuration of the S3 access point attachment.
+
+            :param alias: The S3 access point's alias.
+            :param policy: The S3 access point's policy.
+            :param resource_arn: The S3 access point's ARN.
+            :param vpc_configuration: The S3 access point's virtual private cloud (VPC) configuration.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-s3accesspointattachment-s3accesspoint.html
             :exampleMetadata: fixture=_generated
@@ -4730,7 +4779,8 @@ class CfnS3AccessPointAttachment(
 
         @builtins.property
         def alias(self) -> typing.Optional[builtins.str]:
-            '''
+            '''The S3 access point's alias.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-s3accesspointattachment-s3accesspoint.html#cfn-fsx-s3accesspointattachment-s3accesspoint-alias
             '''
             result = self._values.get("alias")
@@ -4738,7 +4788,8 @@ class CfnS3AccessPointAttachment(
 
         @builtins.property
         def policy(self) -> typing.Any:
-            '''
+            '''The S3 access point's policy.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-s3accesspointattachment-s3accesspoint.html#cfn-fsx-s3accesspointattachment-s3accesspoint-policy
             '''
             result = self._values.get("policy")
@@ -4746,7 +4797,8 @@ class CfnS3AccessPointAttachment(
 
         @builtins.property
         def resource_arn(self) -> typing.Optional[builtins.str]:
-            '''
+            '''The S3 access point's ARN.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-s3accesspointattachment-s3accesspoint.html#cfn-fsx-s3accesspointattachment-s3accesspoint-resourcearn
             '''
             result = self._values.get("resource_arn")
@@ -4756,7 +4808,8 @@ class CfnS3AccessPointAttachment(
         def vpc_configuration(
             self,
         ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnS3AccessPointAttachment.S3AccessPointVpcConfigurationProperty"]]:
-            '''
+            '''The S3 access point's virtual private cloud (VPC) configuration.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-s3accesspointattachment-s3accesspoint.html#cfn-fsx-s3accesspointattachment-s3accesspoint-vpcconfiguration
             '''
             result = self._values.get("vpc_configuration")
@@ -4780,8 +4833,9 @@ class CfnS3AccessPointAttachment(
     )
     class S3AccessPointVpcConfigurationProperty:
         def __init__(self, *, vpc_id: builtins.str) -> None:
-            '''
-            :param vpc_id: 
+            '''If included, Amazon S3 restricts access to this access point to requests from the specified virtual private cloud (VPC).
+
+            :param vpc_id: Specifies the virtual private cloud (VPC) for the S3 access point VPC configuration, if one exists.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-s3accesspointattachment-s3accesspointvpcconfiguration.html
             :exampleMetadata: fixture=_generated
@@ -4805,7 +4859,8 @@ class CfnS3AccessPointAttachment(
 
         @builtins.property
         def vpc_id(self) -> builtins.str:
-            '''
+            '''Specifies the virtual private cloud (VPC) for the S3 access point VPC configuration, if one exists.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-fsx-s3accesspointattachment-s3accesspointvpcconfiguration.html#cfn-fsx-s3accesspointattachment-s3accesspointvpcconfiguration-vpcid
             '''
             result = self._values.get("vpc_id")
@@ -4845,10 +4900,10 @@ class CfnS3AccessPointAttachmentProps:
     ) -> None:
         '''Properties for defining a ``CfnS3AccessPointAttachment``.
 
-        :param name: The Name of the S3AccessPointAttachment.
-        :param open_zfs_configuration: 
-        :param type: 
-        :param s3_access_point: 
+        :param name: The name of the S3 access point attachment; also used for the name of the S3 access point.
+        :param open_zfs_configuration: The OpenZFSConfiguration of the S3 access point attachment.
+        :param type: The type of Amazon FSx volume that the S3 access point is attached to.
+        :param s3_access_point: The S3 access point configuration of the S3 access point attachment.
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-fsx-s3accesspointattachment.html
         :exampleMetadata: fixture=_generated
@@ -4907,7 +4962,9 @@ class CfnS3AccessPointAttachmentProps:
 
     @builtins.property
     def name(self) -> builtins.str:
-        '''The Name of the S3AccessPointAttachment.
+        '''The name of the S3 access point attachment;
+
+        also used for the name of the S3 access point.
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-fsx-s3accesspointattachment.html#cfn-fsx-s3accesspointattachment-name
         '''
@@ -4919,7 +4976,8 @@ class CfnS3AccessPointAttachmentProps:
     def open_zfs_configuration(
         self,
     ) -> typing.Union[_IResolvable_da3f097b, CfnS3AccessPointAttachment.S3AccessPointOpenZFSConfigurationProperty]:
-        '''
+        '''The OpenZFSConfiguration of the S3 access point attachment.
+
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-fsx-s3accesspointattachment.html#cfn-fsx-s3accesspointattachment-openzfsconfiguration
         '''
         result = self._values.get("open_zfs_configuration")
@@ -4928,7 +4986,8 @@ class CfnS3AccessPointAttachmentProps:
 
     @builtins.property
     def type(self) -> builtins.str:
-        '''
+        '''The type of Amazon FSx volume that the S3 access point is attached to.
+
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-fsx-s3accesspointattachment.html#cfn-fsx-s3accesspointattachment-type
         '''
         result = self._values.get("type")
@@ -4939,7 +4998,8 @@ class CfnS3AccessPointAttachmentProps:
     def s3_access_point(
         self,
     ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, CfnS3AccessPointAttachment.S3AccessPointProperty]]:
-        '''
+        '''The S3 access point configuration of the S3 access point attachment.
+
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-fsx-s3accesspointattachment.html#cfn-fsx-s3accesspointattachment-s3accesspoint
         '''
         result = self._values.get("s3_access_point")

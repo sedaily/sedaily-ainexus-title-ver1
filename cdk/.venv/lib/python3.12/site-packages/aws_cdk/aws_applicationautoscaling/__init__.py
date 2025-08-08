@@ -6241,7 +6241,7 @@ class ScalingInterval:
         '''A range of metric values in which to apply a certain scaling operation.
 
         :param change: The capacity adjustment to apply in this interval. The number is interpreted differently based on AdjustmentType: - ChangeInCapacity: add the adjustment to the current capacity. The number can be positive or negative. - PercentChangeInCapacity: add or remove the given percentage of the current capacity to itself. The number can be in the range [-100..100]. - ExactCapacity: set the capacity to this number. The number must be positive.
-        :param lower: The lower bound of the interval. The scaling adjustment will be applied if the metric is higher than this value. Default: Threshold automatically derived from neighbouring intervals
+        :param lower: The lower bound of the interval. The scaling adjustment will be applied if the metric is higher than or equal this value. Default: Threshold automatically derived from neighbouring intervals
         :param upper: The upper bound of the interval. The scaling adjustment will be applied if the metric is lower than this value. Default: Threshold automatically derived from neighbouring intervals
 
         :exampleMetadata: fixture=_generated
@@ -6294,7 +6294,7 @@ class ScalingInterval:
     def lower(self) -> typing.Optional[jsii.Number]:
         '''The lower bound of the interval.
 
-        The scaling adjustment will be applied if the metric is higher than this value.
+        The scaling adjustment will be applied if the metric is higher than or equal this value.
 
         :default: Threshold automatically derived from neighbouring intervals
         '''

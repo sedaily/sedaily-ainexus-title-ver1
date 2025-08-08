@@ -64,7 +64,7 @@ const ProtectedRoute = ({ children, requiredRole = null }) => {
     if (user?.role === "admin") {
       return <Navigate to="/admin" replace />;
     } else {
-      return <Navigate to="/dashboard" replace />;
+      return <Navigate to="/chat" replace />;
     }
   }
 
@@ -114,7 +114,7 @@ function AppContent() {
       {isAuthenticated && !isHeaderHidden && <Header />}
       <main
         className={
-          isHeaderHidden || !isAuthenticated
+          isHeaderHidden
             ? ""
             : isFullScreen
             ? "bg-gray-50 dark:bg-dark-primary"
@@ -123,7 +123,7 @@ function AppContent() {
       >
         <Suspense fallback={<PageSkeleton />}>
           <Routes>
-            {/* 공개 라우트 */}
+            {/* 인증 관련 페이지 */}
             <Route
               path="/login"
               element={isAuthenticated ? <RoleBasedRedirect /> : <Login />}
@@ -186,28 +186,16 @@ function AppContent() {
               }
             />
 
-            {/* 루트 경로 처리 */}
+            {/* 루트 경로 - 인증 상태에 따른 리다이렉트 */}
             <Route
               path="/"
-              element={
-                isAuthenticated ? (
-                  <RoleBasedRedirect />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
+              element={isAuthenticated ? <RoleBasedRedirect /> : <Navigate to="/login" replace />}
             />
 
-            {/* 404 처리 */}
+            {/* 404 페이지 - 인증 상태에 따른 리다이렉트 */}
             <Route
               path="*"
-              element={
-                isAuthenticated ? (
-                  <RoleBasedRedirect />
-                ) : (
-                  <Navigate to="/login" replace />
-                )
-              }
+              element={isAuthenticated ? <RoleBasedRedirect /> : <Navigate to="/login" replace />}
             />
           </Routes>
         </Suspense>

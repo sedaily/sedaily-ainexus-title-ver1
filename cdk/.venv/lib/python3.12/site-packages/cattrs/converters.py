@@ -1,18 +1,19 @@
 from __future__ import annotations
 
 from collections import Counter, deque
+from collections.abc import Callable, Iterable
 from collections.abc import Mapping as AbcMapping
 from collections.abc import MutableMapping as AbcMutableMapping
-from collections.abc import MutableSet as AbcMutableSet
 from dataclasses import Field
 from enum import Enum
 from inspect import Signature
 from inspect import signature as inspect_signature
 from pathlib import Path
-from typing import Any, Callable, Iterable, Optional, Tuple, TypeVar, overload
+from typing import Any, Optional, Tuple, TypeVar, overload
 
 from attrs import Attribute, resolve_types
 from attrs import has as attrs_has
+from typing_extensions import Self
 
 from ._compat import (
     ANIES,
@@ -30,7 +31,6 @@ from ._compat import (
     get_final_base,
     get_newtype_base,
     get_origin,
-    get_type_alias_base,
     has,
     has_with_generic,
     is_annotated,
@@ -48,15 +48,18 @@ from ._compat import (
     is_protocol,
     is_sequence,
     is_tuple,
-    is_type_alias,
     is_typeddict,
     is_union_type,
     signature,
 )
 from .cols import (
+    defaultdict_structure_factory,
+    is_defaultdict,
     is_namedtuple,
     iterable_unstructure_factory,
     list_structure_factory,
+    mapping_structure_factory,
+    mapping_unstructure_factory,
     namedtuple_structure_factory,
     namedtuple_unstructure_factory,
 )
@@ -78,21 +81,24 @@ from .errors import (
 from .fns import Predicate, identity, raise_error
 from .gen import (
     AttributeOverride,
-    DictStructureFn,
     HeteroTupleUnstructureFn,
     IterableUnstructureFn,
-    MappingStructureFn,
     MappingUnstructureFn,
     make_dict_structure_fn,
     make_dict_unstructure_fn,
     make_hetero_tuple_unstructure_fn,
-    make_mapping_structure_fn,
-    make_mapping_unstructure_fn,
 )
 from .gen.typeddicts import make_dict_structure_fn as make_typeddict_dict_struct_fn
 from .gen.typeddicts import make_dict_unstructure_fn as make_typeddict_dict_unstruct_fn
+from .literals import is_literal_containing_enums
+from .typealiases import (
+    get_type_alias_base,
+    is_type_alias,
+    type_alias_structure_factory,
+)
+from .types import SimpleStructureHook
 
-__all__ = ["UnstructureStrategy", "BaseConverter", "Converter", "GenConverter"]
+__all__ = ["BaseConverter", "Converter", "GenConverter", "UnstructureStrategy"]
 
 T = TypeVar("T")
 V = TypeVar("V")
@@ -135,6 +141,7 @@ AnyStructureHookFactory = TypeVar(
 
 UnstructureHookT = TypeVar("UnstructureHookT", bound=UnstructureHook)
 StructureHookT = TypeVar("StructureHookT", bound=StructureHook)
+CounterT = TypeVar("CounterT", bound=Counter)
 
 
 class UnstructureStrategy(Enum):
@@ -142,10 +149,6 @@ class UnstructureStrategy(Enum):
 
     AS_DICT = "asdict"
     AS_TUPLE = "astuple"
-
-
-def is_literal_containing_enums(typ: type) -> bool:
-    return is_literal(typ) and any(isinstance(val, Enum) for val in typ.__args__)
 
 
 def _is_extended_factory(factory: Callable) -> bool:
@@ -163,16 +166,16 @@ class BaseConverter:
     """Converts between structured and unstructured data."""
 
     __slots__ = (
-        "_unstructure_func",
-        "_unstructure_attrs",
-        "_structure_attrs",
         "_dict_factory",
-        "_union_struct_registry",
-        "_structure_func",
         "_prefer_attrib_converters",
-        "detailed_validation",
         "_struct_copy_skip",
+        "_structure_attrs",
+        "_structure_func",
+        "_union_struct_registry",
         "_unstruct_copy_skip",
+        "_unstructure_attrs",
+        "_unstructure_func",
+        "detailed_validation",
     )
 
     def __init__(
@@ -182,7 +185,9 @@ class BaseConverter:
         prefer_attrib_converters: bool = False,
         detailed_validation: bool = True,
         unstructure_fallback_factory: HookFactory[UnstructureHook] = lambda _: identity,
-        structure_fallback_factory: HookFactory[StructureHook] = lambda _: raise_error,
+        structure_fallback_factory: HookFactory[StructureHook] = lambda t: raise_error(
+            None, t
+        ),
     ) -> None:
         """
         :param detailed_validation: Whether to use a slightly slower mode for detailed
@@ -194,6 +199,9 @@ class BaseConverter:
 
         ..  versionadded:: 23.2.0 *unstructure_fallback_factory*
         ..  versionadded:: 23.2.0 *structure_fallback_factory*
+        ..  versionchanged:: 24.2.0
+            The default `structure_fallback_factory` now raises errors for missing handlers
+            more eagerly, surfacing problems earlier.
         """
         unstruct_strat = UnstructureStrategy(unstruct_strat)
         self._prefer_attrib_converters = prefer_attrib_converters
@@ -231,6 +239,7 @@ class BaseConverter:
                     lambda t: self.get_unstructure_hook(get_type_alias_base(t)),
                     True,
                 ),
+                (is_literal_containing_enums, self.unstructure),
                 (is_mapping, self._unstructure_mapping),
                 (is_sequence, self._unstructure_seq),
                 (is_mutable_set, self._unstructure_seq),
@@ -254,7 +263,7 @@ class BaseConverter:
                 ),
                 (is_generic_attrs, self._gen_structure_generic, True),
                 (lambda t: get_newtype_base(t) is not None, self._structure_newtype),
-                (is_type_alias, self._find_type_alias_structure_hook, True),
+                (is_type_alias, type_alias_structure_factory, "extended"),
                 (
                     lambda t: get_final_base(t) is not None,
                     self._structure_final_factory,
@@ -330,6 +339,8 @@ class BaseConverter:
 
         .. versionchanged:: 24.1.0
             This method may now be used as a decorator.
+        .. versionchanged:: 25.1.0
+            Modern type aliases are now supported.
         """
         if func is None:
             # Autodetecting decorator.
@@ -344,6 +355,8 @@ class BaseConverter:
             resolve_types(cls)
         if is_union_type(cls):
             self._unstructure_func.register_func_list([(lambda t: t == cls, func)])
+        elif is_type_alias(cls):
+            self._unstructure_func.register_func_list([(lambda t: t is cls, func)])
         elif get_newtype_base(cls) is not None:
             # This is a newtype, so we handle it specially.
             self._unstructure_func.register_func_list([(lambda t: t is cls, func)])
@@ -466,6 +479,8 @@ class BaseConverter:
 
         .. versionchanged:: 24.1.0
             This method may now be used as a decorator.
+        .. versionchanged:: 25.1.0
+            Modern type aliases are now supported.
         """
         if func is None:
             # The autodetecting decorator.
@@ -479,6 +494,9 @@ class BaseConverter:
         if is_union_type(cl):
             self._union_struct_registry[cl] = func
             self._structure_func.clear_cache()
+        elif is_type_alias(cl):
+            # Type aliases are special-cased.
+            self._structure_func.register_func_list([(lambda t: t is cl, func)])
         elif get_newtype_base(cl) is not None:
             # This is a newtype, so we handle it specially.
             self._structure_func.register_func_list([(lambda t: t is cl, func)])
@@ -633,7 +651,9 @@ class BaseConverter:
 
     # Python primitives to classes.
 
-    def _gen_structure_generic(self, cl: type[T]) -> DictStructureFn[T]:
+    def _gen_structure_generic(
+        self, cl: type[T]
+    ) -> SimpleStructureHook[Mapping[str, Any], T]:
         """Create and return a hook for structuring generics."""
         return make_dict_structure_fn(
             cl, self, _cattrs_prefer_attrib_converters=self._prefer_attrib_converters
@@ -691,14 +711,6 @@ class BaseConverter:
     def _structure_newtype(self, val: UnstructuredValue, type) -> StructuredValue:
         base = get_newtype_base(type)
         return self.get_structure_hook(base)(val, base)
-
-    def _find_type_alias_structure_hook(self, type: Any) -> StructureHook:
-        base = get_type_alias_base(type)
-        res = self.get_structure_hook(base)
-        if res == self._structure_call:
-            # we need to replace the type arg of `structure_call`
-            return lambda v, _, __base=base: __base(v)
-        return lambda v, _, __base=base: res(v, __base)
 
     def _structure_final_factory(self, type):
         base = get_final_base(type)
@@ -878,7 +890,7 @@ class BaseConverter:
         # We can't actually have a Union of a Union, so this is safe.
         return self._structure_func.dispatch(other)(obj, other)
 
-    def _structure_tuple(self, obj: Any, tup: type[T]) -> T:
+    def _structure_tuple(self, obj: Iterable, tup: type[T]) -> T:
         """Deal with structuring into a tuple."""
         tup_params = None if tup in (Tuple, tuple) else tup.__args__
         has_ellipsis = tup_params and tup_params[-1] is Ellipsis
@@ -886,7 +898,7 @@ class BaseConverter:
             # Just a Tuple. (No generic information.)
             return tuple(obj)
         if has_ellipsis:
-            # We're dealing with a homogenous tuple, Tuple[int, ...]
+            # We're dealing with a homogenous tuple, tuple[int, ...]
             tup_type = tup_params[0]
             conv = self._structure_func.dispatch(tup_type)
             if self.detailed_validation:
@@ -913,13 +925,6 @@ class BaseConverter:
 
         # We're dealing with a heterogenous tuple.
         exp_len = len(tup_params)
-        try:
-            len_obj = len(obj)
-        except TypeError:
-            pass  # most likely an unsized iterator, eg generator
-        else:
-            if len_obj > exp_len:
-                exp_len = len_obj
         if self.detailed_validation:
             errors = []
             res = []
@@ -933,8 +938,8 @@ class BaseConverter:
                     )
                     exc.__notes__ = [*getattr(exc, "__notes__", []), msg]
                     errors.append(exc)
-            if len(res) < exp_len:
-                problem = "Not enough" if len(res) < len(tup_params) else "Too many"
+            if len(obj) != exp_len:
+                problem = "Not enough" if len(res) < exp_len else "Too many"
                 exc = ValueError(f"{problem} values in {obj!r} to structure as {tup!r}")
                 msg = f"Structuring {tup}"
                 exc.__notes__ = [*getattr(exc, "__notes__", []), msg]
@@ -943,13 +948,12 @@ class BaseConverter:
                 raise IterableValidationError(f"While structuring {tup!r}", errors, tup)
             return tuple(res)
 
-        res = tuple(
+        if len(obj) != exp_len:
+            problem = "Not enough" if len(obj) < len(tup_params) else "Too many"
+            raise ValueError(f"{problem} values in {obj!r} to structure as {tup!r}")
+        return tuple(
             [self._structure_func.dispatch(t)(e, t) for t, e in zip(tup_params, obj)]
         )
-        if len(res) < exp_len:
-            problem = "Not enough" if len(res) < len(tup_params) else "Too many"
-            raise ValueError(f"{problem} values in {obj!r} to structure as {tup!r}")
-        return res
 
     def _get_dis_func(
         self,
@@ -964,11 +968,9 @@ class BaseConverter:
             # logic.
             union_types = tuple(e for e in union_types if e is not NoneType)
 
-        # TODO: technically both disambiguators could support TypedDicts and
-        # dataclasses...
         if not all(has(get_origin(e) or e) for e in union_types):
             raise StructureHandlerNotFoundError(
-                "Only unions of attrs classes supported "
+                "Only unions of attrs classes and dataclasses supported "
                 "currently. Register a structure hook manually.",
                 type_=union,
             )
@@ -989,7 +991,7 @@ class BaseConverter:
         unstruct_strat: UnstructureStrategy | None = None,
         prefer_attrib_converters: bool | None = None,
         detailed_validation: bool | None = None,
-    ) -> BaseConverter:
+    ) -> Self:
         """Create a copy of the converter, keeping all existing custom hooks.
 
         :param detailed_validation: Whether to use a slightly slower mode for detailed
@@ -1028,10 +1030,10 @@ class Converter(BaseConverter):
     """A converter which generates specialized un/structuring functions."""
 
     __slots__ = (
-        "omit_if_default",
-        "forbid_extra_keys",
-        "type_overrides",
         "_unstruct_collection_overrides",
+        "forbid_extra_keys",
+        "omit_if_default",
+        "type_overrides",
     )
 
     def __init__(
@@ -1041,11 +1043,13 @@ class Converter(BaseConverter):
         omit_if_default: bool = False,
         forbid_extra_keys: bool = False,
         type_overrides: Mapping[type, AttributeOverride] = {},
-        unstruct_collection_overrides: Mapping[type, Callable] = {},
+        unstruct_collection_overrides: Mapping[type, UnstructureHook] = {},
         prefer_attrib_converters: bool = False,
         detailed_validation: bool = True,
         unstructure_fallback_factory: HookFactory[UnstructureHook] = lambda _: identity,
-        structure_fallback_factory: HookFactory[StructureHook] = lambda _: raise_error,
+        structure_fallback_factory: HookFactory[StructureHook] = lambda t: raise_error(
+            None, t
+        ),
     ):
         """
         :param detailed_validation: Whether to use a slightly slower mode for detailed
@@ -1057,6 +1061,9 @@ class Converter(BaseConverter):
 
         ..  versionadded:: 23.2.0 *unstructure_fallback_factory*
         ..  versionadded:: 23.2.0 *structure_fallback_factory*
+        ..  versionchanged:: 24.2.0
+            The default `structure_fallback_factory` now raises errors for missing handlers
+            more eagerly, surfacing problems earlier.
         """
         super().__init__(
             dict_factory=dict_factory,
@@ -1083,16 +1090,12 @@ class Converter(BaseConverter):
         if OriginAbstractSet in co:
             if OriginMutableSet not in co:
                 co[OriginMutableSet] = co[OriginAbstractSet]
-                co[AbcMutableSet] = co[OriginAbstractSet]  # For 3.8 compatibility.
             if FrozenSetSubscriptable not in co:
                 co[FrozenSetSubscriptable] = co[OriginAbstractSet]
 
         # abc.MutableSet overrrides, if defined, apply to sets
         if OriginMutableSet in co and set not in co:
             co[set] = co[OriginMutableSet]
-
-        if FrozenSetSubscriptable in co:
-            co[frozenset] = co[FrozenSetSubscriptable]  # For 3.8 compatibility.
 
         # abc.Sequence overrides, if defined, can apply to MutableSequences, lists and
         # tuples
@@ -1164,6 +1167,9 @@ class Converter(BaseConverter):
         self.register_structure_hook_factory(is_annotated, self.gen_structure_annotated)
         self.register_structure_hook_factory(is_mapping, self.gen_structure_mapping)
         self.register_structure_hook_factory(is_counter, self.gen_structure_counter)
+        self.register_structure_hook_factory(
+            is_defaultdict, defaultdict_structure_factory
+        )
         self.register_structure_hook_factory(is_typeddict, self.gen_structure_typeddict)
         self.register_structure_hook_factory(
             lambda t: get_newtype_base(t) is not None, self.get_structure_newtype
@@ -1325,14 +1331,16 @@ class Converter(BaseConverter):
         unstructure_to = self._unstruct_collection_overrides.get(
             get_origin(cl) or cl, unstructure_to or dict
         )
-        h = make_mapping_unstructure_fn(
+        h = mapping_unstructure_factory(
             cl, self, unstructure_to=unstructure_to, key_handler=key_handler
         )
         self._unstructure_func.register_cls_list([(cl, h)], direct=True)
         return h
 
-    def gen_structure_counter(self, cl: Any) -> MappingStructureFn[T]:
-        h = make_mapping_structure_fn(
+    def gen_structure_counter(
+        self, cl: type[CounterT]
+    ) -> SimpleStructureHook[Mapping[Any, Any], CounterT]:
+        h = mapping_structure_factory(
             cl,
             self,
             structure_to=Counter,
@@ -1342,7 +1350,9 @@ class Converter(BaseConverter):
         self._structure_func.register_cls_list([(cl, h)], direct=True)
         return h
 
-    def gen_structure_mapping(self, cl: Any) -> MappingStructureFn[T]:
+    def gen_structure_mapping(
+        self, cl: Any
+    ) -> SimpleStructureHook[Mapping[Any, Any], Any]:
         structure_to = get_origin(cl) or cl
         if structure_to in (
             MutableMapping,
@@ -1351,7 +1361,7 @@ class Converter(BaseConverter):
             AbcMapping,
         ):  # These default to dicts
             structure_to = dict
-        h = make_mapping_structure_fn(
+        h = mapping_structure_factory(
             cl, self, structure_to, detailed_validation=self.detailed_validation
         )
         self._structure_func.register_cls_list([(cl, h)], direct=True)
@@ -1364,10 +1374,10 @@ class Converter(BaseConverter):
         omit_if_default: bool | None = None,
         forbid_extra_keys: bool | None = None,
         type_overrides: Mapping[type, AttributeOverride] | None = None,
-        unstruct_collection_overrides: Mapping[type, Callable] | None = None,
+        unstruct_collection_overrides: Mapping[type, UnstructureHook] | None = None,
         prefer_attrib_converters: bool | None = None,
         detailed_validation: bool | None = None,
-    ) -> Converter:
+    ) -> Self:
         """Create a copy of the converter, keeping all existing custom hooks.
 
         :param detailed_validation: Whether to use a slightly slower mode for detailed

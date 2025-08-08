@@ -370,8 +370,13 @@ to create additional rules:
 ```python
 connection = events.Connection.from_event_bus_arn(self, "Connection", "arn:aws:events:us-east-1:123456789012:event-bus/EventBusName", "arn:aws:secretsmanager:us-east-1:123456789012:secret:SecretName-f3gDy9")
 
-api_destination_arn = "arn:aws:events:us-east-1:123456789012:api-destination/DestinationName"
-destination = events.ApiDestination.from_api_destination_attributes(self, "Destination", api_destination_arn=api_destination_arn, connection=connection)
+api_destination_arn = "arn:aws:events:us-east-1:123456789012:api-destination/DestinationName/11111111-1111-1111-1111-111111111111"
+api_destination_arn_for_policy = "arn:aws:events:us-east-1:123456789012:api-destination/DestinationName"
+destination = events.ApiDestination.from_api_destination_attributes(self, "Destination",
+    api_destination_arn=api_destination_arn,
+    connection=connection,
+    api_destination_arn_for_policy=api_destination_arn_for_policy
+)
 
 rule = events.Rule(self, "OtherRule",
     schedule=events.Schedule.rate(Duration.minutes(10)),

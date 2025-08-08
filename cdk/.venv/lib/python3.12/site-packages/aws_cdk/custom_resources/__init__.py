@@ -123,6 +123,8 @@ def is_complete(event, context):
 > Do not use this library if your threat model requires that you cannot trust actors who are able
 > to list StepFunction executions in your account.
 
+> **Default behaviour change Note**: the Custom Resource Provider doesn't log anything by default. To enable logging for the Provider framework, toggle `disableWaiterStateMachineLogging` and `disableFrameworkLambdaLogging` depending on you requirement to see waiter state machine logs or provider framework lambda logs
+
 ### Handling Lifecycle Events: onEvent
 
 The user-defined `onEvent` AWS Lambda function is invoked whenever a resource
@@ -1020,7 +1022,11 @@ from ..aws_iam import (
     PolicyStatement as _PolicyStatement_0fe33853,
 )
 from ..aws_kms import IKey as _IKey_5f11635f
-from ..aws_lambda import IFunction as _IFunction_6adb0ab8, Runtime as _Runtime_b4eaa844
+from ..aws_lambda import (
+    ApplicationLogLevel as _ApplicationLogLevel_cd92660a,
+    IFunction as _IFunction_6adb0ab8,
+    Runtime as _Runtime_b4eaa844,
+)
 from ..aws_logs import (
     ILogGroup as _ILogGroup_3c4fa718, RetentionDays as _RetentionDays_070f99f0
 )
@@ -2467,6 +2473,7 @@ class Provider(
         on_event_handler: _IFunction_6adb0ab8,
         disable_waiter_state_machine_logging: typing.Optional[builtins.bool] = None,
         framework_complete_and_timeout_role: typing.Optional[_IRole_235f5d8e] = None,
+        framework_lambda_logging_level: typing.Optional[_ApplicationLogLevel_cd92660a] = None,
         framework_on_event_role: typing.Optional[_IRole_235f5d8e] = None,
         is_complete_handler: typing.Optional[_IFunction_6adb0ab8] = None,
         log_group: typing.Optional[_ILogGroup_3c4fa718] = None,
@@ -2485,8 +2492,9 @@ class Provider(
         :param scope: -
         :param id: -
         :param on_event_handler: The AWS Lambda function to invoke for all resource lifecycle operations (CREATE/UPDATE/DELETE). This function is responsible to begin the requested resource operation (CREATE/UPDATE/DELETE) and return any additional properties to add to the event, which will later be passed to ``isComplete``. The ``PhysicalResourceId`` property must be included in the response.
-        :param disable_waiter_state_machine_logging: Whether logging for the waiter state machine is disabled. Default: - false
+        :param disable_waiter_state_machine_logging: Whether logging for the waiter state machine is disabled. Default: - true
         :param framework_complete_and_timeout_role: Lambda execution role for provider framework's isComplete/onTimeout Lambda function. Note that this role must be assumed by the 'lambda.amazonaws.com' service principal. To prevent circular dependency problem in the provider framework, please ensure you specify a different IAM Role for 'frameworkCompleteAndTimeoutRole' from 'frameworkOnEventRole'. This property cannot be used with 'role' property Default: - A default role will be created.
+        :param framework_lambda_logging_level: Log level of the provider framework lambda. Default: true - Logging is disabled by default
         :param framework_on_event_role: Lambda execution role for provider framework's onEvent Lambda function. Note that this role must be assumed by the 'lambda.amazonaws.com' service principal. This property cannot be used with 'role' property Default: - A default role will be created.
         :param is_complete_handler: The AWS Lambda function to invoke in order to determine if the operation is complete. This function will be called immediately after ``onEvent`` and then periodically based on the configured query interval as long as it returns ``false``. If the function still returns ``false`` and the alloted timeout has passed, the operation will fail. Default: - provider is synchronous. This means that the ``onEvent`` handler is expected to finish all lifecycle operations within the initial invocation.
         :param log_group: The Log Group used for logging of events emitted by the custom resource's lambda function. Providing a user-controlled log group was rolled out to commercial regions on 2023-11-16. If you are deploying to another type of region, please check regional availability first. Default: - a default log group created by AWS Lambda
@@ -2509,6 +2517,7 @@ class Provider(
             on_event_handler=on_event_handler,
             disable_waiter_state_machine_logging=disable_waiter_state_machine_logging,
             framework_complete_and_timeout_role=framework_complete_and_timeout_role,
+            framework_lambda_logging_level=framework_lambda_logging_level,
             framework_on_event_role=framework_on_event_role,
             is_complete_handler=is_complete_handler,
             log_group=log_group,
@@ -2558,6 +2567,7 @@ class Provider(
         "on_event_handler": "onEventHandler",
         "disable_waiter_state_machine_logging": "disableWaiterStateMachineLogging",
         "framework_complete_and_timeout_role": "frameworkCompleteAndTimeoutRole",
+        "framework_lambda_logging_level": "frameworkLambdaLoggingLevel",
         "framework_on_event_role": "frameworkOnEventRole",
         "is_complete_handler": "isCompleteHandler",
         "log_group": "logGroup",
@@ -2580,6 +2590,7 @@ class ProviderProps:
         on_event_handler: _IFunction_6adb0ab8,
         disable_waiter_state_machine_logging: typing.Optional[builtins.bool] = None,
         framework_complete_and_timeout_role: typing.Optional[_IRole_235f5d8e] = None,
+        framework_lambda_logging_level: typing.Optional[_ApplicationLogLevel_cd92660a] = None,
         framework_on_event_role: typing.Optional[_IRole_235f5d8e] = None,
         is_complete_handler: typing.Optional[_IFunction_6adb0ab8] = None,
         log_group: typing.Optional[_ILogGroup_3c4fa718] = None,
@@ -2597,8 +2608,9 @@ class ProviderProps:
         '''Initialization properties for the ``Provider`` construct.
 
         :param on_event_handler: The AWS Lambda function to invoke for all resource lifecycle operations (CREATE/UPDATE/DELETE). This function is responsible to begin the requested resource operation (CREATE/UPDATE/DELETE) and return any additional properties to add to the event, which will later be passed to ``isComplete``. The ``PhysicalResourceId`` property must be included in the response.
-        :param disable_waiter_state_machine_logging: Whether logging for the waiter state machine is disabled. Default: - false
+        :param disable_waiter_state_machine_logging: Whether logging for the waiter state machine is disabled. Default: - true
         :param framework_complete_and_timeout_role: Lambda execution role for provider framework's isComplete/onTimeout Lambda function. Note that this role must be assumed by the 'lambda.amazonaws.com' service principal. To prevent circular dependency problem in the provider framework, please ensure you specify a different IAM Role for 'frameworkCompleteAndTimeoutRole' from 'frameworkOnEventRole'. This property cannot be used with 'role' property Default: - A default role will be created.
+        :param framework_lambda_logging_level: Log level of the provider framework lambda. Default: true - Logging is disabled by default
         :param framework_on_event_role: Lambda execution role for provider framework's onEvent Lambda function. Note that this role must be assumed by the 'lambda.amazonaws.com' service principal. This property cannot be used with 'role' property Default: - A default role will be created.
         :param is_complete_handler: The AWS Lambda function to invoke in order to determine if the operation is complete. This function will be called immediately after ``onEvent`` and then periodically based on the configured query interval as long as it returns ``false``. If the function still returns ``false`` and the alloted timeout has passed, the operation will fail. Default: - provider is synchronous. This means that the ``onEvent`` handler is expected to finish all lifecycle operations within the initial invocation.
         :param log_group: The Log Group used for logging of events emitted by the custom resource's lambda function. Providing a user-controlled log group was rolled out to commercial regions on 2023-11-16. If you are deploying to another type of region, please check regional availability first. Default: - a default log group created by AWS Lambda
@@ -2653,6 +2665,7 @@ class ProviderProps:
             check_type(argname="argument on_event_handler", value=on_event_handler, expected_type=type_hints["on_event_handler"])
             check_type(argname="argument disable_waiter_state_machine_logging", value=disable_waiter_state_machine_logging, expected_type=type_hints["disable_waiter_state_machine_logging"])
             check_type(argname="argument framework_complete_and_timeout_role", value=framework_complete_and_timeout_role, expected_type=type_hints["framework_complete_and_timeout_role"])
+            check_type(argname="argument framework_lambda_logging_level", value=framework_lambda_logging_level, expected_type=type_hints["framework_lambda_logging_level"])
             check_type(argname="argument framework_on_event_role", value=framework_on_event_role, expected_type=type_hints["framework_on_event_role"])
             check_type(argname="argument is_complete_handler", value=is_complete_handler, expected_type=type_hints["is_complete_handler"])
             check_type(argname="argument log_group", value=log_group, expected_type=type_hints["log_group"])
@@ -2673,6 +2686,8 @@ class ProviderProps:
             self._values["disable_waiter_state_machine_logging"] = disable_waiter_state_machine_logging
         if framework_complete_and_timeout_role is not None:
             self._values["framework_complete_and_timeout_role"] = framework_complete_and_timeout_role
+        if framework_lambda_logging_level is not None:
+            self._values["framework_lambda_logging_level"] = framework_lambda_logging_level
         if framework_on_event_role is not None:
             self._values["framework_on_event_role"] = framework_on_event_role
         if is_complete_handler is not None:
@@ -2717,7 +2732,7 @@ class ProviderProps:
     def disable_waiter_state_machine_logging(self) -> typing.Optional[builtins.bool]:
         '''Whether logging for the waiter state machine is disabled.
 
-        :default: - false
+        :default: - true
         '''
         result = self._values.get("disable_waiter_state_machine_logging")
         return typing.cast(typing.Optional[builtins.bool], result)
@@ -2737,6 +2752,17 @@ class ProviderProps:
         '''
         result = self._values.get("framework_complete_and_timeout_role")
         return typing.cast(typing.Optional[_IRole_235f5d8e], result)
+
+    @builtins.property
+    def framework_lambda_logging_level(
+        self,
+    ) -> typing.Optional[_ApplicationLogLevel_cd92660a]:
+        '''Log level of the provider framework lambda.
+
+        :default: true - Logging is disabled by default
+        '''
+        result = self._values.get("framework_lambda_logging_level")
+        return typing.cast(typing.Optional[_ApplicationLogLevel_cd92660a], result)
 
     @builtins.property
     def framework_on_event_role(self) -> typing.Optional[_IRole_235f5d8e]:
@@ -3445,6 +3471,7 @@ def _typecheckingstub__29415d7bf7977fcf110b77ce69cec309dcf0404601944735020770ddf
     on_event_handler: _IFunction_6adb0ab8,
     disable_waiter_state_machine_logging: typing.Optional[builtins.bool] = None,
     framework_complete_and_timeout_role: typing.Optional[_IRole_235f5d8e] = None,
+    framework_lambda_logging_level: typing.Optional[_ApplicationLogLevel_cd92660a] = None,
     framework_on_event_role: typing.Optional[_IRole_235f5d8e] = None,
     is_complete_handler: typing.Optional[_IFunction_6adb0ab8] = None,
     log_group: typing.Optional[_ILogGroup_3c4fa718] = None,
@@ -3467,6 +3494,7 @@ def _typecheckingstub__32b03803ee02437d8d83814282c700ede5633030e4d9f7ebdaf3b9d07
     on_event_handler: _IFunction_6adb0ab8,
     disable_waiter_state_machine_logging: typing.Optional[builtins.bool] = None,
     framework_complete_and_timeout_role: typing.Optional[_IRole_235f5d8e] = None,
+    framework_lambda_logging_level: typing.Optional[_ApplicationLogLevel_cd92660a] = None,
     framework_on_event_role: typing.Optional[_IRole_235f5d8e] = None,
     is_complete_handler: typing.Optional[_IFunction_6adb0ab8] = None,
     log_group: typing.Optional[_ILogGroup_3c4fa718] = None,

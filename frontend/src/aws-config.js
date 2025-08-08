@@ -2,8 +2,8 @@
 export const awsConfig = {
   Auth: {
     Cognito: {
-      userPoolId: process.env.REACT_APP_USER_POOL_ID || "us-east-1_i8lrt1eIK",
-      userPoolClientId: process.env.REACT_APP_USER_POOL_CLIENT_ID || "65034130jm8bj9kvrqokj3g479",
+      userPoolId: process.env.REACT_APP_USER_POOL_ID || "",
+      userPoolClientId: process.env.REACT_APP_USER_POOL_CLIENT_ID || "",
       signUpVerificationMethod: "code",
       loginWith: {
         email: true,
@@ -14,8 +14,7 @@ export const awsConfig = {
     REST: {
       api: {
         endpoint:
-          process.env.REACT_APP_API_URL ||
-          "https://bu1n1ihwo4.execute-api.us-east-1.amazonaws.com/prod",
+          process.env.REACT_APP_API_URL || "",
         region: process.env.REACT_APP_AWS_REGION || "us-east-1",
       },
     },

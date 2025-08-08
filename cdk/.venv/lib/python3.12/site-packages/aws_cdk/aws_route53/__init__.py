@@ -7354,22 +7354,37 @@ class HostedZoneAttributes:
 
         Example::
 
-            # app: App
+            import aws_cdk.aws_certificatemanager as acm
+            import aws_cdk.aws_route53 as route53
             
-            stack = Stack(app, "Stack",
-                cross_region_references=True,
-                env=Environment(
-                    region="us-east-2"
+            # hosted zone and route53 features
+            # hosted_zone_id: str
+            zone_name = "example.com"
+            
+            
+            my_domain_name = "api.example.com"
+            certificate = acm.Certificate(self, "cert", domain_name=my_domain_name)
+            schema = appsync.SchemaFile(file_path="mySchemaFile")
+            api = appsync.GraphqlApi(self, "api",
+                name="myApi",
+                definition=appsync.Definition.from_schema(schema),
+                domain_name=appsync.DomainOptions(
+                    certificate=certificate,
+                    domain_name=my_domain_name
                 )
             )
             
-            patterns.HttpsRedirect(self, "Redirect",
-                record_names=["foo.example.com"],
-                target_domain="bar.example.com",
-                zone=route53.HostedZone.from_hosted_zone_attributes(self, "HostedZone",
-                    hosted_zone_id="ID",
-                    zone_name="example.com"
-                )
+            # hosted zone for adding appsync domain
+            zone = route53.HostedZone.from_hosted_zone_attributes(self, "HostedZone",
+                hosted_zone_id=hosted_zone_id,
+                zone_name=zone_name
+            )
+            
+            # create a cname to the appsync domain. will map to something like xxxx.cloudfront.net
+            route53.CnameRecord(self, "CnameApiRecord",
+                record_name="api",
+                zone=zone,
+                domain_name=api.app_sync_domain_name
             )
         '''
         if __debug__:
@@ -13875,15 +13890,22 @@ class HostedZone(
 
     Example::
 
-        kms_key = kms.Key(self, "KmsCMK",
-            key_spec=kms.KeySpec.ECC_NIST_P256,
-            key_usage=kms.KeyUsage.SIGN_VERIFY
-        )
-        hosted_zone = route53.HostedZone(self, "HostedZone",
+        example_com = route53.HostedZone(self, "ExampleCom",
             zone_name="example.com"
         )
-        # Enable DNSSEC signing for the zone
-        hosted_zone.enable_dnssec(kms_key=kms_key)
+        example_net = route53.HostedZone(self, "ExampleNet",
+            zone_name="example.net"
+        )
+        
+        cert = acm.Certificate(self, "Certificate",
+            domain_name="test.example.com",
+            subject_alternative_names=["cool.example.com", "test.example.net"],
+            validation=acm.CertificateValidation.from_dns_multi_zone({
+                "test.example.com": example_com,
+                "cool.example.com": example_com,
+                "test.example.net": example_net
+            })
+        )
     '''
 
     def __init__(

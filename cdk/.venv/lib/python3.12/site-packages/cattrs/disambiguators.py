@@ -3,10 +3,11 @@
 from __future__ import annotations
 
 from collections import defaultdict
+from collections.abc import Mapping
 from dataclasses import MISSING
 from functools import reduce
 from operator import or_
-from typing import TYPE_CHECKING, Any, Callable, Literal, Mapping, Union
+from typing import TYPE_CHECKING, Any, Callable, Literal, Union
 
 from attrs import NOTHING, Attribute, AttrsInstance
 
@@ -25,11 +26,11 @@ from .gen import AttributeOverride
 if TYPE_CHECKING:
     from .converters import BaseConverter
 
-__all__ = ["is_supported_union", "create_default_dis_func"]
+__all__ = ["create_default_dis_func", "is_supported_union"]
 
 
 def is_supported_union(typ: Any) -> bool:
-    """Whether the type is a union of attrs classes."""
+    """Whether the type is a union of attrs classes or dataclasses."""
     return is_union_type(typ) and all(
         e is NoneType or has(get_origin(e) or e) for e in typ.__args__
     )

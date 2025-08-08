@@ -70,8 +70,11 @@ from .._jsii import *
 import constructs as _constructs_77d1e7e8
 from .. import (
     CfnResource as _CfnResource_9df397a6,
+    CfnTag as _CfnTag_f6864754,
     IInspectable as _IInspectable_c2943556,
     IResolvable as _IResolvable_da3f097b,
+    ITaggableV2 as _ITaggableV2_4e6798f8,
+    TagManager as _TagManager_0a598cb3,
     TreeInspector as _TreeInspector_488e0dd5,
 )
 
@@ -969,7 +972,7 @@ class CfnBucketPolicyProps:
         )
 
 
-@jsii.implements(_IInspectable_c2943556)
+@jsii.implements(_IInspectable_c2943556, _ITaggableV2_4e6798f8)
 class CfnDirectoryBucket(
     _CfnResource_9df397a6,
     metaclass=jsii.JSIIMeta,
@@ -1049,7 +1052,11 @@ class CfnDirectoryBucket(
                     object_size_less_than="objectSizeLessThan",
                     prefix="prefix"
                 )]
-            )
+            ),
+            tags=[CfnTag(
+                key="key",
+                value="value"
+            )]
         )
     '''
 
@@ -1063,6 +1070,7 @@ class CfnDirectoryBucket(
         bucket_encryption: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnDirectoryBucket.BucketEncryptionProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
         bucket_name: typing.Optional[builtins.str] = None,
         lifecycle_configuration: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnDirectoryBucket.LifecycleConfigurationProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
+        tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
     ) -> None:
         '''
         :param scope: Scope in which this resource is defined.
@@ -1072,6 +1080,7 @@ class CfnDirectoryBucket(
         :param bucket_encryption: Specifies default encryption for a bucket using server-side encryption with Amazon S3 managed keys (SSE-S3) or AWS KMS keys (SSE-KMS). For information about default encryption for directory buckets, see `Setting and monitoring default encryption for directory buckets <https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-express-bucket-encryption.html>`_ in the *Amazon S3 User Guide* .
         :param bucket_name: A name for the bucket. The bucket name must contain only lowercase letters, numbers, and hyphens (-). A directory bucket name must be unique in the chosen Zone (Availability Zone or Local Zone). The bucket name must also follow the format ``*bucket_base_name* -- *zone_id* --x-s3`` (for example, ``*bucket_base_name* -- *usw2-az1* --x-s3`` ). If you don't specify a name, AWS CloudFormation generates a unique ID and uses that ID for the bucket name. For information about bucket naming restrictions, see `Directory bucket naming rules <https://docs.aws.amazon.com/AmazonS3/latest/userguide/directory-bucket-naming-rules.html>`_ in the *Amazon S3 User Guide* . .. epigraph:: If you specify a name, you can't perform updates that require replacement of this resource. You can perform updates that require no or some interruption. If you need to replace the resource, specify a new name.
         :param lifecycle_configuration: Container for lifecycle rules. You can add as many as 1000 rules. For more information see, `Creating and managing a lifecycle configuration for directory buckets <https://docs.aws.amazon.com/AmazonS3/latest/userguide/directory-buckets-objects-lifecycle.html>`_ in the *Amazon S3 User Guide* .
+        :param tags: An array of tags that you can apply to the S3 directory bucket. Tags are key-value pairs of metadata used to categorize and organize your buckets, track costs, and control access. For more information, see `Using tags with directory buckets <https://docs.aws.amazon.com/AmazonS3/latest/userguide/directory-buckets-tagging.html>`_ .
         '''
         if __debug__:
             type_hints = typing.get_type_hints(_typecheckingstub__ea5a1e5897b0467fb93393ad6ea2dbcd3916f27713079e8bef3badf71ce2bb20)
@@ -1083,6 +1092,7 @@ class CfnDirectoryBucket(
             bucket_encryption=bucket_encryption,
             bucket_name=bucket_name,
             lifecycle_configuration=lifecycle_configuration,
+            tags=tags,
         )
 
         jsii.create(self.__class__, self, [scope, id, props])
@@ -1141,6 +1151,12 @@ class CfnDirectoryBucket(
         :cloudformationAttribute: AvailabilityZoneName
         '''
         return typing.cast(builtins.str, jsii.get(self, "attrAvailabilityZoneName"))
+
+    @builtins.property
+    @jsii.member(jsii_name="cdkTagManager")
+    def cdk_tag_manager(self) -> _TagManager_0a598cb3:
+        '''Tag Manager which manages the tags for this resource.'''
+        return typing.cast(_TagManager_0a598cb3, jsii.get(self, "cdkTagManager"))
 
     @builtins.property
     @jsii.member(jsii_name="cfnProperties")
@@ -1224,6 +1240,19 @@ class CfnDirectoryBucket(
             type_hints = typing.get_type_hints(_typecheckingstub__ddfd3872142b33ae9fa409c0018df1c791508213de3582b65e63e55af438eb3b)
             check_type(argname="argument value", value=value, expected_type=type_hints["value"])
         jsii.set(self, "lifecycleConfiguration", value) # pyright: ignore[reportArgumentType]
+
+    @builtins.property
+    @jsii.member(jsii_name="tags")
+    def tags(self) -> typing.Optional[typing.List[_CfnTag_f6864754]]:
+        '''An array of tags that you can apply to the S3 directory bucket.'''
+        return typing.cast(typing.Optional[typing.List[_CfnTag_f6864754]], jsii.get(self, "tags"))
+
+    @tags.setter
+    def tags(self, value: typing.Optional[typing.List[_CfnTag_f6864754]]) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__33beef481039e735a6eece9cb8670801f4ba6324284d9ed7c5f1e794009634d3)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "tags", value) # pyright: ignore[reportArgumentType]
 
     @jsii.data_type(
         jsii_type="aws-cdk-lib.aws_s3express.CfnDirectoryBucket.AbortIncompleteMultipartUploadProperty",
@@ -1793,6 +1822,7 @@ class CfnDirectoryBucket(
         "bucket_encryption": "bucketEncryption",
         "bucket_name": "bucketName",
         "lifecycle_configuration": "lifecycleConfiguration",
+        "tags": "tags",
     },
 )
 class CfnDirectoryBucketProps:
@@ -1804,6 +1834,7 @@ class CfnDirectoryBucketProps:
         bucket_encryption: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnDirectoryBucket.BucketEncryptionProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
         bucket_name: typing.Optional[builtins.str] = None,
         lifecycle_configuration: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnDirectoryBucket.LifecycleConfigurationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
+        tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
     ) -> None:
         '''Properties for defining a ``CfnDirectoryBucket``.
 
@@ -1812,6 +1843,7 @@ class CfnDirectoryBucketProps:
         :param bucket_encryption: Specifies default encryption for a bucket using server-side encryption with Amazon S3 managed keys (SSE-S3) or AWS KMS keys (SSE-KMS). For information about default encryption for directory buckets, see `Setting and monitoring default encryption for directory buckets <https://docs.aws.amazon.com/AmazonS3/latest/userguide/s3-express-bucket-encryption.html>`_ in the *Amazon S3 User Guide* .
         :param bucket_name: A name for the bucket. The bucket name must contain only lowercase letters, numbers, and hyphens (-). A directory bucket name must be unique in the chosen Zone (Availability Zone or Local Zone). The bucket name must also follow the format ``*bucket_base_name* -- *zone_id* --x-s3`` (for example, ``*bucket_base_name* -- *usw2-az1* --x-s3`` ). If you don't specify a name, AWS CloudFormation generates a unique ID and uses that ID for the bucket name. For information about bucket naming restrictions, see `Directory bucket naming rules <https://docs.aws.amazon.com/AmazonS3/latest/userguide/directory-bucket-naming-rules.html>`_ in the *Amazon S3 User Guide* . .. epigraph:: If you specify a name, you can't perform updates that require replacement of this resource. You can perform updates that require no or some interruption. If you need to replace the resource, specify a new name.
         :param lifecycle_configuration: Container for lifecycle rules. You can add as many as 1000 rules. For more information see, `Creating and managing a lifecycle configuration for directory buckets <https://docs.aws.amazon.com/AmazonS3/latest/userguide/directory-buckets-objects-lifecycle.html>`_ in the *Amazon S3 User Guide* .
+        :param tags: An array of tags that you can apply to the S3 directory bucket. Tags are key-value pairs of metadata used to categorize and organize your buckets, track costs, and control access. For more information, see `Using tags with directory buckets <https://docs.aws.amazon.com/AmazonS3/latest/userguide/directory-buckets-tagging.html>`_ .
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-s3express-directorybucket.html
         :exampleMetadata: fixture=_generated
@@ -1853,7 +1885,11 @@ class CfnDirectoryBucketProps:
                         object_size_less_than="objectSizeLessThan",
                         prefix="prefix"
                     )]
-                )
+                ),
+                tags=[CfnTag(
+                    key="key",
+                    value="value"
+                )]
             )
         '''
         if __debug__:
@@ -1863,6 +1899,7 @@ class CfnDirectoryBucketProps:
             check_type(argname="argument bucket_encryption", value=bucket_encryption, expected_type=type_hints["bucket_encryption"])
             check_type(argname="argument bucket_name", value=bucket_name, expected_type=type_hints["bucket_name"])
             check_type(argname="argument lifecycle_configuration", value=lifecycle_configuration, expected_type=type_hints["lifecycle_configuration"])
+            check_type(argname="argument tags", value=tags, expected_type=type_hints["tags"])
         self._values: typing.Dict[builtins.str, typing.Any] = {
             "data_redundancy": data_redundancy,
             "location_name": location_name,
@@ -1873,6 +1910,8 @@ class CfnDirectoryBucketProps:
             self._values["bucket_name"] = bucket_name
         if lifecycle_configuration is not None:
             self._values["lifecycle_configuration"] = lifecycle_configuration
+        if tags is not None:
+            self._values["tags"] = tags
 
     @builtins.property
     def data_redundancy(self) -> builtins.str:
@@ -1935,6 +1974,17 @@ class CfnDirectoryBucketProps:
         '''
         result = self._values.get("lifecycle_configuration")
         return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, CfnDirectoryBucket.LifecycleConfigurationProperty]], result)
+
+    @builtins.property
+    def tags(self) -> typing.Optional[typing.List[_CfnTag_f6864754]]:
+        '''An array of tags that you can apply to the S3 directory bucket.
+
+        Tags are key-value pairs of metadata used to categorize and organize your buckets, track costs, and control access. For more information, see `Using tags with directory buckets <https://docs.aws.amazon.com/AmazonS3/latest/userguide/directory-buckets-tagging.html>`_ .
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-s3express-directorybucket.html#cfn-s3express-directorybucket-tags
+        '''
+        result = self._values.get("tags")
+        return typing.cast(typing.Optional[typing.List[_CfnTag_f6864754]], result)
 
     def __eq__(self, rhs: typing.Any) -> builtins.bool:
         return isinstance(rhs, self.__class__) and rhs._values == self._values
@@ -2117,6 +2167,7 @@ def _typecheckingstub__ea5a1e5897b0467fb93393ad6ea2dbcd3916f27713079e8bef3badf71
     bucket_encryption: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnDirectoryBucket.BucketEncryptionProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
     bucket_name: typing.Optional[builtins.str] = None,
     lifecycle_configuration: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnDirectoryBucket.LifecycleConfigurationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
+    tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
 ) -> None:
     """Type checking stubs"""
     pass
@@ -2159,6 +2210,12 @@ def _typecheckingstub__678dc679eb1daf10bbced208f7ef85b8fe01f1ae8ea62c5354ac80b28
 
 def _typecheckingstub__ddfd3872142b33ae9fa409c0018df1c791508213de3582b65e63e55af438eb3b(
     value: typing.Optional[typing.Union[_IResolvable_da3f097b, CfnDirectoryBucket.LifecycleConfigurationProperty]],
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__33beef481039e735a6eece9cb8670801f4ba6324284d9ed7c5f1e794009634d3(
+    value: typing.Optional[typing.List[_CfnTag_f6864754]],
 ) -> None:
     """Type checking stubs"""
     pass
@@ -2220,6 +2277,7 @@ def _typecheckingstub__997b2abc28c849393aef2f13f43682b271277998e07114f1b22407894
     bucket_encryption: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnDirectoryBucket.BucketEncryptionProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
     bucket_name: typing.Optional[builtins.str] = None,
     lifecycle_configuration: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnDirectoryBucket.LifecycleConfigurationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
+    tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
 ) -> None:
     """Type checking stubs"""
     pass

@@ -644,10 +644,10 @@ class CfnCalculatedAttributeDefinition(
             '''The relative time period over which data is included in the aggregation.
 
             :param unit: The unit of time.
-            :param timestamp_format: The format the timestamp field in your JSON object is specified. This value should be one of EPOCHMILLI or ISO_8601. E.g. if your object type is MyType and source JSON is {"generatedAt": {"timestamp": "2001-07-04T12:08:56.235Z"}}, then TimestampFormat should be "ISO_8601".
-            :param timestamp_source: An expression specifying the field in your JSON object from which the date should be parsed. The expression should follow the structure of "{ObjectTypeName.}". E.g. if your object type is MyType and source JSON is {"generatedAt": {"timestamp": "1737587945945"}}, then TimestampSource should be "{MyType.generatedAt.timestamp}".
+            :param timestamp_format: The format the timestamp field in your JSON object is specified. This value should be one of EPOCHMILLI (for Unix epoch timestamps with second/millisecond level precision) or ISO_8601 (following ISO_8601 format with second/millisecond level precision, with an optional offset of Z or in the format HH:MM or HHMM.). E.g. if your object type is MyType and source JSON is {"generatedAt": {"timestamp": "2001-07-04T12:08:56.235-0700"}}, then TimestampFormat should be "ISO_8601"
+            :param timestamp_source: An expression specifying the field in your JSON object from which the date should be parsed. The expression should follow the structure of "{ObjectTypeName.}". E.g. if your object type is MyType and source JSON is {"generatedAt": {"timestamp": "1737587945945"}}, then TimestampSource should be "{MyType.generatedAt.timestamp}"
             :param value: The amount of time of the specified unit.
-            :param value_range: A structure specifying the endpoints of the relative time period over which data is included in the aggregation.
+            :param value_range: A structure letting customers specify a relative time window over which over which data is included in the Calculated Attribute. Use positive numbers to indicate that the endpoint is in the past, and negative numbers to indicate it is in the future. ValueRange overrides Value.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-customerprofiles-calculatedattributedefinition-range.html
             :exampleMetadata: fixture=_generated
@@ -704,7 +704,7 @@ class CfnCalculatedAttributeDefinition(
         def timestamp_format(self) -> typing.Optional[builtins.str]:
             '''The format the timestamp field in your JSON object is specified.
 
-            This value should be one of EPOCHMILLI or ISO_8601. E.g. if your object type is MyType and source JSON is {"generatedAt": {"timestamp": "2001-07-04T12:08:56.235Z"}}, then TimestampFormat should be "ISO_8601".
+            This value should be one of EPOCHMILLI (for Unix epoch timestamps with second/millisecond level precision) or ISO_8601 (following ISO_8601 format with second/millisecond level precision, with an optional offset of Z or in the format HH:MM or HHMM.). E.g. if your object type is MyType and source JSON is {"generatedAt": {"timestamp": "2001-07-04T12:08:56.235-0700"}}, then TimestampFormat should be "ISO_8601"
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-customerprofiles-calculatedattributedefinition-range.html#cfn-customerprofiles-calculatedattributedefinition-range-timestampformat
             '''
@@ -715,7 +715,7 @@ class CfnCalculatedAttributeDefinition(
         def timestamp_source(self) -> typing.Optional[builtins.str]:
             '''An expression specifying the field in your JSON object from which the date should be parsed.
 
-            The expression should follow the structure of "{ObjectTypeName.}". E.g. if your object type is MyType and source JSON is {"generatedAt": {"timestamp": "1737587945945"}}, then TimestampSource should be "{MyType.generatedAt.timestamp}".
+            The expression should follow the structure of "{ObjectTypeName.}". E.g. if your object type is MyType and source JSON is {"generatedAt": {"timestamp": "1737587945945"}}, then TimestampSource should be "{MyType.generatedAt.timestamp}"
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-customerprofiles-calculatedattributedefinition-range.html#cfn-customerprofiles-calculatedattributedefinition-range-timestampsource
             '''
@@ -735,7 +735,9 @@ class CfnCalculatedAttributeDefinition(
         def value_range(
             self,
         ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnCalculatedAttributeDefinition.ValueRangeProperty"]]:
-            '''A structure specifying the endpoints of the relative time period over which data is included in the aggregation.
+            '''A structure letting customers specify a relative time window over which over which data is included in the Calculated Attribute.
+
+            Use positive numbers to indicate that the endpoint is in the past, and negative numbers to indicate it is in the future. ValueRange overrides Value.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-customerprofiles-calculatedattributedefinition-range.html#cfn-customerprofiles-calculatedattributedefinition-range-valuerange
             '''
@@ -768,10 +770,10 @@ class CfnCalculatedAttributeDefinition(
             message: typing.Optional[builtins.str] = None,
             progress_percentage: typing.Optional[jsii.Number] = None,
         ) -> None:
-            '''The readiness status of the calculated attribute.
+            '''Information indicating if the Calculated Attribute is ready for use by confirming all historical data has been processed and reflected.
 
-            :param message: Any information pertaining to the status of the calculated attribute if required.
-            :param progress_percentage: The progress percentage for including historical data in your calculated attribute.
+            :param message: Any customer messaging.
+            :param progress_percentage: Approximately how far the Calculated Attribute creation is from completion.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-customerprofiles-calculatedattributedefinition-readiness.html
             :exampleMetadata: fixture=_generated
@@ -799,7 +801,7 @@ class CfnCalculatedAttributeDefinition(
 
         @builtins.property
         def message(self) -> typing.Optional[builtins.str]:
-            '''Any information pertaining to the status of the calculated attribute if required.
+            '''Any customer messaging.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-customerprofiles-calculatedattributedefinition-readiness.html#cfn-customerprofiles-calculatedattributedefinition-readiness-message
             '''
@@ -808,7 +810,7 @@ class CfnCalculatedAttributeDefinition(
 
         @builtins.property
         def progress_percentage(self) -> typing.Optional[jsii.Number]:
-            '''The progress percentage for including historical data in your calculated attribute.
+            '''Approximately how far the Calculated Attribute creation is from completion.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-customerprofiles-calculatedattributedefinition-readiness.html#cfn-customerprofiles-calculatedattributedefinition-readiness-progresspercentage
             '''
@@ -899,10 +901,12 @@ class CfnCalculatedAttributeDefinition(
     )
     class ValueRangeProperty:
         def __init__(self, *, end: jsii.Number, start: jsii.Number) -> None:
-            '''A structure specifying the endpoints of the relative time period over which data is included in the aggregation.
+            '''A structure letting customers specify a relative time window over which over which data is included in the Calculated Attribute.
 
-            :param end: The ending point for this range. Positive numbers indicate how many days in the past data should be included, and negative numbers indicate how many days in the future.
-            :param start: The starting point for this range. Positive numbers indicate how many days in the past data should be included, and negative numbers indicate how many days in the future.
+            Use positive numbers to indicate that the endpoint is in the past, and negative numbers to indicate it is in the future. ValueRange overrides Value.
+
+            :param end: The ending point for this overridden range. Positive numbers indicate how many days in the past data should be included, and negative numbers indicate how many days in the future.
+            :param start: The starting point for this overridden range. Positive numbers indicate how many days in the past data should be included, and negative numbers indicate how many days in the future.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-customerprofiles-calculatedattributedefinition-valuerange.html
             :exampleMetadata: fixture=_generated
@@ -929,7 +933,7 @@ class CfnCalculatedAttributeDefinition(
 
         @builtins.property
         def end(self) -> jsii.Number:
-            '''The ending point for this range.
+            '''The ending point for this overridden range.
 
             Positive numbers indicate how many days in the past data should be included, and negative numbers indicate how many days in the future.
 
@@ -941,7 +945,7 @@ class CfnCalculatedAttributeDefinition(
 
         @builtins.property
         def start(self) -> jsii.Number:
-            '''The starting point for this range.
+            '''The starting point for this overridden range.
 
             Positive numbers indicate how many days in the past data should be included, and negative numbers indicate how many days in the future.
 
@@ -8872,7 +8876,7 @@ class CfnSegmentDefinition(
             :param party_type_string: A field to describe values to segment on within partyTypeString.
             :param personal_email_address: A field to describe values to segment on within personal email address.
             :param phone_number: A field to describe values to segment on within phone number.
-            :param profile_type: Specifies profile type based criteria for a segment.
+            :param profile_type: The type of profile.
             :param shipping_address: A field to describe values to segment on within shipping address.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-customerprofiles-segmentdefinition-profileattributes.html
@@ -9359,7 +9363,7 @@ class CfnSegmentDefinition(
         def profile_type(
             self,
         ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnSegmentDefinition.ProfileTypeDimensionProperty"]]:
-            '''Specifies profile type based criteria for a segment.
+            '''The type of profile.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-customerprofiles-segmentdefinition-profileattributes.html#cfn-customerprofiles-segmentdefinition-profileattributes-profiletype
             '''
@@ -9472,8 +9476,8 @@ class CfnSegmentDefinition(
         ) -> None:
             '''Specifies profile type based criteria for a segment.
 
-            :param dimension_type: The type of segment dimension to use for a profile type dimension.
-            :param values: 
+            :param dimension_type: The action to segment on.
+            :param values: The values to apply the DimensionType on.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-customerprofiles-segmentdefinition-profiletypedimension.html
             :exampleMetadata: fixture=_generated
@@ -9500,7 +9504,7 @@ class CfnSegmentDefinition(
 
         @builtins.property
         def dimension_type(self) -> builtins.str:
-            '''The type of segment dimension to use for a profile type dimension.
+            '''The action to segment on.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-customerprofiles-segmentdefinition-profiletypedimension.html#cfn-customerprofiles-segmentdefinition-profiletypedimension-dimensiontype
             '''
@@ -9510,7 +9514,8 @@ class CfnSegmentDefinition(
 
         @builtins.property
         def values(self) -> typing.List[builtins.str]:
-            '''
+            '''The values to apply the DimensionType on.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-customerprofiles-segmentdefinition-profiletypedimension.html#cfn-customerprofiles-segmentdefinition-profiletypedimension-values
             '''
             result = self._values.get("values")

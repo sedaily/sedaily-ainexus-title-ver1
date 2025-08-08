@@ -1243,7 +1243,7 @@ class CfnSnapshot(
     metaclass=jsii.JSIIMeta,
     jsii_type="aws-cdk-lib.aws_redshiftserverless.CfnSnapshot",
 ):
-    '''Resource Type definition for AWS::RedshiftServerless::Snapshot Resource Type.
+    '''A snapshot object that contains databases.
 
     :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-redshiftserverless-snapshot.html
     :cloudformationResource: AWS::RedshiftServerless::Snapshot
@@ -1282,9 +1282,9 @@ class CfnSnapshot(
         :param scope: Scope in which this resource is defined.
         :param id: Construct identifier for this resource (unique in its scope).
         :param snapshot_name: The name of the snapshot.
-        :param namespace_name: The namespace the snapshot is associated with.
-        :param retention_period: The retention period of the snapshot.
-        :param tags: An array of key-value pairs to apply to this resource.
+        :param namespace_name: The name of the namepsace.
+        :param retention_period: The retention period of the snapshot created by the scheduled action.
+        :param tags: An array of `Tag objects <https://docs.aws.amazon.com/redshift-serverless/latest/APIReference/API_Tag.html>`_ to associate with the snapshot.
         '''
         if __debug__:
             type_hints = typing.get_type_hints(_typecheckingstub__a1e2b5eeadcf14eaf0be75cda550b6bcef2aa009af0fe87d6f5e9e856ad0ef43)
@@ -1332,7 +1332,9 @@ class CfnSnapshot(
     @builtins.property
     @jsii.member(jsii_name="attrOwnerAccount")
     def attr_owner_account(self) -> builtins.str:
-        '''The owner account of the snapshot.
+        '''The owner AWS ;
+
+        account of the snapshot.
 
         :cloudformationAttribute: OwnerAccount
         '''
@@ -1349,7 +1351,8 @@ class CfnSnapshot(
     @builtins.property
     @jsii.member(jsii_name="attrSnapshotAdminUsername")
     def attr_snapshot_admin_username(self) -> builtins.str:
-        '''
+        '''The username of the database within a snapshot.
+
         :cloudformationAttribute: Snapshot.AdminUsername
         '''
         return typing.cast(builtins.str, jsii.get(self, "attrSnapshotAdminUsername"))
@@ -1357,7 +1360,8 @@ class CfnSnapshot(
     @builtins.property
     @jsii.member(jsii_name="attrSnapshotKmsKeyId")
     def attr_snapshot_kms_key_id(self) -> builtins.str:
-        '''
+        '''The unique identifier of the KMS key used to encrypt the snapshot.
+
         :cloudformationAttribute: Snapshot.KmsKeyId
         '''
         return typing.cast(builtins.str, jsii.get(self, "attrSnapshotKmsKeyId"))
@@ -1365,7 +1369,8 @@ class CfnSnapshot(
     @builtins.property
     @jsii.member(jsii_name="attrSnapshotNamespaceArn")
     def attr_snapshot_namespace_arn(self) -> builtins.str:
-        '''
+        '''The Amazon Resource Name (ARN) of the namespace the snapshot was created from.
+
         :cloudformationAttribute: Snapshot.NamespaceArn
         '''
         return typing.cast(builtins.str, jsii.get(self, "attrSnapshotNamespaceArn"))
@@ -1373,7 +1378,8 @@ class CfnSnapshot(
     @builtins.property
     @jsii.member(jsii_name="attrSnapshotNamespaceName")
     def attr_snapshot_namespace_name(self) -> builtins.str:
-        '''
+        '''The name of the namepsace.
+
         :cloudformationAttribute: Snapshot.NamespaceName
         '''
         return typing.cast(builtins.str, jsii.get(self, "attrSnapshotNamespaceName"))
@@ -1381,7 +1387,10 @@ class CfnSnapshot(
     @builtins.property
     @jsii.member(jsii_name="attrSnapshotOwnerAccount")
     def attr_snapshot_owner_account(self) -> builtins.str:
-        '''
+        '''The owner AWS ;
+
+        account of the snapshot.
+
         :cloudformationAttribute: Snapshot.OwnerAccount
         '''
         return typing.cast(builtins.str, jsii.get(self, "attrSnapshotOwnerAccount"))
@@ -1389,7 +1398,8 @@ class CfnSnapshot(
     @builtins.property
     @jsii.member(jsii_name="attrSnapshotRetentionPeriod")
     def attr_snapshot_retention_period(self) -> jsii.Number:
-        '''
+        '''The retention period of the snapshot created by the scheduled action.
+
         :cloudformationAttribute: Snapshot.RetentionPeriod
         '''
         return typing.cast(jsii.Number, jsii.get(self, "attrSnapshotRetentionPeriod"))
@@ -1397,7 +1407,8 @@ class CfnSnapshot(
     @builtins.property
     @jsii.member(jsii_name="attrSnapshotSnapshotArn")
     def attr_snapshot_snapshot_arn(self) -> builtins.str:
-        '''
+        '''The Amazon Resource Name (ARN) of the snapshot.
+
         :cloudformationAttribute: Snapshot.SnapshotArn
         '''
         return typing.cast(builtins.str, jsii.get(self, "attrSnapshotSnapshotArn"))
@@ -1405,7 +1416,8 @@ class CfnSnapshot(
     @builtins.property
     @jsii.member(jsii_name="attrSnapshotSnapshotCreateTime")
     def attr_snapshot_snapshot_create_time(self) -> builtins.str:
-        '''
+        '''The timestamp of when the snapshot was created.
+
         :cloudformationAttribute: Snapshot.SnapshotCreateTime
         '''
         return typing.cast(builtins.str, jsii.get(self, "attrSnapshotSnapshotCreateTime"))
@@ -1413,7 +1425,8 @@ class CfnSnapshot(
     @builtins.property
     @jsii.member(jsii_name="attrSnapshotSnapshotName")
     def attr_snapshot_snapshot_name(self) -> builtins.str:
-        '''
+        '''The name of the snapshot.
+
         :cloudformationAttribute: Snapshot.SnapshotName
         '''
         return typing.cast(builtins.str, jsii.get(self, "attrSnapshotSnapshotName"))
@@ -1421,7 +1434,8 @@ class CfnSnapshot(
     @builtins.property
     @jsii.member(jsii_name="attrSnapshotStatus")
     def attr_snapshot_status(self) -> builtins.str:
-        '''
+        '''The status of the snapshot.
+
         :cloudformationAttribute: Snapshot.Status
         '''
         return typing.cast(builtins.str, jsii.get(self, "attrSnapshotStatus"))
@@ -1453,7 +1467,7 @@ class CfnSnapshot(
     @builtins.property
     @jsii.member(jsii_name="namespaceName")
     def namespace_name(self) -> typing.Optional[builtins.str]:
-        '''The namespace the snapshot is associated with.'''
+        '''The name of the namepsace.'''
         return typing.cast(typing.Optional[builtins.str], jsii.get(self, "namespaceName"))
 
     @namespace_name.setter
@@ -1466,7 +1480,7 @@ class CfnSnapshot(
     @builtins.property
     @jsii.member(jsii_name="retentionPeriod")
     def retention_period(self) -> typing.Optional[jsii.Number]:
-        '''The retention period of the snapshot.'''
+        '''The retention period of the snapshot created by the scheduled action.'''
         return typing.cast(typing.Optional[jsii.Number], jsii.get(self, "retentionPeriod"))
 
     @retention_period.setter
@@ -1479,7 +1493,7 @@ class CfnSnapshot(
     @builtins.property
     @jsii.member(jsii_name="tags")
     def tags(self) -> typing.Optional[typing.List[_CfnTag_f6864754]]:
-        '''An array of key-value pairs to apply to this resource.'''
+        '''An array of `Tag objects <https://docs.aws.amazon.com/redshift-serverless/latest/APIReference/API_Tag.html>`_ to associate with the snapshot.'''
         return typing.cast(typing.Optional[typing.List[_CfnTag_f6864754]], jsii.get(self, "tags"))
 
     @tags.setter
@@ -1520,17 +1534,18 @@ class CfnSnapshot(
             snapshot_name: typing.Optional[builtins.str] = None,
             status: typing.Optional[builtins.str] = None,
         ) -> None:
-            '''
-            :param admin_username: 
-            :param kms_key_id: 
-            :param namespace_arn: 
-            :param namespace_name: 
-            :param owner_account: 
-            :param retention_period: 
-            :param snapshot_arn: 
-            :param snapshot_create_time: 
-            :param snapshot_name: 
-            :param status: 
+            '''A snapshot object that contains databases.
+
+            :param admin_username: The username of the database within a snapshot.
+            :param kms_key_id: The unique identifier of the KMS key used to encrypt the snapshot.
+            :param namespace_arn: The Amazon Resource Name (ARN) of the namespace the snapshot was created from.
+            :param namespace_name: The name of the namepsace.
+            :param owner_account: The owner AWS ; account of the snapshot.
+            :param retention_period: The retention period of the snapshot created by the scheduled action.
+            :param snapshot_arn: The Amazon Resource Name (ARN) of the snapshot.
+            :param snapshot_create_time: The timestamp of when the snapshot was created.
+            :param snapshot_name: The name of the snapshot.
+            :param status: The status of the snapshot.
 
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-redshiftserverless-snapshot-snapshot.html
             :exampleMetadata: fixture=_generated
@@ -1590,7 +1605,8 @@ class CfnSnapshot(
 
         @builtins.property
         def admin_username(self) -> typing.Optional[builtins.str]:
-            '''
+            '''The username of the database within a snapshot.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-redshiftserverless-snapshot-snapshot.html#cfn-redshiftserverless-snapshot-snapshot-adminusername
             '''
             result = self._values.get("admin_username")
@@ -1598,7 +1614,8 @@ class CfnSnapshot(
 
         @builtins.property
         def kms_key_id(self) -> typing.Optional[builtins.str]:
-            '''
+            '''The unique identifier of the KMS key used to encrypt the snapshot.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-redshiftserverless-snapshot-snapshot.html#cfn-redshiftserverless-snapshot-snapshot-kmskeyid
             '''
             result = self._values.get("kms_key_id")
@@ -1606,7 +1623,8 @@ class CfnSnapshot(
 
         @builtins.property
         def namespace_arn(self) -> typing.Optional[builtins.str]:
-            '''
+            '''The Amazon Resource Name (ARN) of the namespace the snapshot was created from.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-redshiftserverless-snapshot-snapshot.html#cfn-redshiftserverless-snapshot-snapshot-namespacearn
             '''
             result = self._values.get("namespace_arn")
@@ -1614,7 +1632,8 @@ class CfnSnapshot(
 
         @builtins.property
         def namespace_name(self) -> typing.Optional[builtins.str]:
-            '''
+            '''The name of the namepsace.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-redshiftserverless-snapshot-snapshot.html#cfn-redshiftserverless-snapshot-snapshot-namespacename
             '''
             result = self._values.get("namespace_name")
@@ -1622,7 +1641,10 @@ class CfnSnapshot(
 
         @builtins.property
         def owner_account(self) -> typing.Optional[builtins.str]:
-            '''
+            '''The owner AWS ;
+
+            account of the snapshot.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-redshiftserverless-snapshot-snapshot.html#cfn-redshiftserverless-snapshot-snapshot-owneraccount
             '''
             result = self._values.get("owner_account")
@@ -1630,7 +1652,8 @@ class CfnSnapshot(
 
         @builtins.property
         def retention_period(self) -> typing.Optional[jsii.Number]:
-            '''
+            '''The retention period of the snapshot created by the scheduled action.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-redshiftserverless-snapshot-snapshot.html#cfn-redshiftserverless-snapshot-snapshot-retentionperiod
             '''
             result = self._values.get("retention_period")
@@ -1638,7 +1661,8 @@ class CfnSnapshot(
 
         @builtins.property
         def snapshot_arn(self) -> typing.Optional[builtins.str]:
-            '''
+            '''The Amazon Resource Name (ARN) of the snapshot.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-redshiftserverless-snapshot-snapshot.html#cfn-redshiftserverless-snapshot-snapshot-snapshotarn
             '''
             result = self._values.get("snapshot_arn")
@@ -1646,7 +1670,8 @@ class CfnSnapshot(
 
         @builtins.property
         def snapshot_create_time(self) -> typing.Optional[builtins.str]:
-            '''
+            '''The timestamp of when the snapshot was created.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-redshiftserverless-snapshot-snapshot.html#cfn-redshiftserverless-snapshot-snapshot-snapshotcreatetime
             '''
             result = self._values.get("snapshot_create_time")
@@ -1654,7 +1679,8 @@ class CfnSnapshot(
 
         @builtins.property
         def snapshot_name(self) -> typing.Optional[builtins.str]:
-            '''
+            '''The name of the snapshot.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-redshiftserverless-snapshot-snapshot.html#cfn-redshiftserverless-snapshot-snapshot-snapshotname
             '''
             result = self._values.get("snapshot_name")
@@ -1662,7 +1688,8 @@ class CfnSnapshot(
 
         @builtins.property
         def status(self) -> typing.Optional[builtins.str]:
-            '''
+            '''The status of the snapshot.
+
             :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-redshiftserverless-snapshot-snapshot.html#cfn-redshiftserverless-snapshot-snapshot-status
             '''
             result = self._values.get("status")
@@ -1702,9 +1729,9 @@ class CfnSnapshotProps:
         '''Properties for defining a ``CfnSnapshot``.
 
         :param snapshot_name: The name of the snapshot.
-        :param namespace_name: The namespace the snapshot is associated with.
-        :param retention_period: The retention period of the snapshot.
-        :param tags: An array of key-value pairs to apply to this resource.
+        :param namespace_name: The name of the namepsace.
+        :param retention_period: The retention period of the snapshot created by the scheduled action.
+        :param tags: An array of `Tag objects <https://docs.aws.amazon.com/redshift-serverless/latest/APIReference/API_Tag.html>`_ to associate with the snapshot.
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-redshiftserverless-snapshot.html
         :exampleMetadata: fixture=_generated
@@ -1755,7 +1782,7 @@ class CfnSnapshotProps:
 
     @builtins.property
     def namespace_name(self) -> typing.Optional[builtins.str]:
-        '''The namespace the snapshot is associated with.
+        '''The name of the namepsace.
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-redshiftserverless-snapshot.html#cfn-redshiftserverless-snapshot-namespacename
         '''
@@ -1764,7 +1791,7 @@ class CfnSnapshotProps:
 
     @builtins.property
     def retention_period(self) -> typing.Optional[jsii.Number]:
-        '''The retention period of the snapshot.
+        '''The retention period of the snapshot created by the scheduled action.
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-redshiftserverless-snapshot.html#cfn-redshiftserverless-snapshot-retentionperiod
         '''
@@ -1773,7 +1800,7 @@ class CfnSnapshotProps:
 
     @builtins.property
     def tags(self) -> typing.Optional[typing.List[_CfnTag_f6864754]]:
-        '''An array of key-value pairs to apply to this resource.
+        '''An array of `Tag objects <https://docs.aws.amazon.com/redshift-serverless/latest/APIReference/API_Tag.html>`_ to associate with the snapshot.
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-redshiftserverless-snapshot.html#cfn-redshiftserverless-snapshot-tags
         '''

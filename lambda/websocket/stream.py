@@ -19,11 +19,14 @@ PROMPT_META_TABLE = os.environ.get('PROMPT_META_TABLE')
 PROMPT_BUCKET = os.environ.get('PROMPT_BUCKET')
 CONVERSATIONS_TABLE = os.environ.get('CONVERSATIONS_TABLE', 'Conversations')
 MESSAGES_TABLE = os.environ.get('MESSAGES_TABLE', 'Messages')
-MODEL_ID = "anthropic.claude-3-sonnet-20240229-v1:0"
+MODEL_ID = "apac.anthropic.claude-sonnet-4-20250514-v1:0"
 
 # DynamoDB tables
 conversations_table = dynamodb_resource.Table(CONVERSATIONS_TABLE)
 messages_table = dynamodb_resource.Table(MESSAGES_TABLE)
+
+# 청크 데이터 임시 저장소 (Lambda 메모리에 저장)
+chunk_storage = {}
 
 def handler(event, context):
     """
@@ -48,6 +51,8 @@ def handler(event, context):
         
         if action == 'stream':
             return handle_stream_request(connection_id, body)
+        elif action == 'stream_chunk':
+            return handle_chunk_request(connection_id, body)
         else:
             return send_error(connection_id, "지원하지 않는 액션입니다")
             
@@ -58,11 +63,119 @@ def handler(event, context):
             'body': json.dumps({'error': str(e)})
         }
 
+def handle_chunk_request(connection_id, data):
+    """
+    청크로 분할된 메시지 처리
+    """
+    try:
+        chunk_id = data.get('chunkId')
+        chunk_index = data.get('chunkIndex')
+        total_chunks = data.get('totalChunks')
+        chunk_data = data.get('chunkData')
+        is_complete = data.get('isComplete', False)
+        
+        print(f"🔍 [DEBUG] 청크 수신: ID={chunk_id}, Index={chunk_index}/{total_chunks}")
+        
+        # 청크 저장
+        if chunk_id not in chunk_storage:
+            chunk_storage[chunk_id] = {
+                'chunks': {},
+                'metadata': {},
+                'connection_id': connection_id
+            }
+        
+        chunk_storage[chunk_id]['chunks'][chunk_index] = chunk_data
+        
+        # 모든 청크가 도착했는지 확인
+        if is_complete and len(chunk_storage[chunk_id]['chunks']) == total_chunks:
+            print(f"🔍 [DEBUG] 모든 청크 수신 완료, 재조합 시작")
+            
+            # 청크 재조합
+            full_text = ''
+            for i in range(total_chunks):
+                full_text += chunk_storage[chunk_id]['chunks'].get(i, '')
+            
+            # 원본 메타데이터 복원 (첫 번째 메시지에서 저장된 것)
+            metadata = chunk_storage[chunk_id].get('metadata', {})
+            
+            # 재조합된 데이터로 스트림 처리
+            reconstructed_data = {
+                'userInput': full_text,
+                'chat_history': metadata.get('chat_history', []),
+                'prompt_cards': metadata.get('prompt_cards', []),
+                'conversationId': metadata.get('conversationId'),
+                'userSub': metadata.get('userSub'),
+                'enableStepwise': metadata.get('enableStepwise', False)
+            }
+            
+            # 청크 저장소 정리
+            del chunk_storage[chunk_id]
+            
+            # 일반 스트림 처리로 전달
+            return handle_stream_request(connection_id, reconstructed_data)
+        
+        return {
+            'statusCode': 200,
+            'body': json.dumps({'message': f'청크 {chunk_index + 1}/{total_chunks} 수신 완료'})
+        }
+        
+    except Exception as e:
+        print(f"청크 처리 오류: {traceback.format_exc()}")
+        return send_error(connection_id, f"청크 처리 오류: {str(e)}")
+
 def handle_stream_request(connection_id, data):
     """
     실시간 스트리밍 요청 처리 - 단계별 실행 및 사고과정 포함
     """
     try:
+        # 청크 분할된 메시지인지 확인
+        if data.get('chunked', False):
+            chunk_id = data.get('chunkId')
+            chunk_index = data.get('chunkIndex')
+            total_chunks = data.get('totalChunks')
+            
+            print(f"🔍 [DEBUG] 청크 메시지 감지: {chunk_index + 1}/{total_chunks}")
+            
+            # 스트리밍 처리 개선: 즉시 처리 시작
+            if chunk_index == 0:
+                if chunk_id not in chunk_storage:
+                    chunk_storage[chunk_id] = {
+                        'chunks': {},
+                        'metadata': {},
+                        'connection_id': connection_id,
+                        'streaming_started': False,
+                        'processed_chunks': 0
+                    }
+                
+                # 메타데이터 저장
+                chunk_storage[chunk_id]['metadata'] = {
+                    'chat_history': data.get('chat_history', []),
+                    'prompt_cards': data.get('prompt_cards', []),
+                    'conversationId': data.get('conversationId'),
+                    'userSub': data.get('userSub'),
+                    'enableStepwise': data.get('enableStepwise', False)
+                }
+                
+                # 첫 번째 청크 저장
+                chunk_storage[chunk_id]['chunks'][0] = data.get('userInput')
+                
+                # 병렬 처리 시작
+                if total_chunks > 3:  # 3개 이상의 청크인 경우 병렬 처리
+                    _start_parallel_chunk_processing(connection_id, chunk_id, total_chunks)
+                
+                # 추가 청크 대기 메시지
+                send_message(connection_id, {
+                    "type": "progress",
+                    "step": f"📦 대용량 텍스트 수신 중... (1/{total_chunks})",
+                    "progress": int((1 / total_chunks) * 100)
+                })
+                
+                return {
+                    'statusCode': 200,
+                    'body': json.dumps({'message': '첫 번째 청크 수신 완료'})
+                }
+        
+        # 일반 메시지 처리
         user_input = data.get('userInput')
         chat_history = data.get('chat_history', [])
         prompt_cards = data.get('prompt_cards', [])
@@ -72,6 +185,7 @@ def handle_stream_request(connection_id, data):
         
         print(f"🔍 [DEBUG] WebSocket 스트림 요청 받음:")
         print(f"  - user_input: {user_input[:50]}..." if user_input else "  - user_input: None")
+        print(f"  - user_input length: {len(user_input) if user_input else 0}")
         print(f"  - enable_stepwise: {enable_stepwise}")
         print(f"  - prompt_cards count: {len(prompt_cards)}")
         
@@ -91,6 +205,16 @@ def handle_stream_request(connection_id, data):
         
         # 프롬프트 구성
         final_prompt = build_final_prompt(user_input, chat_history, prompt_cards)
+        
+        # 프롬프트 크기 확인
+        print(f"🔍 [DEBUG] 최종 프롬프트 크기: {len(final_prompt)}자 ({len(final_prompt) / 1024:.2f}KB)")
+        
+        # 프롬프트가 너무 큰 경우 처리 - 제거 (build_final_prompt에서 처리함)
+        # MAX_PROMPT_SIZE = 200000  # 200KB 제한 (안전한 범위)
+        # if len(final_prompt) > MAX_PROMPT_SIZE:
+        #     print(f"⚠️ [WARNING] 프롬프트가 너무 큽니다. 잘라서 처리합니다.")
+        #     # 채팅 히스토리를 줄이거나 user_input만 사용
+        #     final_prompt = build_final_prompt(user_input[:MAX_PROMPT_SIZE], [], prompt_cards)
         
         # 2단계: AI 모델 준비
         send_message(connection_id, {
@@ -115,11 +239,32 @@ def handle_stream_request(connection_id, data):
             "progress": 40
         })
         
-        # Bedrock 스트리밍 응답 처리
-        response_stream = bedrock_client.invoke_model_with_response_stream(
-            modelId=MODEL_ID,
-            body=json.dumps(request_body)
-        )
+        try:
+            # Bedrock 스트리밍 응답 처리
+            response_stream = bedrock_client.invoke_model_with_response_stream(
+                modelId=MODEL_ID,
+                body=json.dumps(request_body)
+            )
+        except Exception as bedrock_error:
+            print(f"❌ [ERROR] Bedrock API 호출 실패: {str(bedrock_error)}")
+            print(f"Request body size: {len(json.dumps(request_body))} bytes")
+            
+            # 에러 타입에 따른 처리
+            error_message = str(bedrock_error)
+            if "ValidationException" in error_message:
+                if "maximum" in error_message.lower() or "token" in error_message.lower():
+                    send_error(connection_id, "입력 텍스트가 너무 깁니다. 텍스트를 줄여서 다시 시도해주세요.")
+                else:
+                    send_error(connection_id, "입력 형식이 올바르지 않습니다.")
+            elif "ThrottlingException" in error_message:
+                send_error(connection_id, "요청이 너무 많습니다. 잠시 후 다시 시도해주세요.")
+            else:
+                send_error(connection_id, f"AI 모델 호출 중 오류가 발생했습니다: {error_message}")
+            
+            return {
+                'statusCode': 400,
+                'body': json.dumps({'error': str(bedrock_error)})
+            }
         
         full_response = ""
         
@@ -335,6 +480,29 @@ def analyze_response_confidence(response, card):
     # 범위 제한
     return max(0.0, min(1.0, confidence))
 
+def summarize_large_text(text, max_length=50000):
+    """
+    대용량 텍스트를 요약하여 처리 가능한 크기로 줄임
+    """
+    if len(text) <= max_length:
+        return text
+    
+    print(f"🔍 [DEBUG] 대용량 텍스트 요약 시작: {len(text)}자 -> {max_length}자")
+    
+    # 텍스트를 청크로 나누어 주요 부분만 추출
+    chunk_size = max_length // 3
+    
+    # 시작, 중간, 끝 부분 추출
+    start_chunk = text[:chunk_size]
+    middle_start = len(text) // 2 - chunk_size // 2
+    middle_chunk = text[middle_start:middle_start + chunk_size]
+    end_chunk = text[-chunk_size:]
+    
+    summarized = f"{start_chunk}\n\n[... 중간 내용 생략 ...]\n\n{middle_chunk}\n\n[... 중간 내용 생략 ...]\n\n{end_chunk}"
+    
+    print(f"✅ [DEBUG] 텍스트 요약 완료: {len(summarized)}자")
+    return summarized
+
 def build_final_prompt(user_input, chat_history, prompt_cards):
     """
     프론트엔드에서 전송된 프롬프트 카드와 채팅 히스토리를 사용하여 최종 프롬프트 구성
@@ -343,6 +511,13 @@ def build_final_prompt(user_input, chat_history, prompt_cards):
         print(f"WebSocket 프롬프트 구성 시작")
         print(f"전달받은 프롬프트 카드 수: {len(prompt_cards)}")
         print(f"전달받은 채팅 히스토리 수: {len(chat_history)}")
+        print(f"사용자 입력 길이: {len(user_input)}자")
+        
+        # 대용량 텍스트 처리
+        MAX_INPUT_LENGTH = 150000  # 150KB로 증가 (generate.py와 동일)
+        if len(user_input) > MAX_INPUT_LENGTH:
+            print(f"⚠️ [WARNING] 사용자 입력이 너무 깁니다. 요약합니다.")
+            user_input = summarize_large_text(user_input, MAX_INPUT_LENGTH)
         
         # 프론트엔드에서 전송된 프롬프트 카드 사용
         system_prompt_parts = []
@@ -356,12 +531,16 @@ def build_final_prompt(user_input, chat_history, prompt_cards):
         system_prompt = "\n\n".join(system_prompt_parts)
         print(f"WebSocket 시스템 프롬프트 길이: {len(system_prompt)}자")
         
-        # 채팅 히스토리 구성
+        # 채팅 히스토리 구성 (최근 10개만)
+        recent_history = chat_history[-10:] if len(chat_history) > 10 else chat_history
         history_parts = []
-        for msg in chat_history:
+        for msg in recent_history:
             role = msg.get('role', '')
             content = msg.get('content', '')
             if role and content:
+                # 히스토리 메시지도 길이 제한
+                if len(content) > 1000:
+                    content = content[:1000] + "..."
                 if role == 'user':
                     history_parts.append(f"Human: {content}")
                 elif role == 'assistant':
@@ -388,19 +567,22 @@ def build_final_prompt(user_input, chat_history, prompt_cards):
         final_prompt = "\n\n".join(prompt_parts)
         print(f"WebSocket 최종 프롬프트 길이: {len(final_prompt)}자")
         
+        # 최종 프롬프트도 크기 제한
+        MAX_PROMPT_LENGTH = 180000  # 180KB (Claude 토큰 제한 고려)
+        if len(final_prompt) > MAX_PROMPT_LENGTH:
+            print(f"⚠️ [WARNING] 최종 프롬프트가 너무 깁니다. 잘라서 처리합니다.")
+            # 시스템 프롬프트와 사용자 입력만 사용
+            final_prompt = f"{system_prompt}\n\nHuman: {user_input}\n\nAssistant:"
+            if len(final_prompt) > MAX_PROMPT_LENGTH:
+                # 그래도 크면 사용자 입력만
+                final_prompt = f"Human: {user_input[:MAX_PROMPT_LENGTH-20]}\n\nAssistant:"
+        
         return final_prompt
         
     except Exception as e:
         print(f"WebSocket 프롬프트 구성 오류: {traceback.format_exc()}")
-        # 오류 발생 시 기본 프롬프트 반환 (히스토리 포함)
-        try:
-            history_str = "\n\n".join([f"{msg['role']}: {msg['content']}" for msg in chat_history])
-            if history_str:
-                return f"{history_str}\n\nHuman: {user_input}\n\nAssistant:"
-            else:
-                return f"Human: {user_input}\n\nAssistant:"
-        except:
-            return f"Human: {user_input}\n\nAssistant:"
+        # 오류 발생 시 기본 프롬프트 반환
+        return f"Human: {user_input[:50000]}\n\nAssistant:"
 
 def send_message(connection_id, message):
     """
@@ -526,3 +708,33 @@ def estimate_token_count(text):
     if not text:
         return 0
     return max(1, len(text) // 4)
+
+def _start_parallel_chunk_processing(connection_id, chunk_id, total_chunks):
+    """
+    병렬 청크 처리 시작
+    """
+    try:
+        # Lambda 비동기 호출을 통한 병렬 처리
+        lambda_client = boto3.client('lambda')
+        function_name = os.environ.get('PARALLEL_PROCESSOR_FUNCTION', 'title-generator-parallel-processor')
+        
+        # 병렬 처리 작업 생성
+        payload = {
+            'action': 'process_parallel_chunks',
+            'chunkId': chunk_id,
+            'totalChunks': total_chunks,
+            'connectionId': connection_id
+        }
+        
+        # 비동기 호출
+        lambda_client.invoke(
+            FunctionName=function_name,
+            InvocationType='Event',  # 비동기
+            Payload=json.dumps(payload)
+        )
+        
+        print(f"병렬 처리 시작: chunk_id={chunk_id}, total_chunks={total_chunks}")
+        
+    except Exception as e:
+        print(f"병렬 처리 시작 오류: {e}")
+        # 폴백: 기존 순차 처리 방식 유지

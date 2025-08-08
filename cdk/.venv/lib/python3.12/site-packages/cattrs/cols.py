@@ -2,21 +2,31 @@
 
 from __future__ import annotations
 
-from sys import version_info
+from collections import defaultdict
+from collections.abc import Callable, Iterable
+from functools import partial
 from typing import (
     TYPE_CHECKING,
     Any,
-    Iterable,
+    DefaultDict,
     Literal,
     NamedTuple,
-    Tuple,
     TypeVar,
     get_type_hints,
 )
 
-from attrs import NOTHING, Attribute
+from attrs import NOTHING, Attribute, NothingType
 
-from ._compat import ANIES, is_bare, is_frozenset, is_mapping, is_sequence, is_subclass
+from ._compat import (
+    ANIES,
+    get_args,
+    get_origin,
+    is_bare,
+    is_frozenset,
+    is_mapping,
+    is_sequence,
+    is_subclass,
+)
 from ._compat import is_mutable_set as is_set
 from .dispatch import StructureHook, UnstructureHook
 from .errors import IterableValidationError, IterableValidationNote
@@ -28,6 +38,7 @@ from .gen import (
     make_dict_unstructure_fn_from_attrs,
     make_hetero_tuple_unstructure_fn,
     mapping_structure_factory,
+    mapping_unstructure_factory,
 )
 from .gen import make_iterable_unstructure_fn as iterable_unstructure_factory
 
@@ -35,19 +46,22 @@ if TYPE_CHECKING:
     from .converters import BaseConverter
 
 __all__ = [
+    "defaultdict_structure_factory",
     "is_any_set",
+    "is_defaultdict",
     "is_frozenset",
-    "is_namedtuple",
     "is_mapping",
-    "is_set",
+    "is_namedtuple",
     "is_sequence",
+    "is_set",
     "iterable_unstructure_factory",
     "list_structure_factory",
-    "namedtuple_structure_factory",
-    "namedtuple_unstructure_factory",
+    "mapping_structure_factory",
+    "mapping_unstructure_factory",
     "namedtuple_dict_structure_factory",
     "namedtuple_dict_unstructure_factory",
-    "mapping_structure_factory",
+    "namedtuple_structure_factory",
+    "namedtuple_unstructure_factory",
 ]
 
 
@@ -56,34 +70,15 @@ def is_any_set(type) -> bool:
     return is_set(type) or is_frozenset(type)
 
 
-if version_info[:2] >= (3, 9):
+def is_namedtuple(type: Any) -> bool:
+    """A predicate function for named tuples."""
 
-    def is_namedtuple(type: Any) -> bool:
-        """A predicate function for named tuples."""
-
-        if is_subclass(type, tuple):
-            for cl in type.mro():
-                orig_bases = cl.__dict__.get("__orig_bases__", ())
-                if NamedTuple in orig_bases:
-                    return True
-        return False
-
-else:
-
-    def is_namedtuple(type: Any) -> bool:
-        """A predicate function for named tuples."""
-        # This is tricky. It may not be possible for this function to be 100%
-        # accurate, since it doesn't seem like we can distinguish between tuple
-        # subclasses and named tuples reliably.
-
-        if is_subclass(type, tuple):
-            for cl in type.mro():
-                if cl is tuple:
-                    # No point going further.
-                    break
-                if "_fields" in cl.__dict__:
-                    return True
-        return False
+    if is_subclass(type, tuple):
+        for cl in type.mro():
+            orig_bases = cl.__dict__.get("__orig_bases__", ())
+            if NamedTuple in orig_bases:
+                return True
+    return False
 
 
 def _is_passthrough(type: type[tuple], converter: BaseConverter) -> bool:
@@ -180,7 +175,7 @@ def namedtuple_structure_factory(
 ) -> StructureHook:
     """A hook factory for structuring namedtuples from iterables."""
     # We delegate to the existing infrastructure for heterogenous tuples.
-    hetero_tuple_type = Tuple[tuple(cl.__annotations__.values())]
+    hetero_tuple_type = tuple[tuple(cl.__annotations__.values())]
     base_hook = converter.get_structure_hook(hetero_tuple_type)
     return lambda v, _: cl(*base_hook(v, hetero_tuple_type))
 
@@ -287,3 +282,28 @@ def namedtuple_dict_unstructure_factory(
         working_set.remove(cl)
         if not working_set:
             del already_generating.working_set
+
+
+def is_defaultdict(type: Any) -> bool:
+    """Is this type a defaultdict?
+
+    Bare defaultdicts (defaultdicts with no type arguments) are not supported
+    since there's no way to discover their _default_factory_.
+    """
+    return is_subclass(get_origin(type), (defaultdict, DefaultDict))
+
+
+def defaultdict_structure_factory(
+    type: type[defaultdict],
+    converter: BaseConverter,
+    default_factory: Callable[[], Any] | NothingType = NOTHING,
+) -> StructureHook:
+    """A structure hook factory for defaultdicts.
+
+    The value type parameter will be used as the _default factory_.
+    """
+    if default_factory is NOTHING:
+        default_factory = get_args(type)[1]
+    return mapping_structure_factory(
+        type, converter, partial(defaultdict, default_factory)
+    )

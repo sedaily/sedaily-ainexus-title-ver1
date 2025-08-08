@@ -15,8 +15,9 @@ export const useWebSocket = () => {
   // WebSocket URL (환경변수나 실제 배포된 URL로 설정)
   const getWebSocketUrl = useCallback(async () => {
     const wsUrl =
+      process.env.REACT_APP_WEBSOCKET_URL ||
       process.env.REACT_APP_WS_URL ||
-      "wss://yoc1j9q1p5.execute-api.us-east-1.amazonaws.com/prod";
+      "wss://f1orwz0ro4.execute-api.ap-northeast-2.amazonaws.com/prod";
 
     // URL 형식 검증 및 정규화
     if (!wsUrl.startsWith("wss://") && !wsUrl.startsWith("ws://")) {
@@ -259,45 +260,109 @@ export const useWebSocket = () => {
         return false;
       }
 
-      const message = {
-        action: "stream",
-        userInput,
-        chat_history: chatHistory,
-        prompt_cards: promptCards,
-        modelId: modelId,
-        conversationId: conversationId,
-        userSub: userSub,
-        enableStepwise: enableStepwise,
-      };
-      
-      // 프롬프트 카드 내용 확인
-      console.log("🔍 [CRITICAL] WebSocket 전송할 프롬프트 카드 상세:");
-      promptCards.forEach((card, index) => {
-        console.log(`  카드 ${index + 1}:`, {
-          title: card.title,
-          hasContent: !!card.prompt_text,
-          contentLength: card.prompt_text?.length || 0,
-          contentPreview: card.prompt_text?.substring(0, 100) + "..."
+      try {
+        // 대용량 텍스트 처리를 위한 청크 분할
+        const MAX_CHUNK_SIZE = 100000; // 100KB 청크 (WebSocket 128KB 제한 고려)
+        
+        // 입력 텍스트가 큰 경우 청크로 분할
+        if (userInput.length > MAX_CHUNK_SIZE) {
+          console.log(`🔍 [DEBUG] 대용량 텍스트 감지: ${userInput.length}자, 청크 분할 필요`);
+          
+          // 첫 번째 청크는 메타데이터와 함께 전송
+          const firstChunk = userInput.substring(0, MAX_CHUNK_SIZE);
+          const totalChunks = Math.ceil(userInput.length / MAX_CHUNK_SIZE);
+          const chunkId = 'chunk-' + Date.now();
+          
+          // 첫 번째 청크 전송
+          const firstMessage = {
+            action: 'stream',
+            userInput: firstChunk,
+            chat_history: chatHistory,
+            prompt_cards: promptCards,
+            modelId: modelId,
+            conversationId: conversationId,
+            userSub: userSub,
+            enableStepwise: enableStepwise,
+            chunked: true,
+            chunkId: chunkId,
+            chunkIndex: 0,
+            totalChunks: totalChunks,
+            isComplete: totalChunks === 1
+          };
+          
+          sendMessage(firstMessage);
+          
+          // 나머지 청크들 순차적으로 전송
+          for (let i = 1; i < totalChunks; i++) {
+            const start = i * MAX_CHUNK_SIZE;
+            const end = Math.min((i + 1) * MAX_CHUNK_SIZE, userInput.length);
+            const chunk = userInput.substring(start, end);
+            
+            setTimeout(() => {
+              const chunkMessage = {
+                action: 'stream_chunk',
+                chunkId: chunkId,
+                chunkIndex: i,
+                totalChunks: totalChunks,
+                chunkData: chunk,
+                isComplete: i === totalChunks - 1
+              };
+              
+              if (wsRef.current?.readyState === WebSocket.OPEN) {
+                sendMessage(chunkMessage);
+                console.log(`🔍 [DEBUG] 청크 ${i + 1}/${totalChunks} 전송 완료`);
+              }
+            }, i * 100); // 각 청크 간 100ms 지연
+          }
+          
+          console.log(`🔍 [DEBUG] 총 ${totalChunks}개 청크로 분할하여 전송`);
+          return true;
+        }
+        
+        // 일반 크기의 경우 기존 방식대로 전송
+        const message = {
+          action: "stream",
+          userInput,
+          chat_history: chatHistory,
+          prompt_cards: promptCards,
+          modelId: modelId,
+          conversationId: conversationId,
+          userSub: userSub,
+          enableStepwise: enableStepwise,
+        };
+        
+        // 프롬프트 카드 내용 확인
+        console.log("🔍 [CRITICAL] WebSocket 전송할 프롬프트 카드 상세:");
+        promptCards.forEach((card, index) => {
+          console.log(`  카드 ${index + 1}:`, {
+            title: card.title,
+            hasContent: !!card.prompt_text,
+            contentLength: card.prompt_text?.length || 0,
+            contentPreview: card.prompt_text?.substring(0, 100) + "..."
+          });
         });
-      });
 
-      console.log("🔍 [DEBUG] WebSocket 메시지 전송 상세:", {
-        action: message.action,
-        inputLength: userInput.length,
-        historyLength: chatHistory.length,
-        promptCardsCount: promptCards.length,
-        promptCards: promptCards,
-        conversationId: message.conversationId,
-        conversationIdType: typeof message.conversationId,
-        conversationIdValue: message.conversationId,
-        isConversationIdNull: message.conversationId === null,
-        isConversationIdUndefined: message.conversationId === undefined,
-        userSub: message.userSub,
-        enableStepwise: message.enableStepwise,
-        fullMessage: JSON.stringify(message),
-      });
+        console.log("🔍 [DEBUG] WebSocket 메시지 전송 상세:", {
+          action: message.action,
+          inputLength: userInput.length,
+          historyLength: chatHistory.length,
+          promptCardsCount: promptCards.length,
+          promptCards: promptCards,
+          conversationId: message.conversationId,
+          conversationIdType: typeof message.conversationId,
+          conversationIdValue: message.conversationId,
+          isConversationIdNull: message.conversationId === null,
+          isConversationIdUndefined: message.conversationId === undefined,
+          userSub: message.userSub,
+          enableStepwise: message.enableStepwise,
+        });
 
-      return sendMessage(message);
+        return sendMessage(message);
+      } catch (error) {
+        console.error('스트리밍 시작 실패:', error);
+        setError('메시지 전송에 실패했습니다');
+        return false;
+      }
     },
     [isConnected, sendMessage]
   );

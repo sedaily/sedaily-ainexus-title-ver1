@@ -723,7 +723,7 @@ This system is built on a **100% serverless architecture** with no traditional s
 **Model Access**
 
 - **Foundation Model**: Claude 3 Sonnet
-- **Model ARN**: `arn:aws:bedrock:us-east-1::foundation-model/anthropic.claude-3-sonnet-20240229-v1:0`
+- **Model ARN**: `arn:aws:bedrock:REGION::foundation-model/MODEL_ID`
 - **Cross-Region Inference**: Disabled (single region deployment)
 - **Model Invocation Logging**: Enabled for monitoring
 
@@ -804,7 +804,7 @@ This system is built on a **100% serverless architecture** with no traditional s
         "bedrock:InvokeModel",
         "bedrock:InvokeModelWithResponseStream"
       ],
-      "Resource": "arn:aws:bedrock:*::foundation-model/anthropic.claude-3-sonnet-*"
+      "Resource": "arn:aws:bedrock:*::foundation-model/*"
     },
     {
       "Effect": "Allow",
@@ -816,7 +816,7 @@ This system is built on a **100% serverless architecture** with no traditional s
         "dynamodb:Query",
         "dynamodb:Scan"
       ],
-      "Resource": ["arn:aws:dynamodb:*:*:table/bedrock-diy-*"]
+      "Resource": ["arn:aws:dynamodb:*:*:table/YOUR-TABLE-PREFIX-*"]
     }
   ]
 }

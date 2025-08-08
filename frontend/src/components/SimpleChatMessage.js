@@ -184,6 +184,28 @@ const SimpleChatMessage = React.memo(
         {isUser ? (
           // 사용자 메시지 - 우측 말풍선
           <div className="max-w-[85%] sm:max-w-[70%]">
+            {/* 첨부파일 표시 (메시지 위) */}
+            {message.attachedFiles && message.attachedFiles.length > 0 && (
+              <div className="mb-2 ml-auto">
+                <div className="flex flex-wrap gap-2 justify-end">
+                  {message.attachedFiles.map((file, index) => (
+                    <div
+                      key={index}
+                      className="flex items-center gap-2 px-3 py-1.5 bg-gray-100 dark:bg-gray-700 rounded-lg"
+                    >
+                      <div className="w-6 h-6 bg-gradient-to-br from-pink-500 to-pink-600 dark:from-pink-600 dark:to-pink-700 rounded flex items-center justify-center">
+                        <svg className="w-3.5 h-3.5 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M4 4a2 2 0 00-2 2v8a2 2 0 002 2h12a2 2 0 002-2V6a2 2 0 00-2-2h-5L9 2H4z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <span className="text-xs font-medium text-gray-700 dark:text-gray-200">
+                        {file.name}
+                      </span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
             <div className="bg-[#5E89FF] text-white rounded-2xl px-3 sm:px-4 py-2 shadow-md ml-auto">
               <div className="text-sm sm:text-[15px] font-normal leading-[1.5] whitespace-pre-wrap break-words">
                 {message.content}

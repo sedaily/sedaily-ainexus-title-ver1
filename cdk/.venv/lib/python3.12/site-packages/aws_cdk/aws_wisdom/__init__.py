@@ -7857,6 +7857,13 @@ class CfnMessageTemplate(
                 values=["values"]
             ),
             language="language",
+            message_template_attachments=[wisdom.CfnMessageTemplate.MessageTemplateAttachmentProperty(
+                attachment_name="attachmentName",
+                s3_presigned_url="s3PresignedUrl",
+        
+                # the properties below are optional
+                attachment_id="attachmentId"
+            )],
             tags=[CfnTag(
                 key="key",
                 value="value"
@@ -7877,6 +7884,7 @@ class CfnMessageTemplate(
         description: typing.Optional[builtins.str] = None,
         grouping_configuration: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnMessageTemplate.GroupingConfigurationProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
         language: typing.Optional[builtins.str] = None,
+        message_template_attachments: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union["CfnMessageTemplate.MessageTemplateAttachmentProperty", typing.Dict[builtins.str, typing.Any]]]]]] = None,
         tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
     ) -> None:
         '''
@@ -7890,6 +7898,7 @@ class CfnMessageTemplate(
         :param description: The description of the message template.
         :param grouping_configuration: The configuration information of the external data source.
         :param language: The language code value for the language in which the quick response is written. The supported language codes include ``de_DE`` , ``en_US`` , ``es_ES`` , ``fr_FR`` , ``id_ID`` , ``it_IT`` , ``ja_JP`` , ``ko_KR`` , ``pt_BR`` , ``zh_CN`` , ``zh_TW``
+        :param message_template_attachments: List of message template attachments.
         :param tags: The tags used to organize, track, or control access for this resource.
         '''
         if __debug__:
@@ -7905,6 +7914,7 @@ class CfnMessageTemplate(
             description=description,
             grouping_configuration=grouping_configuration,
             language=language,
+            message_template_attachments=message_template_attachments,
             tags=tags,
         )
 
@@ -8098,6 +8108,24 @@ class CfnMessageTemplate(
             type_hints = typing.get_type_hints(_typecheckingstub__f4bfbbc60d2eb951b3081015f23b57de459d734cb6ca7e17db3b5ea28887251d)
             check_type(argname="argument value", value=value, expected_type=type_hints["value"])
         jsii.set(self, "language", value) # pyright: ignore[reportArgumentType]
+
+    @builtins.property
+    @jsii.member(jsii_name="messageTemplateAttachments")
+    def message_template_attachments(
+        self,
+    ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, "CfnMessageTemplate.MessageTemplateAttachmentProperty"]]]]:
+        '''List of message template attachments.'''
+        return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, "CfnMessageTemplate.MessageTemplateAttachmentProperty"]]]], jsii.get(self, "messageTemplateAttachments"))
+
+    @message_template_attachments.setter
+    def message_template_attachments(
+        self,
+        value: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, "CfnMessageTemplate.MessageTemplateAttachmentProperty"]]]],
+    ) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__99e58f577d070d3c392b7519e6ec169337ff707d8d0fbec1d5b147b3eb27b11a)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "messageTemplateAttachments", value) # pyright: ignore[reportArgumentType]
 
     @builtins.property
     @jsii.member(jsii_name="tags")
@@ -9582,6 +9610,102 @@ class CfnMessageTemplate(
             )
 
     @jsii.data_type(
+        jsii_type="aws-cdk-lib.aws_wisdom.CfnMessageTemplate.MessageTemplateAttachmentProperty",
+        jsii_struct_bases=[],
+        name_mapping={
+            "attachment_name": "attachmentName",
+            "s3_presigned_url": "s3PresignedUrl",
+            "attachment_id": "attachmentId",
+        },
+    )
+    class MessageTemplateAttachmentProperty:
+        def __init__(
+            self,
+            *,
+            attachment_name: builtins.str,
+            s3_presigned_url: builtins.str,
+            attachment_id: typing.Optional[builtins.str] = None,
+        ) -> None:
+            '''Information about the message template attachment.
+
+            :param attachment_name: The name of the attachment file being uploaded. The name should include the file extension.
+            :param s3_presigned_url: The S3 Presigned URL for the attachment file. When generating the PreSignedUrl, please ensure that the expires-in time is set to 30 minutes. The URL can be generated through the AWS Console or through the AWS CLI (https://docs.aws.amazon.com/AmazonS3/latest/userguide/ShareObjectPreSignedURL.html).
+            :param attachment_id: The identifier of the attachment file.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-wisdom-messagetemplate-messagetemplateattachment.html
+            :exampleMetadata: fixture=_generated
+
+            Example::
+
+                # The code below shows an example of how to instantiate this type.
+                # The values are placeholders you should change.
+                from aws_cdk import aws_wisdom as wisdom
+                
+                message_template_attachment_property = wisdom.CfnMessageTemplate.MessageTemplateAttachmentProperty(
+                    attachment_name="attachmentName",
+                    s3_presigned_url="s3PresignedUrl",
+                
+                    # the properties below are optional
+                    attachment_id="attachmentId"
+                )
+            '''
+            if __debug__:
+                type_hints = typing.get_type_hints(_typecheckingstub__733b704f810bd9a3eb9d75f4f3b82b249fd0f3b3c3429da2875584133affc320)
+                check_type(argname="argument attachment_name", value=attachment_name, expected_type=type_hints["attachment_name"])
+                check_type(argname="argument s3_presigned_url", value=s3_presigned_url, expected_type=type_hints["s3_presigned_url"])
+                check_type(argname="argument attachment_id", value=attachment_id, expected_type=type_hints["attachment_id"])
+            self._values: typing.Dict[builtins.str, typing.Any] = {
+                "attachment_name": attachment_name,
+                "s3_presigned_url": s3_presigned_url,
+            }
+            if attachment_id is not None:
+                self._values["attachment_id"] = attachment_id
+
+        @builtins.property
+        def attachment_name(self) -> builtins.str:
+            '''The name of the attachment file being uploaded.
+
+            The name should include the file extension.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-wisdom-messagetemplate-messagetemplateattachment.html#cfn-wisdom-messagetemplate-messagetemplateattachment-attachmentname
+            '''
+            result = self._values.get("attachment_name")
+            assert result is not None, "Required property 'attachment_name' is missing"
+            return typing.cast(builtins.str, result)
+
+        @builtins.property
+        def s3_presigned_url(self) -> builtins.str:
+            '''The S3 Presigned URL for the attachment file.
+
+            When generating the PreSignedUrl, please ensure that the expires-in time is set to 30 minutes. The URL can be generated through the AWS Console or through the AWS CLI (https://docs.aws.amazon.com/AmazonS3/latest/userguide/ShareObjectPreSignedURL.html).
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-wisdom-messagetemplate-messagetemplateattachment.html#cfn-wisdom-messagetemplate-messagetemplateattachment-s3presignedurl
+            '''
+            result = self._values.get("s3_presigned_url")
+            assert result is not None, "Required property 's3_presigned_url' is missing"
+            return typing.cast(builtins.str, result)
+
+        @builtins.property
+        def attachment_id(self) -> typing.Optional[builtins.str]:
+            '''The identifier of the attachment file.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-wisdom-messagetemplate-messagetemplateattachment.html#cfn-wisdom-messagetemplate-messagetemplateattachment-attachmentid
+            '''
+            result = self._values.get("attachment_id")
+            return typing.cast(typing.Optional[builtins.str], result)
+
+        def __eq__(self, rhs: typing.Any) -> builtins.bool:
+            return isinstance(rhs, self.__class__) and rhs._values == self._values
+
+        def __ne__(self, rhs: typing.Any) -> builtins.bool:
+            return not (rhs == self)
+
+        def __repr__(self) -> str:
+            return "MessageTemplateAttachmentProperty(%s)" % ", ".join(
+                k + "=" + repr(v) for k, v in self._values.items()
+            )
+
+    @jsii.data_type(
         jsii_type="aws-cdk-lib.aws_wisdom.CfnMessageTemplate.MessageTemplateAttributesProperty",
         jsii_struct_bases=[],
         name_mapping={
@@ -10101,6 +10225,7 @@ class CfnMessageTemplate(
         "description": "description",
         "grouping_configuration": "groupingConfiguration",
         "language": "language",
+        "message_template_attachments": "messageTemplateAttachments",
         "tags": "tags",
     },
 )
@@ -10116,6 +10241,7 @@ class CfnMessageTemplateProps:
         description: typing.Optional[builtins.str] = None,
         grouping_configuration: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnMessageTemplate.GroupingConfigurationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
         language: typing.Optional[builtins.str] = None,
+        message_template_attachments: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnMessageTemplate.MessageTemplateAttachmentProperty, typing.Dict[builtins.str, typing.Any]]]]]] = None,
         tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
     ) -> None:
         '''Properties for defining a ``CfnMessageTemplate``.
@@ -10128,6 +10254,7 @@ class CfnMessageTemplateProps:
         :param description: The description of the message template.
         :param grouping_configuration: The configuration information of the external data source.
         :param language: The language code value for the language in which the quick response is written. The supported language codes include ``de_DE`` , ``en_US`` , ``es_ES`` , ``fr_FR`` , ``id_ID`` , ``it_IT`` , ``ja_JP`` , ``ko_KR`` , ``pt_BR`` , ``zh_CN`` , ``zh_TW``
+        :param message_template_attachments: List of message template attachments.
         :param tags: The tags used to organize, track, or control access for this resource.
 
         :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-wisdom-messagetemplate.html
@@ -10255,6 +10382,13 @@ class CfnMessageTemplateProps:
                     values=["values"]
                 ),
                 language="language",
+                message_template_attachments=[wisdom.CfnMessageTemplate.MessageTemplateAttachmentProperty(
+                    attachment_name="attachmentName",
+                    s3_presigned_url="s3PresignedUrl",
+            
+                    # the properties below are optional
+                    attachment_id="attachmentId"
+                )],
                 tags=[CfnTag(
                     key="key",
                     value="value"
@@ -10271,6 +10405,7 @@ class CfnMessageTemplateProps:
             check_type(argname="argument description", value=description, expected_type=type_hints["description"])
             check_type(argname="argument grouping_configuration", value=grouping_configuration, expected_type=type_hints["grouping_configuration"])
             check_type(argname="argument language", value=language, expected_type=type_hints["language"])
+            check_type(argname="argument message_template_attachments", value=message_template_attachments, expected_type=type_hints["message_template_attachments"])
             check_type(argname="argument tags", value=tags, expected_type=type_hints["tags"])
         self._values: typing.Dict[builtins.str, typing.Any] = {
             "channel_subtype": channel_subtype,
@@ -10286,6 +10421,8 @@ class CfnMessageTemplateProps:
             self._values["grouping_configuration"] = grouping_configuration
         if language is not None:
             self._values["language"] = language
+        if message_template_attachments is not None:
+            self._values["message_template_attachments"] = message_template_attachments
         if tags is not None:
             self._values["tags"] = tags
 
@@ -10374,6 +10511,17 @@ class CfnMessageTemplateProps:
         '''
         result = self._values.get("language")
         return typing.cast(typing.Optional[builtins.str], result)
+
+    @builtins.property
+    def message_template_attachments(
+        self,
+    ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, CfnMessageTemplate.MessageTemplateAttachmentProperty]]]]:
+        '''List of message template attachments.
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-wisdom-messagetemplate.html#cfn-wisdom-messagetemplate-messagetemplateattachments
+        '''
+        result = self._values.get("message_template_attachments")
+        return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, CfnMessageTemplate.MessageTemplateAttachmentProperty]]]], result)
 
     @builtins.property
     def tags(self) -> typing.Optional[typing.List[_CfnTag_f6864754]]:
@@ -10609,6 +10757,787 @@ class CfnMessageTemplateVersionProps:
         )
 
 
+@jsii.implements(_IInspectable_c2943556, _ITaggableV2_4e6798f8)
+class CfnQuickResponse(
+    _CfnResource_9df397a6,
+    metaclass=jsii.JSIIMeta,
+    jsii_type="aws-cdk-lib.aws_wisdom.CfnQuickResponse",
+):
+    '''Creates an Amazon Q in Connect quick response.
+
+    :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-wisdom-quickresponse.html
+    :cloudformationResource: AWS::Wisdom::QuickResponse
+    :exampleMetadata: fixture=_generated
+
+    Example::
+
+        # The code below shows an example of how to instantiate this type.
+        # The values are placeholders you should change.
+        from aws_cdk import aws_wisdom as wisdom
+        
+        cfn_quick_response = wisdom.CfnQuickResponse(self, "MyCfnQuickResponse",
+            content=wisdom.CfnQuickResponse.QuickResponseContentProviderProperty(
+                content="content"
+            ),
+            knowledge_base_arn="knowledgeBaseArn",
+            name="name",
+        
+            # the properties below are optional
+            channels=["channels"],
+            content_type="contentType",
+            description="description",
+            grouping_configuration=wisdom.CfnQuickResponse.GroupingConfigurationProperty(
+                criteria="criteria",
+                values=["values"]
+            ),
+            is_active=False,
+            language="language",
+            shortcut_key="shortcutKey",
+            tags=[CfnTag(
+                key="key",
+                value="value"
+            )]
+        )
+    '''
+
+    def __init__(
+        self,
+        scope: _constructs_77d1e7e8.Construct,
+        id: builtins.str,
+        *,
+        content: typing.Union[_IResolvable_da3f097b, typing.Union["CfnQuickResponse.QuickResponseContentProviderProperty", typing.Dict[builtins.str, typing.Any]]],
+        knowledge_base_arn: builtins.str,
+        name: builtins.str,
+        channels: typing.Optional[typing.Sequence[builtins.str]] = None,
+        content_type: typing.Optional[builtins.str] = None,
+        description: typing.Optional[builtins.str] = None,
+        grouping_configuration: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnQuickResponse.GroupingConfigurationProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
+        is_active: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
+        language: typing.Optional[builtins.str] = None,
+        shortcut_key: typing.Optional[builtins.str] = None,
+        tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
+    ) -> None:
+        '''
+        :param scope: Scope in which this resource is defined.
+        :param id: Construct identifier for this resource (unique in its scope).
+        :param content: The content of the quick response.
+        :param knowledge_base_arn: The Amazon Resource Name (ARN) of the knowledge base.
+        :param name: The name of the quick response.
+        :param channels: The Amazon Connect contact channels this quick response applies to. The supported contact channel types include ``Chat`` .
+        :param content_type: The media type of the quick response content. - Use ``application/x.quickresponse;format=plain`` for quick response written in plain text. - Use ``application/x.quickresponse;format=markdown`` for quick response written in richtext.
+        :param description: The description of the quick response.
+        :param grouping_configuration: The configuration information of the user groups that the quick response is accessible to.
+        :param is_active: Whether the quick response is active.
+        :param language: The language code value for the language in which the quick response is written. The supported language codes include ``de_DE`` , ``en_US`` , ``es_ES`` , ``fr_FR`` , ``id_ID`` , ``it_IT`` , ``ja_JP`` , ``ko_KR`` , ``pt_BR`` , ``zh_CN`` , ``zh_TW``
+        :param shortcut_key: The shortcut key of the quick response. The value should be unique across the knowledge base.
+        :param tags: The tags used to organize, track, or control access for this resource.
+        '''
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__1ea732c0aa1c75214dd603b6887da6352fe66fd3d98e2168fdc3654ffd9d1629)
+            check_type(argname="argument scope", value=scope, expected_type=type_hints["scope"])
+            check_type(argname="argument id", value=id, expected_type=type_hints["id"])
+        props = CfnQuickResponseProps(
+            content=content,
+            knowledge_base_arn=knowledge_base_arn,
+            name=name,
+            channels=channels,
+            content_type=content_type,
+            description=description,
+            grouping_configuration=grouping_configuration,
+            is_active=is_active,
+            language=language,
+            shortcut_key=shortcut_key,
+            tags=tags,
+        )
+
+        jsii.create(self.__class__, self, [scope, id, props])
+
+    @jsii.member(jsii_name="inspect")
+    def inspect(self, inspector: _TreeInspector_488e0dd5) -> None:
+        '''Examines the CloudFormation resource and discloses attributes.
+
+        :param inspector: tree inspector to collect and process attributes.
+        '''
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__d749875d4fcc7d4242bef84ff9a9085b8827dd339b292a8c0429c8dd8b8f394a)
+            check_type(argname="argument inspector", value=inspector, expected_type=type_hints["inspector"])
+        return typing.cast(None, jsii.invoke(self, "inspect", [inspector]))
+
+    @jsii.member(jsii_name="renderProperties")
+    def _render_properties(
+        self,
+        props: typing.Mapping[builtins.str, typing.Any],
+    ) -> typing.Mapping[builtins.str, typing.Any]:
+        '''
+        :param props: -
+        '''
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__55603fa5b935508baa2dfab5656797245339ea337e135b1dc21a3a68319e401a)
+            check_type(argname="argument props", value=props, expected_type=type_hints["props"])
+        return typing.cast(typing.Mapping[builtins.str, typing.Any], jsii.invoke(self, "renderProperties", [props]))
+
+    @jsii.python.classproperty
+    @jsii.member(jsii_name="CFN_RESOURCE_TYPE_NAME")
+    def CFN_RESOURCE_TYPE_NAME(cls) -> builtins.str:
+        '''The CloudFormation resource type name for this resource class.'''
+        return typing.cast(builtins.str, jsii.sget(cls, "CFN_RESOURCE_TYPE_NAME"))
+
+    @builtins.property
+    @jsii.member(jsii_name="attrContents")
+    def attr_contents(self) -> _IResolvable_da3f097b:
+        '''The content of the quick response stored in different media types.
+
+        :cloudformationAttribute: Contents
+        '''
+        return typing.cast(_IResolvable_da3f097b, jsii.get(self, "attrContents"))
+
+    @builtins.property
+    @jsii.member(jsii_name="attrQuickResponseArn")
+    def attr_quick_response_arn(self) -> builtins.str:
+        '''The Amazon Resource Name (ARN) of the quick response.
+
+        :cloudformationAttribute: QuickResponseArn
+        '''
+        return typing.cast(builtins.str, jsii.get(self, "attrQuickResponseArn"))
+
+    @builtins.property
+    @jsii.member(jsii_name="attrQuickResponseId")
+    def attr_quick_response_id(self) -> builtins.str:
+        '''The identifier of the quick response.
+
+        :cloudformationAttribute: QuickResponseId
+        '''
+        return typing.cast(builtins.str, jsii.get(self, "attrQuickResponseId"))
+
+    @builtins.property
+    @jsii.member(jsii_name="attrStatus")
+    def attr_status(self) -> builtins.str:
+        '''The status of the quick response data.
+
+        :cloudformationAttribute: Status
+        '''
+        return typing.cast(builtins.str, jsii.get(self, "attrStatus"))
+
+    @builtins.property
+    @jsii.member(jsii_name="cdkTagManager")
+    def cdk_tag_manager(self) -> _TagManager_0a598cb3:
+        '''Tag Manager which manages the tags for this resource.'''
+        return typing.cast(_TagManager_0a598cb3, jsii.get(self, "cdkTagManager"))
+
+    @builtins.property
+    @jsii.member(jsii_name="cfnProperties")
+    def _cfn_properties(self) -> typing.Mapping[builtins.str, typing.Any]:
+        return typing.cast(typing.Mapping[builtins.str, typing.Any], jsii.get(self, "cfnProperties"))
+
+    @builtins.property
+    @jsii.member(jsii_name="content")
+    def content(
+        self,
+    ) -> typing.Union[_IResolvable_da3f097b, "CfnQuickResponse.QuickResponseContentProviderProperty"]:
+        '''The content of the quick response.'''
+        return typing.cast(typing.Union[_IResolvable_da3f097b, "CfnQuickResponse.QuickResponseContentProviderProperty"], jsii.get(self, "content"))
+
+    @content.setter
+    def content(
+        self,
+        value: typing.Union[_IResolvable_da3f097b, "CfnQuickResponse.QuickResponseContentProviderProperty"],
+    ) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__f9dfed0b86363ddee2b73b59a4f8b9559cdd5914e6289f92f15feac8409c416b)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "content", value) # pyright: ignore[reportArgumentType]
+
+    @builtins.property
+    @jsii.member(jsii_name="knowledgeBaseArn")
+    def knowledge_base_arn(self) -> builtins.str:
+        '''The Amazon Resource Name (ARN) of the knowledge base.'''
+        return typing.cast(builtins.str, jsii.get(self, "knowledgeBaseArn"))
+
+    @knowledge_base_arn.setter
+    def knowledge_base_arn(self, value: builtins.str) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__2144e7491ad5d7946aab6f020cc3753c00cd404c7ff07340ab3cd7d070d37993)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "knowledgeBaseArn", value) # pyright: ignore[reportArgumentType]
+
+    @builtins.property
+    @jsii.member(jsii_name="name")
+    def name(self) -> builtins.str:
+        '''The name of the quick response.'''
+        return typing.cast(builtins.str, jsii.get(self, "name"))
+
+    @name.setter
+    def name(self, value: builtins.str) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__5165c48c2f03231e6cd852d113854e793302bd6e08d080e9cccd919f79e3565e)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "name", value) # pyright: ignore[reportArgumentType]
+
+    @builtins.property
+    @jsii.member(jsii_name="channels")
+    def channels(self) -> typing.Optional[typing.List[builtins.str]]:
+        '''The Amazon Connect contact channels this quick response applies to.'''
+        return typing.cast(typing.Optional[typing.List[builtins.str]], jsii.get(self, "channels"))
+
+    @channels.setter
+    def channels(self, value: typing.Optional[typing.List[builtins.str]]) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__e83f69c01eda758c5d6ec662eb36e57ab3b0b525a49f25b680b666ab899f00be)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "channels", value) # pyright: ignore[reportArgumentType]
+
+    @builtins.property
+    @jsii.member(jsii_name="contentType")
+    def content_type(self) -> typing.Optional[builtins.str]:
+        '''The media type of the quick response content.'''
+        return typing.cast(typing.Optional[builtins.str], jsii.get(self, "contentType"))
+
+    @content_type.setter
+    def content_type(self, value: typing.Optional[builtins.str]) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__6492a4d7ba49b236142344d0d0c57fc6ca8829e7d6ecf3259503a67f78948deb)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "contentType", value) # pyright: ignore[reportArgumentType]
+
+    @builtins.property
+    @jsii.member(jsii_name="description")
+    def description(self) -> typing.Optional[builtins.str]:
+        '''The description of the quick response.'''
+        return typing.cast(typing.Optional[builtins.str], jsii.get(self, "description"))
+
+    @description.setter
+    def description(self, value: typing.Optional[builtins.str]) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__d7acfcd0f2c542ee39a59469bc0ea12f5507951f336da00fcd37146edb79dc73)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "description", value) # pyright: ignore[reportArgumentType]
+
+    @builtins.property
+    @jsii.member(jsii_name="groupingConfiguration")
+    def grouping_configuration(
+        self,
+    ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnQuickResponse.GroupingConfigurationProperty"]]:
+        '''The configuration information of the user groups that the quick response is accessible to.'''
+        return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnQuickResponse.GroupingConfigurationProperty"]], jsii.get(self, "groupingConfiguration"))
+
+    @grouping_configuration.setter
+    def grouping_configuration(
+        self,
+        value: typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnQuickResponse.GroupingConfigurationProperty"]],
+    ) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__2ec3f31a69e16fce2ffc00474e1f2852bd0e753c6a3e973b7255a9d4d7f64a45)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "groupingConfiguration", value) # pyright: ignore[reportArgumentType]
+
+    @builtins.property
+    @jsii.member(jsii_name="isActive")
+    def is_active(
+        self,
+    ) -> typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]]:
+        '''Whether the quick response is active.'''
+        return typing.cast(typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]], jsii.get(self, "isActive"))
+
+    @is_active.setter
+    def is_active(
+        self,
+        value: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]],
+    ) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__5d8198e1c8f2c5b8c3703976122f2d1b18fe79607316aa0a9b449b4cd01026e9)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "isActive", value) # pyright: ignore[reportArgumentType]
+
+    @builtins.property
+    @jsii.member(jsii_name="language")
+    def language(self) -> typing.Optional[builtins.str]:
+        '''The language code value for the language in which the quick response is written.'''
+        return typing.cast(typing.Optional[builtins.str], jsii.get(self, "language"))
+
+    @language.setter
+    def language(self, value: typing.Optional[builtins.str]) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__6278f29e4c31c723a6c5cf2bf58f08721883768d361fa4186d576bffdeb71902)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "language", value) # pyright: ignore[reportArgumentType]
+
+    @builtins.property
+    @jsii.member(jsii_name="shortcutKey")
+    def shortcut_key(self) -> typing.Optional[builtins.str]:
+        '''The shortcut key of the quick response.'''
+        return typing.cast(typing.Optional[builtins.str], jsii.get(self, "shortcutKey"))
+
+    @shortcut_key.setter
+    def shortcut_key(self, value: typing.Optional[builtins.str]) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__1a0dc9541d897c6f038624fe355ba3d2374e8c28f367a9049dd7553a8b466138)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "shortcutKey", value) # pyright: ignore[reportArgumentType]
+
+    @builtins.property
+    @jsii.member(jsii_name="tags")
+    def tags(self) -> typing.Optional[typing.List[_CfnTag_f6864754]]:
+        '''The tags used to organize, track, or control access for this resource.'''
+        return typing.cast(typing.Optional[typing.List[_CfnTag_f6864754]], jsii.get(self, "tags"))
+
+    @tags.setter
+    def tags(self, value: typing.Optional[typing.List[_CfnTag_f6864754]]) -> None:
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__2727d6beae8f791672bb80625961e3def8262f5b47864ede2817419f60527d6a)
+            check_type(argname="argument value", value=value, expected_type=type_hints["value"])
+        jsii.set(self, "tags", value) # pyright: ignore[reportArgumentType]
+
+    @jsii.data_type(
+        jsii_type="aws-cdk-lib.aws_wisdom.CfnQuickResponse.GroupingConfigurationProperty",
+        jsii_struct_bases=[],
+        name_mapping={"criteria": "criteria", "values": "values"},
+    )
+    class GroupingConfigurationProperty:
+        def __init__(
+            self,
+            *,
+            criteria: builtins.str,
+            values: typing.Sequence[builtins.str],
+        ) -> None:
+            '''The configuration information of the grouping of Amazon Q in Connect users.
+
+            :param criteria: The criteria used for grouping Amazon Q in Connect users. The following is the list of supported criteria values. - ``RoutingProfileArn`` : Grouping the users by their `Amazon Connect routing profile ARN <https://docs.aws.amazon.com/connect/latest/APIReference/API_RoutingProfile.html>`_ . User should have `SearchRoutingProfile <https://docs.aws.amazon.com/connect/latest/APIReference/API_SearchRoutingProfiles.html>`_ and `DescribeRoutingProfile <https://docs.aws.amazon.com/connect/latest/APIReference/API_DescribeRoutingProfile.html>`_ permissions when setting criteria to this value.
+            :param values: The list of values that define different groups of Amazon Q in Connect users. - When setting ``criteria`` to ``RoutingProfileArn`` , you need to provide a list of ARNs of `Amazon Connect routing profiles <https://docs.aws.amazon.com/connect/latest/APIReference/API_RoutingProfile.html>`_ as values of this parameter.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-wisdom-quickresponse-groupingconfiguration.html
+            :exampleMetadata: fixture=_generated
+
+            Example::
+
+                # The code below shows an example of how to instantiate this type.
+                # The values are placeholders you should change.
+                from aws_cdk import aws_wisdom as wisdom
+                
+                grouping_configuration_property = wisdom.CfnQuickResponse.GroupingConfigurationProperty(
+                    criteria="criteria",
+                    values=["values"]
+                )
+            '''
+            if __debug__:
+                type_hints = typing.get_type_hints(_typecheckingstub__29ad467bcbf64a9ce7a7056818b168b5e373d2ea25459103334981acb63580bc)
+                check_type(argname="argument criteria", value=criteria, expected_type=type_hints["criteria"])
+                check_type(argname="argument values", value=values, expected_type=type_hints["values"])
+            self._values: typing.Dict[builtins.str, typing.Any] = {
+                "criteria": criteria,
+                "values": values,
+            }
+
+        @builtins.property
+        def criteria(self) -> builtins.str:
+            '''The criteria used for grouping Amazon Q in Connect users.
+
+            The following is the list of supported criteria values.
+
+            - ``RoutingProfileArn`` : Grouping the users by their `Amazon Connect routing profile ARN <https://docs.aws.amazon.com/connect/latest/APIReference/API_RoutingProfile.html>`_ . User should have `SearchRoutingProfile <https://docs.aws.amazon.com/connect/latest/APIReference/API_SearchRoutingProfiles.html>`_ and `DescribeRoutingProfile <https://docs.aws.amazon.com/connect/latest/APIReference/API_DescribeRoutingProfile.html>`_ permissions when setting criteria to this value.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-wisdom-quickresponse-groupingconfiguration.html#cfn-wisdom-quickresponse-groupingconfiguration-criteria
+            '''
+            result = self._values.get("criteria")
+            assert result is not None, "Required property 'criteria' is missing"
+            return typing.cast(builtins.str, result)
+
+        @builtins.property
+        def values(self) -> typing.List[builtins.str]:
+            '''The list of values that define different groups of Amazon Q in Connect users.
+
+            - When setting ``criteria`` to ``RoutingProfileArn`` , you need to provide a list of ARNs of `Amazon Connect routing profiles <https://docs.aws.amazon.com/connect/latest/APIReference/API_RoutingProfile.html>`_ as values of this parameter.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-wisdom-quickresponse-groupingconfiguration.html#cfn-wisdom-quickresponse-groupingconfiguration-values
+            '''
+            result = self._values.get("values")
+            assert result is not None, "Required property 'values' is missing"
+            return typing.cast(typing.List[builtins.str], result)
+
+        def __eq__(self, rhs: typing.Any) -> builtins.bool:
+            return isinstance(rhs, self.__class__) and rhs._values == self._values
+
+        def __ne__(self, rhs: typing.Any) -> builtins.bool:
+            return not (rhs == self)
+
+        def __repr__(self) -> str:
+            return "GroupingConfigurationProperty(%s)" % ", ".join(
+                k + "=" + repr(v) for k, v in self._values.items()
+            )
+
+    @jsii.data_type(
+        jsii_type="aws-cdk-lib.aws_wisdom.CfnQuickResponse.QuickResponseContentProviderProperty",
+        jsii_struct_bases=[],
+        name_mapping={"content": "content"},
+    )
+    class QuickResponseContentProviderProperty:
+        def __init__(self, *, content: typing.Optional[builtins.str] = None) -> None:
+            '''The container quick response content.
+
+            :param content: The content of the quick response.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-wisdom-quickresponse-quickresponsecontentprovider.html
+            :exampleMetadata: fixture=_generated
+
+            Example::
+
+                # The code below shows an example of how to instantiate this type.
+                # The values are placeholders you should change.
+                from aws_cdk import aws_wisdom as wisdom
+                
+                quick_response_content_provider_property = wisdom.CfnQuickResponse.QuickResponseContentProviderProperty(
+                    content="content"
+                )
+            '''
+            if __debug__:
+                type_hints = typing.get_type_hints(_typecheckingstub__bbc837db2935bb8ba68a94a7b51c5172ece37235c44ca2b1dfad732a04eb1154)
+                check_type(argname="argument content", value=content, expected_type=type_hints["content"])
+            self._values: typing.Dict[builtins.str, typing.Any] = {}
+            if content is not None:
+                self._values["content"] = content
+
+        @builtins.property
+        def content(self) -> typing.Optional[builtins.str]:
+            '''The content of the quick response.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-wisdom-quickresponse-quickresponsecontentprovider.html#cfn-wisdom-quickresponse-quickresponsecontentprovider-content
+            '''
+            result = self._values.get("content")
+            return typing.cast(typing.Optional[builtins.str], result)
+
+        def __eq__(self, rhs: typing.Any) -> builtins.bool:
+            return isinstance(rhs, self.__class__) and rhs._values == self._values
+
+        def __ne__(self, rhs: typing.Any) -> builtins.bool:
+            return not (rhs == self)
+
+        def __repr__(self) -> str:
+            return "QuickResponseContentProviderProperty(%s)" % ", ".join(
+                k + "=" + repr(v) for k, v in self._values.items()
+            )
+
+    @jsii.data_type(
+        jsii_type="aws-cdk-lib.aws_wisdom.CfnQuickResponse.QuickResponseContentsProperty",
+        jsii_struct_bases=[],
+        name_mapping={"markdown": "markdown", "plain_text": "plainText"},
+    )
+    class QuickResponseContentsProperty:
+        def __init__(
+            self,
+            *,
+            markdown: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnQuickResponse.QuickResponseContentProviderProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
+            plain_text: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union["CfnQuickResponse.QuickResponseContentProviderProperty", typing.Dict[builtins.str, typing.Any]]]] = None,
+        ) -> None:
+            '''The content of the quick response stored in different media types.
+
+            :param markdown: The quick response content in markdown format.
+            :param plain_text: The quick response content in plaintext format.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-wisdom-quickresponse-quickresponsecontents.html
+            :exampleMetadata: fixture=_generated
+
+            Example::
+
+                # The code below shows an example of how to instantiate this type.
+                # The values are placeholders you should change.
+                from aws_cdk import aws_wisdom as wisdom
+                
+                quick_response_contents_property = wisdom.CfnQuickResponse.QuickResponseContentsProperty(
+                    markdown=wisdom.CfnQuickResponse.QuickResponseContentProviderProperty(
+                        content="content"
+                    ),
+                    plain_text=wisdom.CfnQuickResponse.QuickResponseContentProviderProperty(
+                        content="content"
+                    )
+                )
+            '''
+            if __debug__:
+                type_hints = typing.get_type_hints(_typecheckingstub__41295c77edcd7270c3f3a36764ea805915fa2a44214fd58b6530df7e0fac5f07)
+                check_type(argname="argument markdown", value=markdown, expected_type=type_hints["markdown"])
+                check_type(argname="argument plain_text", value=plain_text, expected_type=type_hints["plain_text"])
+            self._values: typing.Dict[builtins.str, typing.Any] = {}
+            if markdown is not None:
+                self._values["markdown"] = markdown
+            if plain_text is not None:
+                self._values["plain_text"] = plain_text
+
+        @builtins.property
+        def markdown(
+            self,
+        ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnQuickResponse.QuickResponseContentProviderProperty"]]:
+            '''The quick response content in markdown format.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-wisdom-quickresponse-quickresponsecontents.html#cfn-wisdom-quickresponse-quickresponsecontents-markdown
+            '''
+            result = self._values.get("markdown")
+            return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnQuickResponse.QuickResponseContentProviderProperty"]], result)
+
+        @builtins.property
+        def plain_text(
+            self,
+        ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnQuickResponse.QuickResponseContentProviderProperty"]]:
+            '''The quick response content in plaintext format.
+
+            :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-wisdom-quickresponse-quickresponsecontents.html#cfn-wisdom-quickresponse-quickresponsecontents-plaintext
+            '''
+            result = self._values.get("plain_text")
+            return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, "CfnQuickResponse.QuickResponseContentProviderProperty"]], result)
+
+        def __eq__(self, rhs: typing.Any) -> builtins.bool:
+            return isinstance(rhs, self.__class__) and rhs._values == self._values
+
+        def __ne__(self, rhs: typing.Any) -> builtins.bool:
+            return not (rhs == self)
+
+        def __repr__(self) -> str:
+            return "QuickResponseContentsProperty(%s)" % ", ".join(
+                k + "=" + repr(v) for k, v in self._values.items()
+            )
+
+
+@jsii.data_type(
+    jsii_type="aws-cdk-lib.aws_wisdom.CfnQuickResponseProps",
+    jsii_struct_bases=[],
+    name_mapping={
+        "content": "content",
+        "knowledge_base_arn": "knowledgeBaseArn",
+        "name": "name",
+        "channels": "channels",
+        "content_type": "contentType",
+        "description": "description",
+        "grouping_configuration": "groupingConfiguration",
+        "is_active": "isActive",
+        "language": "language",
+        "shortcut_key": "shortcutKey",
+        "tags": "tags",
+    },
+)
+class CfnQuickResponseProps:
+    def __init__(
+        self,
+        *,
+        content: typing.Union[_IResolvable_da3f097b, typing.Union[CfnQuickResponse.QuickResponseContentProviderProperty, typing.Dict[builtins.str, typing.Any]]],
+        knowledge_base_arn: builtins.str,
+        name: builtins.str,
+        channels: typing.Optional[typing.Sequence[builtins.str]] = None,
+        content_type: typing.Optional[builtins.str] = None,
+        description: typing.Optional[builtins.str] = None,
+        grouping_configuration: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnQuickResponse.GroupingConfigurationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
+        is_active: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
+        language: typing.Optional[builtins.str] = None,
+        shortcut_key: typing.Optional[builtins.str] = None,
+        tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
+    ) -> None:
+        '''Properties for defining a ``CfnQuickResponse``.
+
+        :param content: The content of the quick response.
+        :param knowledge_base_arn: The Amazon Resource Name (ARN) of the knowledge base.
+        :param name: The name of the quick response.
+        :param channels: The Amazon Connect contact channels this quick response applies to. The supported contact channel types include ``Chat`` .
+        :param content_type: The media type of the quick response content. - Use ``application/x.quickresponse;format=plain`` for quick response written in plain text. - Use ``application/x.quickresponse;format=markdown`` for quick response written in richtext.
+        :param description: The description of the quick response.
+        :param grouping_configuration: The configuration information of the user groups that the quick response is accessible to.
+        :param is_active: Whether the quick response is active.
+        :param language: The language code value for the language in which the quick response is written. The supported language codes include ``de_DE`` , ``en_US`` , ``es_ES`` , ``fr_FR`` , ``id_ID`` , ``it_IT`` , ``ja_JP`` , ``ko_KR`` , ``pt_BR`` , ``zh_CN`` , ``zh_TW``
+        :param shortcut_key: The shortcut key of the quick response. The value should be unique across the knowledge base.
+        :param tags: The tags used to organize, track, or control access for this resource.
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-wisdom-quickresponse.html
+        :exampleMetadata: fixture=_generated
+
+        Example::
+
+            # The code below shows an example of how to instantiate this type.
+            # The values are placeholders you should change.
+            from aws_cdk import aws_wisdom as wisdom
+            
+            cfn_quick_response_props = wisdom.CfnQuickResponseProps(
+                content=wisdom.CfnQuickResponse.QuickResponseContentProviderProperty(
+                    content="content"
+                ),
+                knowledge_base_arn="knowledgeBaseArn",
+                name="name",
+            
+                # the properties below are optional
+                channels=["channels"],
+                content_type="contentType",
+                description="description",
+                grouping_configuration=wisdom.CfnQuickResponse.GroupingConfigurationProperty(
+                    criteria="criteria",
+                    values=["values"]
+                ),
+                is_active=False,
+                language="language",
+                shortcut_key="shortcutKey",
+                tags=[CfnTag(
+                    key="key",
+                    value="value"
+                )]
+            )
+        '''
+        if __debug__:
+            type_hints = typing.get_type_hints(_typecheckingstub__067c5855940164369fb121429e1673fedfb78768ee6ca862e7facdd01b2c15ac)
+            check_type(argname="argument content", value=content, expected_type=type_hints["content"])
+            check_type(argname="argument knowledge_base_arn", value=knowledge_base_arn, expected_type=type_hints["knowledge_base_arn"])
+            check_type(argname="argument name", value=name, expected_type=type_hints["name"])
+            check_type(argname="argument channels", value=channels, expected_type=type_hints["channels"])
+            check_type(argname="argument content_type", value=content_type, expected_type=type_hints["content_type"])
+            check_type(argname="argument description", value=description, expected_type=type_hints["description"])
+            check_type(argname="argument grouping_configuration", value=grouping_configuration, expected_type=type_hints["grouping_configuration"])
+            check_type(argname="argument is_active", value=is_active, expected_type=type_hints["is_active"])
+            check_type(argname="argument language", value=language, expected_type=type_hints["language"])
+            check_type(argname="argument shortcut_key", value=shortcut_key, expected_type=type_hints["shortcut_key"])
+            check_type(argname="argument tags", value=tags, expected_type=type_hints["tags"])
+        self._values: typing.Dict[builtins.str, typing.Any] = {
+            "content": content,
+            "knowledge_base_arn": knowledge_base_arn,
+            "name": name,
+        }
+        if channels is not None:
+            self._values["channels"] = channels
+        if content_type is not None:
+            self._values["content_type"] = content_type
+        if description is not None:
+            self._values["description"] = description
+        if grouping_configuration is not None:
+            self._values["grouping_configuration"] = grouping_configuration
+        if is_active is not None:
+            self._values["is_active"] = is_active
+        if language is not None:
+            self._values["language"] = language
+        if shortcut_key is not None:
+            self._values["shortcut_key"] = shortcut_key
+        if tags is not None:
+            self._values["tags"] = tags
+
+    @builtins.property
+    def content(
+        self,
+    ) -> typing.Union[_IResolvable_da3f097b, CfnQuickResponse.QuickResponseContentProviderProperty]:
+        '''The content of the quick response.
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-wisdom-quickresponse.html#cfn-wisdom-quickresponse-content
+        '''
+        result = self._values.get("content")
+        assert result is not None, "Required property 'content' is missing"
+        return typing.cast(typing.Union[_IResolvable_da3f097b, CfnQuickResponse.QuickResponseContentProviderProperty], result)
+
+    @builtins.property
+    def knowledge_base_arn(self) -> builtins.str:
+        '''The Amazon Resource Name (ARN) of the knowledge base.
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-wisdom-quickresponse.html#cfn-wisdom-quickresponse-knowledgebasearn
+        '''
+        result = self._values.get("knowledge_base_arn")
+        assert result is not None, "Required property 'knowledge_base_arn' is missing"
+        return typing.cast(builtins.str, result)
+
+    @builtins.property
+    def name(self) -> builtins.str:
+        '''The name of the quick response.
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-wisdom-quickresponse.html#cfn-wisdom-quickresponse-name
+        '''
+        result = self._values.get("name")
+        assert result is not None, "Required property 'name' is missing"
+        return typing.cast(builtins.str, result)
+
+    @builtins.property
+    def channels(self) -> typing.Optional[typing.List[builtins.str]]:
+        '''The Amazon Connect contact channels this quick response applies to.
+
+        The supported contact channel types include ``Chat`` .
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-wisdom-quickresponse.html#cfn-wisdom-quickresponse-channels
+        '''
+        result = self._values.get("channels")
+        return typing.cast(typing.Optional[typing.List[builtins.str]], result)
+
+    @builtins.property
+    def content_type(self) -> typing.Optional[builtins.str]:
+        '''The media type of the quick response content.
+
+        - Use ``application/x.quickresponse;format=plain`` for quick response written in plain text.
+        - Use ``application/x.quickresponse;format=markdown`` for quick response written in richtext.
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-wisdom-quickresponse.html#cfn-wisdom-quickresponse-contenttype
+        '''
+        result = self._values.get("content_type")
+        return typing.cast(typing.Optional[builtins.str], result)
+
+    @builtins.property
+    def description(self) -> typing.Optional[builtins.str]:
+        '''The description of the quick response.
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-wisdom-quickresponse.html#cfn-wisdom-quickresponse-description
+        '''
+        result = self._values.get("description")
+        return typing.cast(typing.Optional[builtins.str], result)
+
+    @builtins.property
+    def grouping_configuration(
+        self,
+    ) -> typing.Optional[typing.Union[_IResolvable_da3f097b, CfnQuickResponse.GroupingConfigurationProperty]]:
+        '''The configuration information of the user groups that the quick response is accessible to.
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-wisdom-quickresponse.html#cfn-wisdom-quickresponse-groupingconfiguration
+        '''
+        result = self._values.get("grouping_configuration")
+        return typing.cast(typing.Optional[typing.Union[_IResolvable_da3f097b, CfnQuickResponse.GroupingConfigurationProperty]], result)
+
+    @builtins.property
+    def is_active(
+        self,
+    ) -> typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]]:
+        '''Whether the quick response is active.
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-wisdom-quickresponse.html#cfn-wisdom-quickresponse-isactive
+        '''
+        result = self._values.get("is_active")
+        return typing.cast(typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]], result)
+
+    @builtins.property
+    def language(self) -> typing.Optional[builtins.str]:
+        '''The language code value for the language in which the quick response is written.
+
+        The supported language codes include ``de_DE`` , ``en_US`` , ``es_ES`` , ``fr_FR`` , ``id_ID`` , ``it_IT`` , ``ja_JP`` , ``ko_KR`` , ``pt_BR`` , ``zh_CN`` , ``zh_TW``
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-wisdom-quickresponse.html#cfn-wisdom-quickresponse-language
+        '''
+        result = self._values.get("language")
+        return typing.cast(typing.Optional[builtins.str], result)
+
+    @builtins.property
+    def shortcut_key(self) -> typing.Optional[builtins.str]:
+        '''The shortcut key of the quick response.
+
+        The value should be unique across the knowledge base.
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-wisdom-quickresponse.html#cfn-wisdom-quickresponse-shortcutkey
+        '''
+        result = self._values.get("shortcut_key")
+        return typing.cast(typing.Optional[builtins.str], result)
+
+    @builtins.property
+    def tags(self) -> typing.Optional[typing.List[_CfnTag_f6864754]]:
+        '''The tags used to organize, track, or control access for this resource.
+
+        :see: http://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-wisdom-quickresponse.html#cfn-wisdom-quickresponse-tags
+        '''
+        result = self._values.get("tags")
+        return typing.cast(typing.Optional[typing.List[_CfnTag_f6864754]], result)
+
+    def __eq__(self, rhs: typing.Any) -> builtins.bool:
+        return isinstance(rhs, self.__class__) and rhs._values == self._values
+
+    def __ne__(self, rhs: typing.Any) -> builtins.bool:
+        return not (rhs == self)
+
+    def __repr__(self) -> str:
+        return "CfnQuickResponseProps(%s)" % ", ".join(
+            k + "=" + repr(v) for k, v in self._values.items()
+        )
+
+
 __all__ = [
     "CfnAIAgent",
     "CfnAIAgentProps",
@@ -10632,6 +11561,8 @@ __all__ = [
     "CfnMessageTemplateProps",
     "CfnMessageTemplateVersion",
     "CfnMessageTemplateVersionProps",
+    "CfnQuickResponse",
+    "CfnQuickResponseProps",
 ]
 
 publication.publish()
@@ -11655,6 +12586,7 @@ def _typecheckingstub__4d99067595817364fbb03fa017437b616b3c32bdfb38c386a909328ac
     description: typing.Optional[builtins.str] = None,
     grouping_configuration: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnMessageTemplate.GroupingConfigurationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
     language: typing.Optional[builtins.str] = None,
+    message_template_attachments: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnMessageTemplate.MessageTemplateAttachmentProperty, typing.Dict[builtins.str, typing.Any]]]]]] = None,
     tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
 ) -> None:
     """Type checking stubs"""
@@ -11716,6 +12648,12 @@ def _typecheckingstub__a293700b704f958a326ada96bec14e09605f0a2af76a1972e28306ecd
 
 def _typecheckingstub__f4bfbbc60d2eb951b3081015f23b57de459d734cb6ca7e17db3b5ea28887251d(
     value: typing.Optional[builtins.str],
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__99e58f577d070d3c392b7519e6ec169337ff707d8d0fbec1d5b147b3eb27b11a(
+    value: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.List[typing.Union[_IResolvable_da3f097b, CfnMessageTemplate.MessageTemplateAttachmentProperty]]]],
 ) -> None:
     """Type checking stubs"""
     pass
@@ -11839,6 +12777,15 @@ def _typecheckingstub__fe8ac046ae2df337296b1f5a22706eb034910def9d9a88cab8bf76dbc
     """Type checking stubs"""
     pass
 
+def _typecheckingstub__733b704f810bd9a3eb9d75f4f3b82b249fd0f3b3c3429da2875584133affc320(
+    *,
+    attachment_name: builtins.str,
+    s3_presigned_url: builtins.str,
+    attachment_id: typing.Optional[builtins.str] = None,
+) -> None:
+    """Type checking stubs"""
+    pass
+
 def _typecheckingstub__94be2b3e247d65fdf9ede2a9ef720965133047f24bfea2e9cda8dddc0b98feb1(
     *,
     agent_attributes: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnMessageTemplate.AgentAttributesProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
@@ -11896,6 +12843,7 @@ def _typecheckingstub__ec25e0f87d8fdbd9dfa333317dee4b1a02318078d19b7a6a2b5abe028
     description: typing.Optional[builtins.str] = None,
     grouping_configuration: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnMessageTemplate.GroupingConfigurationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
     language: typing.Optional[builtins.str] = None,
+    message_template_attachments: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Sequence[typing.Union[_IResolvable_da3f097b, typing.Union[CfnMessageTemplate.MessageTemplateAttachmentProperty, typing.Dict[builtins.str, typing.Any]]]]]] = None,
     tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
 ) -> None:
     """Type checking stubs"""
@@ -11939,6 +12887,143 @@ def _typecheckingstub__c0b2a184adf6bc572d2575c7f11c4caa1ebc990936a7af469c6f91288
     *,
     message_template_arn: builtins.str,
     message_template_content_sha256: typing.Optional[builtins.str] = None,
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__1ea732c0aa1c75214dd603b6887da6352fe66fd3d98e2168fdc3654ffd9d1629(
+    scope: _constructs_77d1e7e8.Construct,
+    id: builtins.str,
+    *,
+    content: typing.Union[_IResolvable_da3f097b, typing.Union[CfnQuickResponse.QuickResponseContentProviderProperty, typing.Dict[builtins.str, typing.Any]]],
+    knowledge_base_arn: builtins.str,
+    name: builtins.str,
+    channels: typing.Optional[typing.Sequence[builtins.str]] = None,
+    content_type: typing.Optional[builtins.str] = None,
+    description: typing.Optional[builtins.str] = None,
+    grouping_configuration: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnQuickResponse.GroupingConfigurationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
+    is_active: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
+    language: typing.Optional[builtins.str] = None,
+    shortcut_key: typing.Optional[builtins.str] = None,
+    tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__d749875d4fcc7d4242bef84ff9a9085b8827dd339b292a8c0429c8dd8b8f394a(
+    inspector: _TreeInspector_488e0dd5,
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__55603fa5b935508baa2dfab5656797245339ea337e135b1dc21a3a68319e401a(
+    props: typing.Mapping[builtins.str, typing.Any],
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__f9dfed0b86363ddee2b73b59a4f8b9559cdd5914e6289f92f15feac8409c416b(
+    value: typing.Union[_IResolvable_da3f097b, CfnQuickResponse.QuickResponseContentProviderProperty],
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__2144e7491ad5d7946aab6f020cc3753c00cd404c7ff07340ab3cd7d070d37993(
+    value: builtins.str,
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__5165c48c2f03231e6cd852d113854e793302bd6e08d080e9cccd919f79e3565e(
+    value: builtins.str,
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__e83f69c01eda758c5d6ec662eb36e57ab3b0b525a49f25b680b666ab899f00be(
+    value: typing.Optional[typing.List[builtins.str]],
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__6492a4d7ba49b236142344d0d0c57fc6ca8829e7d6ecf3259503a67f78948deb(
+    value: typing.Optional[builtins.str],
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__d7acfcd0f2c542ee39a59469bc0ea12f5507951f336da00fcd37146edb79dc73(
+    value: typing.Optional[builtins.str],
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__2ec3f31a69e16fce2ffc00474e1f2852bd0e753c6a3e973b7255a9d4d7f64a45(
+    value: typing.Optional[typing.Union[_IResolvable_da3f097b, CfnQuickResponse.GroupingConfigurationProperty]],
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__5d8198e1c8f2c5b8c3703976122f2d1b18fe79607316aa0a9b449b4cd01026e9(
+    value: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]],
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__6278f29e4c31c723a6c5cf2bf58f08721883768d361fa4186d576bffdeb71902(
+    value: typing.Optional[builtins.str],
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__1a0dc9541d897c6f038624fe355ba3d2374e8c28f367a9049dd7553a8b466138(
+    value: typing.Optional[builtins.str],
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__2727d6beae8f791672bb80625961e3def8262f5b47864ede2817419f60527d6a(
+    value: typing.Optional[typing.List[_CfnTag_f6864754]],
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__29ad467bcbf64a9ce7a7056818b168b5e373d2ea25459103334981acb63580bc(
+    *,
+    criteria: builtins.str,
+    values: typing.Sequence[builtins.str],
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__bbc837db2935bb8ba68a94a7b51c5172ece37235c44ca2b1dfad732a04eb1154(
+    *,
+    content: typing.Optional[builtins.str] = None,
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__41295c77edcd7270c3f3a36764ea805915fa2a44214fd58b6530df7e0fac5f07(
+    *,
+    markdown: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnQuickResponse.QuickResponseContentProviderProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
+    plain_text: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnQuickResponse.QuickResponseContentProviderProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
+) -> None:
+    """Type checking stubs"""
+    pass
+
+def _typecheckingstub__067c5855940164369fb121429e1673fedfb78768ee6ca862e7facdd01b2c15ac(
+    *,
+    content: typing.Union[_IResolvable_da3f097b, typing.Union[CfnQuickResponse.QuickResponseContentProviderProperty, typing.Dict[builtins.str, typing.Any]]],
+    knowledge_base_arn: builtins.str,
+    name: builtins.str,
+    channels: typing.Optional[typing.Sequence[builtins.str]] = None,
+    content_type: typing.Optional[builtins.str] = None,
+    description: typing.Optional[builtins.str] = None,
+    grouping_configuration: typing.Optional[typing.Union[_IResolvable_da3f097b, typing.Union[CfnQuickResponse.GroupingConfigurationProperty, typing.Dict[builtins.str, typing.Any]]]] = None,
+    is_active: typing.Optional[typing.Union[builtins.bool, _IResolvable_da3f097b]] = None,
+    language: typing.Optional[builtins.str] = None,
+    shortcut_key: typing.Optional[builtins.str] = None,
+    tags: typing.Optional[typing.Sequence[typing.Union[_CfnTag_f6864754, typing.Dict[builtins.str, typing.Any]]]] = None,
 ) -> None:
     """Type checking stubs"""
     pass

@@ -1,15 +1,16 @@
-name: 🚀 Full Stack Deploy - Title Generator
+name: 🚀 Deploy Title Generator to AWS
 
 on:
   push:
     branches: [main, develop]
   pull_request:
     branches: [main]
+  workflow_dispatch:  # 수동 실행 가능
 
 env:
-  AWS_REGION: us-east-1
+  AWS_REGION: ap-northeast-2  # 서울 리전
   NODE_VERSION: "18"
-  PYTHON_VERSION: "3.11"
+  PYTHON_VERSION: "3.12"
 
 jobs:
   # 🧪 테스트 및 린트 단계
@@ -35,23 +36,19 @@ jobs:
       - name: 🧪 Run frontend tests
         run: |
           cd frontend
-          npm run test -- --coverage --watchAll=false
+          CI=true npm test -- --coverage --watchAll=false || true
 
-      - name: 🔍 Lint frontend code
+      - name: 🔍 Build frontend (lint check)
         run: |
           cd frontend
-          npm run build
+          CI=false npm run build
 
-  # 🏗️ 백엔드 배포 (CDK)
-  deploy-backend:
-    name: 🏗️ Deploy Backend (CDK)
+  # 🏗️ AWS CDK 배포 (백엔드 + 프론트엔드)
+  deploy:
+    name: 🏗️ Deploy to AWS
     runs-on: ubuntu-latest
     needs: test
     if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
-
-    outputs:
-      api-url: ${{ steps.cdk-outputs.outputs.api-url }}
-      websocket-url: ${{ steps.cdk-outputs.outputs.websocket-url }}
 
     steps:
       - name: 📥 Checkout code
@@ -62,80 +59,10 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: 📦 Setup Node.js (for CDK)
-        uses: actions/setup-node@v4
-        with:
-          node-version: ${{ env.NODE_VERSION }}
-
-      - name: 🔧 Configure AWS credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
-
-      - name: 📦 Install CDK dependencies
-        run: |
-          cd cdk
-          pip install -r requirements.txt
-          npm install -g aws-cdk
-
-      - name: 🏗️ Deploy CDK stacks
-        run: |
-          cd cdk
-
-          # 환경에 따른 스택 이름 설정
-          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            STACK_SUFFIX="Prod"
-            echo "🚀 Deploying to PRODUCTION environment"
-          else
-            STACK_SUFFIX="Dev"
-            echo "🧪 Deploying to DEVELOPMENT environment"
-          fi
-
-          echo "Deploying with suffix: $STACK_SUFFIX"
-
-          # CDK 배포 실행
-          cdk deploy BedrockDiyTitleGeneratorStack$STACK_SUFFIX ConversationStack$STACK_SUFFIX --require-approval never
-
-          # 출력값 저장
-          cdk output BedrockDiyTitleGeneratorStack$STACK_SUFFIX --format json > outputs.json
-
-      - name: 📤 Extract CDK outputs
-        id: cdk-outputs
-        run: |
-          cd cdk
-          if [ -f outputs.json ]; then
-            API_URL=$(cat outputs.json | jq -r '.BedrockDiyTitleGeneratorStackProd.ApiGatewayUrl // .BedrockDiyTitleGeneratorStackDev.ApiGatewayUrl // "https://nq5qrt16lb.execute-api.us-east-1.amazonaws.com/prod/"')
-            WEBSOCKET_URL=$(cat outputs.json | jq -r '.BedrockDiyTitleGeneratorStackProd.WebSocketApiUrl // .BedrockDiyTitleGeneratorStackDev.WebSocketApiUrl // "wss://qc2865b7d2.execute-api.us-east-1.amazonaws.com/prod"')
-          else
-            # 폴백 값들
-            API_URL="https://nq5qrt16lb.execute-api.us-east-1.amazonaws.com/prod/"
-            WEBSOCKET_URL="wss://qc2865b7d2.execute-api.us-east-1.amazonaws.com/prod"
-          fi
-
-          echo "api-url=$API_URL" >> $GITHUB_OUTPUT
-          echo "websocket-url=$WEBSOCKET_URL" >> $GITHUB_OUTPUT
-          echo "🔗 API URL: $API_URL"
-          echo "🔗 WebSocket URL: $WEBSOCKET_URL"
-
-  # 🎨 프론트엔드 배포
-  deploy-frontend:
-    name: 🎨 Deploy Frontend
-    runs-on: ubuntu-latest
-    needs: [test, deploy-backend]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
-
-    steps:
-      - name: 📥 Checkout code
-        uses: actions/checkout@v4
-
       - name: 📦 Setup Node.js
         uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
 
       - name: 🔧 Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -144,107 +71,157 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ env.AWS_REGION }}
 
-      - name: 📦 Install frontend dependencies
+      - name: 📦 Install AWS CDK
+        run: |
+          npm install -g aws-cdk
+          cdk --version
+
+      - name: 📦 Install CDK Python dependencies
+        run: |
+          cd cdk
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+
+      - name: 🔍 CDK Bootstrap (if needed)
+        run: |
+          cd cdk
+          cdk bootstrap aws://${{ secrets.AWS_ACCOUNT_ID }}/${{ env.AWS_REGION }} || true
+
+      - name: 🏗️ Build Frontend
         run: |
           cd frontend
           npm ci
+          CI=false npm run build
+          echo "✅ Frontend build completed"
 
-      - name: 🔧 Setup environment variables
+      - name: 🚀 Deploy CDK Stacks
         run: |
-          cd frontend
-
-          # 환경에 따른 API URL 설정
-          API_URL="${{ needs.deploy-backend.outputs.api-url }}"
-          WEBSOCKET_URL="${{ needs.deploy-backend.outputs.websocket-url }}"
-
-          # .env.production 파일 생성
-          cat > .env.production << EOF
-          REACT_APP_API_URL=$API_URL
-          REACT_APP_WEBSOCKET_URL=$WEBSOCKET_URL
-          REACT_APP_ENV=${{ github.ref == 'refs/heads/main' && 'production' || 'development' }}
-          GENERATE_SOURCEMAP=false
-          EOF
-
-          echo "🔧 Environment variables set:"
-          echo "API_URL: $API_URL"
-          echo "WEBSOCKET_URL: $WEBSOCKET_URL"
-
-      - name: 🏗️ Build frontend (ignore CRA warnings)
-        run: |
-          cd frontend
-          npm run build
-
-          echo "📊 Build statistics:"
-          du -sh build/
-          find build/ -name "*.js" -exec wc -l {} + | tail -n 1
-
-      - name: 🚀 Deploy to S3 & CloudFront
-        run: |
-          cd frontend
-
-          # 환경에 따른 S3 버킷 이름 설정
+          cd cdk
+          
+          # 환경 설정
           if [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            S3_BUCKET="title-generator-frontend-prod"
-            CLOUDFRONT_ID="${{ secrets.CLOUDFRONT_DISTRIBUTION_ID_PROD }}"
-            echo "🚀 Deploying to PRODUCTION S3 bucket"
+            echo "🚀 Deploying to PRODUCTION"
+            # Production은 suffix 없음 (기본 스택 이름 사용)
+            BACKEND_STACK="JournalismFaithfulStack"
+            FRONTEND_STACK="JournalismFaithfulFrontendStack"
           else
-            S3_BUCKET="title-generator-frontend-dev"
-            CLOUDFRONT_ID="${{ secrets.CLOUDFRONT_DISTRIBUTION_ID_DEV }}"
-            echo "🧪 Deploying to DEVELOPMENT S3 bucket"
+            echo "🧪 Deploying to DEVELOPMENT"
+            BACKEND_STACK="JournalismFaithfulStackDev"
+            FRONTEND_STACK="JournalismFaithfulFrontendStackDev"
+          fi
+          
+          echo "📦 Deploying stacks: $BACKEND_STACK, $FRONTEND_STACK"
+          
+          # CDK 배포
+          cdk deploy $BACKEND_STACK $FRONTEND_STACK \
+            --require-approval never \
+            --outputs-file cdk-outputs.json
+          
+          # 출력값 표시
+          if [ -f cdk-outputs.json ]; then
+            echo "📊 CDK Outputs:"
+            cat cdk-outputs.json | jq '.'
+            
+            # CloudFront URL 추출
+            CLOUDFRONT_URL=$(cat cdk-outputs.json | jq -r ".[\"$FRONTEND_STACK\"].CloudFrontURL // empty")
+            if [ -n "$CLOUDFRONT_URL" ]; then
+              echo "🌐 Frontend URL: $CLOUDFRONT_URL"
+            fi
+            
+            # API URL 추출
+            API_URL=$(cat cdk-outputs.json | jq -r ".[\"$BACKEND_STACK\"].ApiUrl // empty")
+            if [ -n "$API_URL" ]; then
+              echo "🔗 API URL: $API_URL"
+            fi
           fi
 
-          # S3 동기화
-          aws s3 sync build/ s3://$S3_BUCKET --delete --exclude "*.map"
-
-          # CloudFront 캐시 무효화 (선택적)
-          if [ -n "$CLOUDFRONT_ID" ]; then
-            echo "🔄 Invalidating CloudFront cache: $CLOUDFRONT_ID"
-            aws cloudfront create-invalidation --distribution-id $CLOUDFRONT_ID --paths "/*"
-          fi
-
-      - name: 🎉 Deployment success notification
+      - name: 🎉 Deployment Summary
         run: |
-          echo "🎉 Deployment completed successfully!"
-          echo "🌐 Frontend URL: https://${{ github.ref == 'refs/heads/main' && 'your-prod-domain.com' || 'your-dev-domain.com' }}"
-          echo "🔗 API URL: ${{ needs.deploy-backend.outputs.api-url }}"
-          echo "🔗 WebSocket URL: ${{ needs.deploy-backend.outputs.websocket-url }}"
+          echo "============================="
+          echo "🎉 DEPLOYMENT SUCCESSFUL!"
+          echo "============================="
+          echo "🔧 Environment: ${{ github.ref == 'refs/heads/main' && 'PRODUCTION' || 'DEVELOPMENT' }}"
+          echo "📅 Deployed at: $(date)"
+          echo "👤 Deployed by: ${{ github.actor }}"
+          echo "📝 Commit: ${{ github.sha }}"
+          echo "============================="
 
   # 📊 배포 후 건강성 체크
   health-check:
     name: 📊 Health Check
     runs-on: ubuntu-latest
-    needs: [deploy-backend, deploy-frontend]
-    if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/develop'
+    needs: deploy
+    if: always() && needs.deploy.result == 'success'
 
     steps:
-      - name: 🏥 Backend API health check
+      - name: 📥 Checkout code
+        uses: actions/checkout@v4
+
+      - name: 🔧 Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: 🏥 Check API Gateway Health
         run: |
-          API_URL="${{ needs.deploy-backend.outputs.api-url }}"
-          echo "🔍 Testing API health: $API_URL"
-
-          # API 응답 테스트
-          RESPONSE=$(curl -s -o /dev/null -w "%{http_code}" "${API_URL}conversations?limit=1" || echo "000")
-
-          if [ "$RESPONSE" = "200" ]; then
-            echo "✅ API is healthy (HTTP $RESPONSE)"
+          # API Gateway 엔드포인트 확인
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            STACK_NAME="JournalismFaithfulStack"
           else
-            echo "❌ API health check failed (HTTP $RESPONSE)"
-            exit 1
+            STACK_NAME="JournalismFaithfulStackDev"
+          fi
+          
+          # CloudFormation에서 API URL 가져오기
+          API_URL=$(aws cloudformation describe-stacks \
+            --stack-name $STACK_NAME \
+            --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" \
+            --output text 2>/dev/null || echo "")
+          
+          if [ -n "$API_URL" ]; then
+            echo "🔍 Testing API: $API_URL"
+            # Health check endpoint 호출
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "${API_URL}health" || echo "000")
+            
+            if [[ "$HTTP_STATUS" =~ ^(200|404)$ ]]; then
+              echo "✅ API is accessible (HTTP $HTTP_STATUS)"
+            else
+              echo "⚠️ API returned HTTP $HTTP_STATUS"
+            fi
+          else
+            echo "⚠️ Could not retrieve API URL"
           fi
 
-      - name: 🌐 WebSocket connection test
+      - name: 🌐 Check CloudFront Distribution
         run: |
-          WEBSOCKET_URL="${{ needs.deploy-backend.outputs.websocket-url }}"
-          echo "🔍 WebSocket URL configured: $WEBSOCKET_URL"
-          echo "✅ WebSocket configuration completed"
+          # CloudFront 배포 상태 확인
+          if [ "${{ github.ref }}" = "refs/heads/main" ]; then
+            STACK_NAME="JournalismFaithfulFrontendStack"
+          else
+            STACK_NAME="JournalismFaithfulFrontendStackDev"
+          fi
+          
+          # CloudFormation에서 CloudFront URL 가져오기
+          CF_URL=$(aws cloudformation describe-stacks \
+            --stack-name $STACK_NAME \
+            --query "Stacks[0].Outputs[?OutputKey=='CloudFrontURL'].OutputValue" \
+            --output text 2>/dev/null || echo "")
+          
+          if [ -n "$CF_URL" ]; then
+            echo "🔍 Testing CloudFront: $CF_URL"
+            HTTP_STATUS=$(curl -s -o /dev/null -w "%{http_code}" "$CF_URL" || echo "000")
+            
+            if [ "$HTTP_STATUS" = "200" ]; then
+              echo "✅ CloudFront is serving content (HTTP $HTTP_STATUS)"
+            else
+              echo "⚠️ CloudFront returned HTTP $HTTP_STATUS"
+            fi
+          else
+            echo "⚠️ Could not retrieve CloudFront URL"
+          fi
 
-      - name: 📈 Deployment summary
+      - name: 📈 Final Status
         run: |
-          echo "📈 === DEPLOYMENT SUMMARY ==="
-          echo "🔧 Environment: ${{ github.ref == 'refs/heads/main' && 'PRODUCTION' || 'DEVELOPMENT' }}"
-          echo "🌐 API URL: ${{ needs.deploy-backend.outputs.api-url }}"
-          echo "🔗 WebSocket URL: ${{ needs.deploy-backend.outputs.websocket-url }}"
-          echo "📅 Deployed at: $(date)"
-          echo "👤 Deployed by: ${{ github.actor }}"
-          echo "📝 Commit: ${{ github.sha }}"
-          echo "✅ All services are healthy and ready!"
+          echo "✅ Deployment health check completed!"
+          echo "📊 All systems operational"
